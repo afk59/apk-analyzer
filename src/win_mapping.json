@@ -1,0 +1,656 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-05-07",
+  "target": "hmos",
+  "description": "Windows DLL / API namespace → HarmonyOS NEXT kit mapping for PC migration analysis",
+  "dll_mappings": [
+    {
+      "dll_name": "user32.dll",
+      "dll_display": "Windows User Interface API",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Core Win32 UI (windows, messages, dialogs) → ArkUI component model. Full architectural rewrite required; no 1-to-1 API mapping."
+    },
+    {
+      "dll_name": "kernel32.dll",
+      "dll_display": "Windows Kernel Base API",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "Process/thread/memory management, file I/O, synchronization → BasicServicesKit + taskpool + fileio. Core POSIX-like subset available via HarmonyOS NDK."
+    },
+    {
+      "dll_name": "ntdll.dll",
+      "dll_display": "Windows NT Layer DLL",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "NT native API layer — not available on HarmonyOS. Low-level syscall wrappers must be replaced with POSIX equivalents from the NDK libc."
+    },
+    {
+      "dll_name": "gdi32.dll",
+      "dll_display": "Windows GDI (2D Graphics)",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "GDI 2D drawing primitives → ArkGraphics2D / Canvas API. Custom rendering can use @ohos.graphics.drawing."
+    },
+    {
+      "dll_name": "gdi32full.dll",
+      "dll_display": "Windows GDI Full (Extended 2D Graphics)",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "Extended GDI functions → ArkGraphics2D. Same mapping as gdi32.dll."
+    },
+    {
+      "dll_name": "opengl32.dll",
+      "dll_display": "OpenGL 3D Graphics",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "high",
+      "note": "OpenGL ES 3.x is supported on HarmonyOS NEXT via NDK. @kit.ArkGraphics3D provides XComponent + EGL surface. Port GL code with minimal changes."
+    },
+    {
+      "dll_name": "d3d11.dll",
+      "dll_display": "Direct3D 11",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "low",
+      "note": "DirectX 11 not available. HarmonyOS supports OpenGL ES 3.x and Vulkan via NDK. D3D → Vulkan/GLES port required."
+    },
+    {
+      "dll_name": "d3d12.dll",
+      "dll_display": "Direct3D 12",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "low",
+      "note": "DirectX 12 not available. Vulkan is the closest equivalent and is supported on HarmonyOS NEXT via NDK."
+    },
+    {
+      "dll_name": "vulkan-1.dll",
+      "dll_display": "Vulkan Graphics API",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "high",
+      "note": "Vulkan is natively supported on HarmonyOS NEXT via NDK. libvulkan.so is available. High portability."
+    },
+    {
+      "dll_name": "dxgi.dll",
+      "dll_display": "DirectX Graphics Infrastructure",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "low",
+      "note": "DXGI swap chains and adapters are Windows-specific. EGL + XComponent serves a similar role on HarmonyOS."
+    },
+    {
+      "dll_name": "ole32.dll",
+      "dll_display": "OLE / COM Core",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "COM/OLE infrastructure not present on HarmonyOS. IPC should use HarmonyOS ServiceExtension / RemoteObject (IPC Kit)."
+    },
+    {
+      "dll_name": "oleaut32.dll",
+      "dll_display": "OLE Automation",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "OLE Automation / VARIANT/BSTR types not present on HarmonyOS. Data interchange should use structured JSON or protobuf."
+    },
+    {
+      "dll_name": "comctl32.dll",
+      "dll_display": "Common Controls Library",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Windows common controls (TreeView, ListView, etc.) → ArkUI built-in components (List, Grid, Tree, etc.)."
+    },
+    {
+      "dll_name": "comdlg32.dll",
+      "dll_display": "Common Dialogs",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "File/color/font picker dialogs → ArkUI picker components + @ohos.file.picker."
+    },
+    {
+      "dll_name": "shell32.dll",
+      "dll_display": "Windows Shell API",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "medium",
+      "note": "Shell operations (file associations, shortcuts, tray icons) → CoreFileKit + AbilityKit. Desktop shell integration differs significantly."
+    },
+    {
+      "dll_name": "shlwapi.dll",
+      "dll_display": "Shell Lightweight Utility API",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "medium",
+      "note": "Path manipulation, registry helpers, URL functions → CoreFileKit + built-in ArkTS string/URL utilities."
+    },
+    {
+      "dll_name": "advapi32.dll",
+      "dll_display": "Advanced Windows API (Registry, Security, Services)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "low",
+      "note": "Registry, Windows services, security APIs not available on HarmonyOS. Persistent storage → @ohos.data.preferences or relationalStore. Service lifecycle → ServiceExtensionAbility."
+    },
+    {
+      "dll_name": "crypt32.dll",
+      "dll_display": "Windows Cryptography API",
+      "harmony_kit": "@kit.DeviceCertificateKit",
+      "harmony_import": "@kit.DeviceCertificateKit",
+      "confidence": "medium",
+      "note": "CryptoAPI (cert store, PKCS) → DeviceCertificateKit + @kit.CryptoArchitectureKit. AES/RSA/SHA available via NDK mbedTLS."
+    },
+    {
+      "dll_name": "bcrypt.dll",
+      "dll_display": "Windows BCrypt (CNG Cryptography)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "CNG symmetric/asymmetric crypto → @kit.CryptoArchitectureKit. AES-GCM, RSA, ECDH, SHA-2/3 all available."
+    },
+    {
+      "dll_name": "ncrypt.dll",
+      "dll_display": "Windows CNG Key Storage",
+      "harmony_kit": "@kit.UniversalKeystoreKit",
+      "harmony_import": "@kit.UniversalKeystoreKit",
+      "confidence": "medium",
+      "note": "CNG key storage / TPM keys → UniversalKeystoreKit (HUKS). TEE-backed key operations supported."
+    },
+    {
+      "dll_name": "ws2_32.dll",
+      "dll_display": "Windows Sockets 2 (Winsock)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "TCP/UDP sockets → @kit.NetworkKit (@ohos.net.socket). BSD socket API also available via NDK for native code."
+    },
+    {
+      "dll_name": "winhttp.dll",
+      "dll_display": "Windows HTTP Services",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "HTTP/HTTPS client → @ohos.net.http (NetworkKit). Supports GET/POST, TLS, cookies, headers."
+    },
+    {
+      "dll_name": "wininet.dll",
+      "dll_display": "Windows Internet API",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "WinINet HTTP/FTP/cookie API → @kit.NetworkKit. @ohos.net.http covers HTTP; FTP not natively supported."
+    },
+    {
+      "dll_name": "dnsapi.dll",
+      "dll_display": "Windows DNS Client API",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "DNS resolution → NetworkKit. Direct DNS query API limited; rely on hostname resolution in socket/http APIs."
+    },
+    {
+      "dll_name": "iphlpapi.dll",
+      "dll_display": "IP Helper API",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "Network adapter enumeration, routing tables → @ohos.net.connection (NetworkKit). Not all adapter-level details exposed."
+    },
+    {
+      "dll_name": "mfplat.dll",
+      "dll_display": "Media Foundation Platform",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "medium",
+      "note": "Media Foundation pipeline → @kit.MediaKit (AVPlayer/AVRecorder). Codec pipeline is abstracted; direct MFT transforms not supported."
+    },
+    {
+      "dll_name": "mf.dll",
+      "dll_display": "Media Foundation",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "medium",
+      "note": "Media Foundation session/topology → AVPlayer/AVRecorder in MediaKit."
+    },
+    {
+      "dll_name": "mfreadwrite.dll",
+      "dll_display": "Media Foundation Source Reader / Sink Writer",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "medium",
+      "note": "MF source reader/sink writer → @ohos.multimedia.media AVMuxer/AVDemuxer (MediaKit)."
+    },
+    {
+      "dll_name": "dsound.dll",
+      "dll_display": "DirectSound",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "medium",
+      "note": "DirectSound PCM playback/capture → @kit.AudioKit (AudioRenderer/AudioCapturer). Low-latency path via NDK OHAudio."
+    },
+    {
+      "dll_name": "winmm.dll",
+      "dll_display": "Windows Multimedia API",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "medium",
+      "note": "waveOut/waveIn, MIDI, timer → AudioKit + @ohos.multimedia.audio. MIDI not natively supported."
+    },
+    {
+      "dll_name": "xaudio2_9.dll",
+      "dll_display": "XAudio2 (Game Audio)",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "medium",
+      "note": "XAudio2 DSP/submix graph → OHAudio (NDK) for low-latency. ArkTS-side: AudioRenderer."
+    },
+    {
+      "dll_name": "avrt.dll",
+      "dll_display": "Audio/Video Real-Time Thread Priority",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "low",
+      "note": "MMCSS real-time thread priority → HarmonyOS thread priority APIs in NDK (limited access)."
+    },
+    {
+      "dll_name": "d2d1.dll",
+      "dll_display": "Direct2D",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "Direct2D GPU-accelerated 2D → ArkGraphics2D / Canvas drawing API. @ohos.graphics.drawing for NDK path."
+    },
+    {
+      "dll_name": "dwrite.dll",
+      "dll_display": "DirectWrite (Text Rendering)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "DirectWrite text layout/rendering → ArkUI Text component + @ohos.graphics.text (NDK). OpenType feature support available."
+    },
+    {
+      "dll_name": "wintypes.dll",
+      "dll_display": "Windows Runtime Types",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "WinRT type system not present on HarmonyOS. WinRT APIs must be rewritten using HarmonyOS ArkTS/NDK equivalents."
+    },
+    {
+      "dll_name": "combase.dll",
+      "dll_display": "COM Base (Windows Runtime)",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "COM/WinRT activation not available. IPC → HarmonyOS IPC Kit (RemoteObject)."
+    },
+    {
+      "dll_name": "rpcrt4.dll",
+      "dll_display": "Remote Procedure Call (RPC)",
+      "harmony_kit": "@kit.IPCKit",
+      "harmony_import": "@kit.IPCKit",
+      "confidence": "low",
+      "note": "Windows RPC → HarmonyOS IPC Kit or ServiceExtension for cross-process calls."
+    },
+    {
+      "dll_name": "setupapi.dll",
+      "dll_display": "Windows Setup / Device Install API",
+      "harmony_kit": "@kit.DriverDevelopmentKit",
+      "harmony_import": "@kit.DriverDevelopmentKit",
+      "confidence": "low",
+      "note": "Device installation, INF parsing not applicable on HarmonyOS. Driver interaction → DriverDevelopmentKit."
+    },
+    {
+      "dll_name": "cfgmgr32.dll",
+      "dll_display": "Configuration Manager (Device Enumeration)",
+      "harmony_kit": "@kit.DriverDevelopmentKit",
+      "harmony_import": "@kit.DriverDevelopmentKit",
+      "confidence": "low",
+      "note": "PnP device enumeration → HarmonyOS USB/HID via DriverDevelopmentKit or @ohos.usbManager."
+    },
+    {
+      "dll_name": "hid.dll",
+      "dll_display": "HID (Human Interface Devices)",
+      "harmony_kit": "@kit.InputKit",
+      "harmony_import": "@kit.InputKit",
+      "confidence": "medium",
+      "note": "HID device access → @kit.InputKit for mouse/keyboard/gamepad input events. Raw HID access limited."
+    },
+    {
+      "dll_name": "xinput1_4.dll",
+      "dll_display": "XInput (Game Controller)",
+      "harmony_kit": "@kit.InputKit",
+      "harmony_import": "@kit.InputKit",
+      "confidence": "medium",
+      "note": "Xbox/gamepad input → @kit.InputKit (@ohos.multimodalInput.inputDevice). Gamepad axis/button events available."
+    },
+    {
+      "dll_name": "xinput9_1_0.dll",
+      "dll_display": "XInput 9.1 (Legacy Game Controller)",
+      "harmony_kit": "@kit.InputKit",
+      "harmony_import": "@kit.InputKit",
+      "confidence": "medium",
+      "note": "Legacy XInput → @kit.InputKit. Same as xinput1_4 mapping."
+    },
+    {
+      "dll_name": "dinput8.dll",
+      "dll_display": "DirectInput 8",
+      "harmony_kit": "@kit.InputKit",
+      "harmony_import": "@kit.InputKit",
+      "confidence": "low",
+      "note": "DirectInput joystick/keyboard raw access → @kit.InputKit. Raw device polling not directly supported."
+    },
+    {
+      "dll_name": "msvcrt.dll",
+      "dll_display": "MSVC C Runtime",
+      "harmony_kit": "HarmonyOS NDK (libc / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "C runtime (malloc, stdio, math) → standard libc available in HarmonyOS NDK (LLVM/BiSheng). High portability for C standard library calls."
+    },
+    {
+      "dll_name": "vcruntime140.dll",
+      "dll_display": "MSVC 2015-2022 C++ Runtime",
+      "harmony_kit": "HarmonyOS NDK (libc++ / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "C++ runtime (exception handling, RTTI, STL) → libc++ in HarmonyOS NDK. Recompile with BiSheng/Clang targeting ohos-arm64 or ohos-x86_64."
+    },
+    {
+      "dll_name": "vcruntime140_1.dll",
+      "dll_display": "MSVC 2019+ C++ Runtime (coroutines)",
+      "harmony_kit": "HarmonyOS NDK (libc++ / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "C++ 20 coroutine support → libc++ in BiSheng NDK. Coroutine ABI compatible when recompiled."
+    },
+    {
+      "dll_name": "msvcp140.dll",
+      "dll_display": "MSVC C++ Standard Library",
+      "harmony_kit": "HarmonyOS NDK (libc++ / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "STL (vector, string, iostream) → libc++ NDK. Direct recompile path, high confidence."
+    },
+    {
+      "dll_name": "ucrtbase.dll",
+      "dll_display": "Universal C Runtime Base",
+      "harmony_kit": "HarmonyOS NDK (libc / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "UCRT (printf, fopen, math.h) → NDK libc. Standard C library calls port directly."
+    },
+    {
+      "dll_name": "msvcr120.dll",
+      "dll_display": "MSVC 2013 C Runtime",
+      "harmony_kit": "HarmonyOS NDK (libc / BiSheng)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Legacy CRT → NDK libc. Upgrade compiler target to modern C standard."
+    },
+    {
+      "dll_name": "wldap32.dll",
+      "dll_display": "Windows LDAP API",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "LDAP directory services not natively available on HarmonyOS. Use third-party OpenLDAP NDK build or server-side proxy."
+    },
+    {
+      "dll_name": "secur32.dll",
+      "dll_display": "Windows Security (SSPI / NTLM / Kerberos)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "low",
+      "note": "SSPI/NTLM/Kerberos not available on HarmonyOS. TLS → @ohos.net.ssl or NDK mbedTLS. Auth flows must be redesigned."
+    },
+    {
+      "dll_name": "sspicli.dll",
+      "dll_display": "SSPI Client Interface",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "low",
+      "note": "SSPI client-side auth not available. Same recommendation as secur32.dll."
+    },
+    {
+      "dll_name": "schannel.dll",
+      "dll_display": "Windows TLS/SSL (Schannel)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Schannel TLS → @ohos.net.ssl (NetworkKit) or NDK mbedTLS. TLS 1.2/1.3 both supported."
+    },
+    {
+      "dll_name": "dbghelp.dll",
+      "dll_display": "Debug Help Library",
+      "harmony_kit": "HarmonyOS NDK (hilog / hiperf)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Stack walk, symbol resolution, minidump → HarmonyOS hilog + hiperf + HiTrace. No direct minidump equivalent."
+    },
+    {
+      "dll_name": "psapi.dll",
+      "dll_display": "Process Status API",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Process memory/module enumeration → limited on HarmonyOS for security reasons. Self-process info via /proc is available in NDK."
+    },
+    {
+      "dll_name": "pdh.dll",
+      "dll_display": "Performance Data Helper",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "low",
+      "note": "Windows performance counters → @kit.PerformanceAnalysisKit (hiPerf, hiTrace). API model differs significantly."
+    },
+    {
+      "dll_name": "wtsapi32.dll",
+      "dll_display": "Windows Terminal Services API",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Remote Desktop / session management APIs not applicable on HarmonyOS."
+    },
+    {
+      "dll_name": "wevtapi.dll",
+      "dll_display": "Windows Event Log API",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "low",
+      "note": "Windows Event Log → HarmonyOS hilog (@ohos.hilog). Structured logging available; event subscription model differs."
+    },
+    {
+      "dll_name": "openssl",
+      "dll_display": "OpenSSL (libssl / libcrypto)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "OpenSSL → @kit.CryptoArchitectureKit or NDK mbedTLS. OpenSSL can also be cross-compiled for HarmonyOS NDK."
+    },
+    {
+      "dll_name": "libssl",
+      "dll_display": "OpenSSL libssl",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "TLS/SSL via OpenSSL → @kit.CryptoArchitectureKit or mbedTLS NDK. OpenSSL NDK port available."
+    },
+    {
+      "dll_name": "libcrypto",
+      "dll_display": "OpenSSL libcrypto",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "Symmetric/asymmetric crypto via OpenSSL → CryptoArchitectureKit. AES, RSA, ECDSA, SHA all available."
+    },
+    {
+      "dll_name": "sqlite3.dll",
+      "dll_display": "SQLite3 Database",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "SQLite → @kit.ArkData relationalStore (wraps SQLite). Direct SQLite NDK access also available."
+    },
+    {
+      "dll_name": "zlib1.dll",
+      "dll_display": "zlib Compression",
+      "harmony_kit": "HarmonyOS NDK (zlib)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "zlib deflate/inflate → NDK libz (zlib prebuilt). @ohos.zlib also available in ArkTS."
+    },
+    {
+      "dll_name": "libpng16.dll",
+      "dll_display": "libpng Image Library",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "PNG decode/encode → @kit.ImageKit (ImageSource/ImagePacker). NDK libpng also cross-compilable."
+    },
+    {
+      "dll_name": "libjpeg",
+      "dll_display": "libjpeg / libjpeg-turbo",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "JPEG decode/encode → @kit.ImageKit. NDK libjpeg-turbo also cross-compilable."
+    },
+    {
+      "dll_name": "freetype.dll",
+      "dll_display": "FreeType Font Rendering",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "FreeType glyph rasterization → ArkUI text rendering engine (uses Skia internally). Custom font loading via @ohos.font."
+    },
+    {
+      "dll_name": "harfbuzz.dll",
+      "dll_display": "HarfBuzz Text Shaping",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "HarfBuzz OpenType shaping → ArkUI text engine. Can also cross-compile HarfBuzz for NDK."
+    },
+    {
+      "dll_name": "Qt5Core.dll",
+      "dll_display": "Qt5 Core",
+      "harmony_kit": "No HarmonyOS NEXT port (Qt6 roadmap)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Qt5 Core (QObject, signals/slots, QThread) → no official OHOS port yet. Qt6 OHOS port in progress (community). Manual rewrite or wait for Qt6 OHOS stable release."
+    },
+    {
+      "dll_name": "Qt5Gui.dll",
+      "dll_display": "Qt5 GUI",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "low",
+      "note": "Qt5 QWidget/QPainter rendering → ArkUI. No Qt5 OHOS port. Full UI rewrite in ArkTS/ArkUI required."
+    },
+    {
+      "dll_name": "Qt5Widgets.dll",
+      "dll_display": "Qt5 Widgets",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "low",
+      "note": "Qt5 widget set → ArkUI components. No direct port; UI layer requires full rewrite."
+    },
+    {
+      "dll_name": "Qt6Core.dll",
+      "dll_display": "Qt6 Core",
+      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Qt6 OHOS community port exists but not production-ready as of 2025. QObject/QThread/QEventLoop → evaluate Qt6 OHOS port status before committing."
+    },
+    {
+      "dll_name": "Qt6Gui.dll",
+      "dll_display": "Qt6 GUI",
+      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Qt6 GUI OHOS port — experimental. Rendering backend targets OpenGL ES. Test on OHOS emulator before adopting."
+    },
+    {
+      "dll_name": "Qt6Widgets.dll",
+      "dll_display": "Qt6 Widgets",
+      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "Qt6 Widgets OHOS port — experimental. Same caveat as Qt6Core/Qt6Gui."
+    },
+    {
+      "dll_name": "Qt6Network.dll",
+      "dll_display": "Qt6 Network",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "QNetworkAccessManager → @ohos.net.http (NetworkKit). Or keep Qt6Network if Qt6 OHOS port is adopted."
+    },
+    {
+      "dll_name": "Qt5Network.dll",
+      "dll_display": "Qt5 Network",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "QNetworkAccessManager → @ohos.net.http. No OHOS port for Qt5; rewrite networking layer."
+    },
+    {
+      "dll_name": "msvcp140d.dll",
+      "dll_display": "MSVC C++ Debug Runtime",
+      "harmony_kit": "HarmonyOS NDK (libc++ debug)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Debug CRT — only present in debug builds. Recompile in release mode for HarmonyOS."
+    },
+    {
+      "dll_name": "ucrtbased.dll",
+      "dll_display": "Universal C Runtime Debug",
+      "harmony_kit": "HarmonyOS NDK (libc debug)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Debug UCRT — debug build artifact. Recompile in release mode targeting OHOS."
+    },
+    {
+      "dll_name": "wer.dll",
+      "dll_display": "Windows Error Reporting",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "low",
+      "note": "WER crash reporting → HarmonyOS HiTrace + hilog crash capture. @kit.PerformanceAnalysisKit."
+    },
+    {
+      "dll_name": "version.dll",
+      "dll_display": "Windows Version Information",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "PE version resource queries → @ohos.bundleManager (app version info) via BasicServicesKit."
+    },
+    {
+      "dll_name": "userenv.dll",
+      "dll_display": "User Environment API",
+      "harmony_kit": "No direct equivalent",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "User profile/env-var loading (Windows-specific). HarmonyOS app sandbox provides fixed paths; no per-user profile concept."
+    },
+    {
+      "dll_name": "mpr.dll",
+      "dll_display": "Multiple Provider Router (Network Provider)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "low",
+      "note": "Windows network provider router (mapped drives, UNC paths) → no direct equivalent on HarmonyOS."
+    }
+  ]
+}

@@ -1,0 +1,440 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-06-25",
+  "target": "hmos",
+  "description": "iOS framework → HarmonyOS NEXT kit mapping for IPA migration analysis",
+  "framework_mappings": [
+    {
+      "framework_name": "GoogleMaps",
+      "framework_display": "Google Maps SDK for iOS",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "Google Maps → @kit.MapKit. MapView, markers, polylines, routing all available natively in HarmonyOS."
+    },
+    {
+      "framework_name": "GoogleMLKit",
+      "framework_display": "Google ML Kit (On-Device ML)",
+      "harmony_kit": "@kit.CoreVisionKit",
+      "harmony_import": "@kit.CoreVisionKit",
+      "confidence": "medium",
+      "note": "Google ML Kit vision features (text recognition, face detection, barcode) → @kit.CoreVisionKit + @kit.ScanKit."
+    },
+    {
+      "framework_name": "FirebaseAnalytics",
+      "framework_display": "Firebase Analytics",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "high",
+      "note": "Firebase Analytics event tracking → @kit.AnalyticsKit (HiAppEvent). Custom events, user properties, funnel analysis all supported."
+    },
+    {
+      "framework_name": "FirebaseCore",
+      "framework_display": "Firebase Core",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Firebase initialization → migrate Firebase app config to AGC (AppGallery Connect) initialization via @kit.AnalyticsKit."
+    },
+    {
+      "framework_name": "FirebaseCrashlytics",
+      "framework_display": "Firebase Crashlytics",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "Crash reporting → @kit.PerformanceAnalysisKit. JsError, native crash, and ANR detection available via HiAppEvent SDK."
+    },
+    {
+      "framework_name": "FirebaseMessaging",
+      "framework_display": "Firebase Cloud Messaging (FCM)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "FCM push notifications → @kit.PushKit. Token registration, message handling, topic subscription all map directly."
+    },
+    {
+      "framework_name": "FirebaseAuth",
+      "framework_display": "Firebase Authentication",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "medium",
+      "note": "Firebase Auth → @kit.AccountKit. HUAWEI ID, phone/email auth, token management supported; social providers require reimplementation."
+    },
+    {
+      "framework_name": "FirebaseFirestore",
+      "framework_display": "Firebase Cloud Firestore",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "low",
+      "note": "Firestore NoSQL cloud DB → AGC Cloud DB (@kit.CloudFoundationKit). Schema and query model differ; data migration required."
+    },
+    {
+      "framework_name": "FirebaseDatabase",
+      "framework_display": "Firebase Realtime Database",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "low",
+      "note": "Firebase RTDB → AGC Cloud DB or Cloud Storage. Real-time sync requires AGC Cloud Functions or custom WebSocket layer."
+    },
+    {
+      "framework_name": "FirebaseRemoteConfig",
+      "framework_display": "Firebase Remote Config",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "Remote Config → AGC Remote Configuration. Key-value config, A/B testing, and conditions available via AGC platform."
+    },
+    {
+      "framework_name": "FirebaseStorage",
+      "framework_display": "Firebase Cloud Storage",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "Firebase Storage → AGC Cloud Storage. Upload, download, and metadata APIs align well with AGC equivalents."
+    },
+    {
+      "framework_name": "Alamofire",
+      "framework_display": "Alamofire HTTP Networking",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Alamofire HTTP client → @kit.NetworkKit. HTTP/HTTPS requests, interceptors, and multipart upload all supported."
+    },
+    {
+      "framework_name": "AFNetworking",
+      "framework_display": "AFNetworking (Objective-C HTTP)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "AFNetworking → @kit.NetworkKit. Session management, request serialization, and response validation available."
+    },
+    {
+      "framework_name": "Moya",
+      "framework_display": "Moya Network Abstraction Layer",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Moya (Alamofire wrapper) → @kit.NetworkKit. Same underlying HTTP primitives; type-safe request layer must be rewritten in ArkTS."
+    },
+    {
+      "framework_name": "SDWebImage",
+      "framework_display": "SDWebImage Async Image Loading",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "SDWebImage async load + disk cache → @kit.ImageKit. URL-based loading, cache eviction, and progressive decode all available."
+    },
+    {
+      "framework_name": "Kingfisher",
+      "framework_display": "Kingfisher Swift Image Loading",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Kingfisher → @kit.ImageKit. Disk + memory cache, animated GIF support, and downsampling all supported in ImageKit."
+    },
+    {
+      "framework_name": "Nuke",
+      "framework_display": "Nuke Image Loading Pipeline",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "Nuke pipeline → @kit.ImageKit. Cache management APIs differ in detail; pipeline priority and prefetching need adaptation."
+    },
+    {
+      "framework_name": "Realm",
+      "framework_display": "Realm Mobile Database",
+      "harmony_kit": "@kit.RelationalStoreKit",
+      "harmony_import": "@kit.RelationalStoreKit",
+      "confidence": "medium",
+      "note": "Realm object store → @kit.RelationalStoreKit (RDB). Schema migration required; Realm live-objects model differs from SQL rows."
+    },
+    {
+      "framework_name": "RealmSwift",
+      "framework_display": "Realm Swift Mobile Database",
+      "harmony_kit": "@kit.RelationalStoreKit",
+      "harmony_import": "@kit.RelationalStoreKit",
+      "confidence": "medium",
+      "note": "Realm Swift API → @kit.RelationalStoreKit (RDB). Full data layer rewrite needed; async query and change notification APIs differ."
+    },
+    {
+      "framework_name": "FMDB",
+      "framework_display": "FMDB SQLite Wrapper (Objective-C)",
+      "harmony_kit": "@kit.RelationalStoreKit",
+      "harmony_import": "@kit.RelationalStoreKit",
+      "confidence": "high",
+      "note": "FMDB SQLite → @kit.RelationalStoreKit. Standard SQL queries, transactions, and migrations map directly to RDB APIs."
+    },
+    {
+      "framework_name": "Charts",
+      "framework_display": "Charts (Swift Charting Library)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Charts → @kit.ArkUI Canvas + built-in chart components. ArkUI provides Line, Bar, and Pie chart components natively."
+    },
+    {
+      "framework_name": "Lottie",
+      "framework_display": "Lottie Animation Library",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Lottie JSON animations → @kit.ArkUI Lottie component. HarmonyOS ArkUI includes native Lottie playback support out of the box."
+    },
+    {
+      "framework_name": "FBSDKCoreKit",
+      "framework_display": "Facebook SDK Core",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "low",
+      "note": "Facebook SDK login → @kit.AccountKit (HUAWEI ID OAuth). No direct Facebook login on HarmonyOS; social login flows require full reimplementation."
+    },
+    {
+      "framework_name": "FacebookSDK",
+      "framework_display": "Facebook iOS SDK",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "low",
+      "note": "Facebook iOS SDK → @kit.AccountKit. Auth only; Facebook Graph API calls need a backend proxy. Analytics and sharing features not available natively."
+    },
+    {
+      "framework_name": "AdjustSDK",
+      "framework_display": "Adjust Attribution SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Adjust install attribution → @kit.AnalyticsKit. Install tracking, event attribution, and deep link measurement available via AGC Analytics."
+    },
+    {
+      "framework_name": "AppsFlyerLib",
+      "framework_display": "AppsFlyer Attribution SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "AppsFlyer → @kit.AnalyticsKit. Install attribution and in-app events map to HiAppEvent; AGC Analytics provides equivalent functionality."
+    },
+    {
+      "framework_name": "Braze",
+      "framework_display": "Braze Customer Engagement SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Braze push and in-app messaging → @kit.PushKit + @kit.NotificationKit. Rich notification and in-app message UI must be rebuilt for HarmonyOS."
+    },
+    {
+      "framework_name": "BrazeKit",
+      "framework_display": "Braze Swift SDK (BrazeKit)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "BrazeKit (Braze Swift SDK) → @kit.PushKit. Same mapping as legacy Braze framework; push + in-app messaging need HarmonyOS rebuild."
+    },
+    {
+      "framework_name": "OneSignal",
+      "framework_display": "OneSignal Push Notification SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "OneSignal → @kit.PushKit. Token registration, notification click handlers, segmentation map well to HarmonyOS PushKit APIs."
+    },
+    {
+      "framework_name": "Stripe",
+      "framework_display": "Stripe iOS Payment SDK",
+      "harmony_kit": "@kit.PaymentKit",
+      "harmony_import": "@kit.PaymentKit",
+      "confidence": "high",
+      "note": "Stripe → @kit.PaymentKit (HUAWEI Pay). Card tokenization, 3DS, payment sheet UI available; Stripe server-side component remains unchanged."
+    },
+    {
+      "framework_name": "RevenueCat",
+      "framework_display": "RevenueCat In-App Purchase SDK",
+      "harmony_kit": "@kit.IAPKit",
+      "harmony_import": "@kit.IAPKit",
+      "confidence": "high",
+      "note": "RevenueCat IAP → @kit.IAPKit. Subscription products, purchase verification, and entitlement management all available in HUAWEI IAPKit."
+    },
+    {
+      "framework_name": "GoogleMobileAds",
+      "framework_display": "Google Mobile Ads SDK (AdMob)",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "high",
+      "note": "AdMob → @kit.AdsKit (HUAWEI Ads). Banner, interstitial, rewarded, and native ad formats all supported by HUAWEI Ads Kit."
+    },
+    {
+      "framework_name": "AppLovinSDK",
+      "framework_display": "AppLovin MAX Mediation SDK",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "AppLovin MAX → @kit.AdsKit. HUAWEI Ads mediation adapters available for major networks; waterfall configuration differs."
+    },
+    {
+      "framework_name": "IronSource",
+      "framework_display": "ironSource Ad Mediation SDK",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "ironSource mediation → @kit.AdsKit. Ad serving APIs map; adapt network adapter configuration to HUAWEI Ads mediation."
+    },
+    {
+      "framework_name": "UnityAds",
+      "framework_display": "Unity Ads SDK",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Unity Ads rewarded/interstitial → @kit.AdsKit. Rewarded ad flow is identical in concept; placement IDs and callbacks need remapping."
+    },
+    {
+      "framework_name": "AWSS3",
+      "framework_display": "AWS S3 iOS SDK",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "low",
+      "note": "AWS S3 → AGC Cloud Storage (@kit.CloudFoundationKit). Upload, download, and presigned URL logic must be rewritten for AGC APIs."
+    },
+    {
+      "framework_name": "AWSCore",
+      "framework_display": "AWS iOS Core SDK",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "low",
+      "note": "AWS iOS SDK core → no direct HMOS equivalent. Migrate backend calls to AGC or retain a custom server layer for AWS services."
+    },
+    {
+      "framework_name": "GoogleSignIn",
+      "framework_display": "Google Sign-In SDK for iOS",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "high",
+      "note": "Google Sign-In OAuth → @kit.AccountKit (HUAWEI ID). ID token flow, profile scopes, and silent sign-in all available."
+    },
+    {
+      "framework_name": "AuthenticationServices",
+      "framework_display": "Sign in with Apple (AuthenticationServices)",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "medium",
+      "note": "Sign in with Apple → @kit.AccountKit (HUAWEI ID). Anonymous email relay not available; use standard HUAWEI ID authorization flow."
+    },
+    {
+      "framework_name": "Branch",
+      "framework_display": "Branch Deep Linking & Attribution SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Branch attribution + deep links → @kit.AnalyticsKit + AGC App Linking. Custom URI schemes and App Links replace Branch links."
+    },
+    {
+      "framework_name": "Mixpanel",
+      "framework_display": "Mixpanel Analytics SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Mixpanel product analytics → @kit.AnalyticsKit. Event tracking, user profiles, and funnel analysis maps to AGC Analytics."
+    },
+    {
+      "framework_name": "Amplitude",
+      "framework_display": "Amplitude Analytics SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Amplitude product analytics → @kit.AnalyticsKit. Event ingestion, session tracking, and cohort analysis maps to HiAppEvent."
+    },
+    {
+      "framework_name": "Segment",
+      "framework_display": "Segment Customer Data Platform SDK",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Segment CDP → @kit.AnalyticsKit. Event forwarding pipeline must be rebuilt; replace Segment destinations with native AGC integrations."
+    },
+    {
+      "framework_name": "TensorFlowLiteObjC",
+      "framework_display": "TensorFlow Lite (Objective-C)",
+      "harmony_kit": "@kit.MindSporeLiteKit",
+      "harmony_import": "@kit.MindSporeLiteKit",
+      "confidence": "medium",
+      "note": "TFLite on-device inference → @kit.MindSporeLiteKit. Model conversion (.tflite → .ms) required; inference API is structurally similar."
+    },
+    {
+      "framework_name": "TensorFlowLiteSwift",
+      "framework_display": "TensorFlow Lite (Swift)",
+      "harmony_kit": "@kit.MindSporeLiteKit",
+      "harmony_import": "@kit.MindSporeLiteKit",
+      "confidence": "medium",
+      "note": "TFLite Swift API → @kit.MindSporeLiteKit. Model conversion needed (.tflite → .ms); GPU and NNAPI delegates available on HarmonyOS."
+    },
+    {
+      "framework_name": "KeychainAccess",
+      "framework_display": "KeychainAccess Swift Keychain Wrapper",
+      "harmony_kit": "@kit.UniversalKeystoreKit",
+      "harmony_import": "@kit.UniversalKeystoreKit",
+      "confidence": "high",
+      "note": "iOS Keychain → @kit.UniversalKeystoreKit (HUKS). Key generation, secure storage, and AES/RSA crypto operations all available."
+    },
+    {
+      "framework_name": "Sentry",
+      "framework_display": "Sentry Error Monitoring SDK",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "Sentry crash/error monitoring → @kit.PerformanceAnalysisKit. Exception capture, breadcrumbs, and performance tracing via HiAppEvent SDK."
+    },
+    {
+      "framework_name": "FirebaseFirestoreInternal",
+      "framework_display": "Firebase Firestore Internal (Swift Package)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "low",
+      "note": "FirebaseFirestoreInternal (internal Firestore Swift PM target) → @kit.ArkData. NoSQL cloud sync → relational/cloud storage; full data layer migration required."
+    },
+    {
+      "framework_name": "GoogleAppMeasurement",
+      "framework_display": "Google App Measurement (Analytics Core)",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "high",
+      "note": "Google App Measurement (Firebase Analytics backend) → @kit.AnalyticsKit (HiAppEvent). Session, event, and user-property measurement map directly."
+    },
+    {
+      "framework_name": "GoogleAppMeasurementIdentitySupport",
+      "framework_display": "Google App Measurement Identity Support",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "Google identity support for App Measurement → @kit.AnalyticsKit. User-identity stitching handled via AGC Analytics user ID APIs."
+    },
+    {
+      "framework_name": "absl",
+      "framework_display": "Google Abseil C++ Library",
+      "harmony_kit": "NDK libc++",
+      "harmony_import": "NDK libc++",
+      "confidence": "low",
+      "note": "Abseil C++ (absl) has no direct HarmonyOS equivalent. Replace with HarmonyOS NDK libc++ or equivalent STL containers/algorithms; assess usage per component."
+    },
+    {
+      "framework_name": "grpc",
+      "framework_display": "gRPC C Core Library",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "gRPC over HTTP/2 → @kit.NetworkKit WebSocket or HTTP/2 requests. No native gRPC runtime on HarmonyOS; evaluate protobuf-over-HTTP or a gRPC-Web proxy."
+    },
+    {
+      "framework_name": "grpcpp",
+      "framework_display": "gRPC C++ Library",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "gRPC C++ (grpcpp) → @kit.NetworkKit. Same migration path as grpc core: replace with HTTP/2 or WebSocket transport via NetworkKit."
+    },
+    {
+      "framework_name": "openssl_grpc",
+      "framework_display": "OpenSSL (bundled with gRPC)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "medium",
+      "note": "OpenSSL bundled by gRPC → @kit.CryptoArchitectureKit (HUKS / HarmonyOS TLS stack). TLS channel security and certificate handling are provided by the platform."
+    }
+  ]
+}

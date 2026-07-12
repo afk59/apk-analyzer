@@ -1,0 +1,1532 @@
+{
+  "version": "1.2.0",
+  "last_updated": "2026-07",
+  "namespace_mappings": [
+    {
+      "android_namespace": "com.google.android.gms.ads",
+      "android_display": "Google Ads (AdMob)",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "high",
+      "note": "@kit.AdsKit is recommended as the HarmonyOS equivalent for ad delivery and monetization."
+    },
+    {
+      "android_namespace": "com.google.android.gms.location",
+      "android_display": "Google Location Services (Fused)",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "@kit.LocationKit is recommended for location and geofencing functionality.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/map-explorer"
+    },
+    {
+      "android_namespace": "com.google.android.gms.maps",
+      "android_display": "Google Maps",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/map-explorer",
+      "note": "@kit.MapKit is recommended for map rendering, markers, and navigation UI."
+    },
+    {
+      "android_namespace": "com.google.android.gms.auth",
+      "android_display": "Google Sign-In / Auth",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "high",
+      "note": "@kit.AccountKit is recommended for Huawei ID-based authentication.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/demo-auth-scan"
+    },
+    {
+      "android_namespace": "com.google.android.gms.wallet",
+      "android_display": "Google Pay / Wallet",
+      "harmony_kit": "@kit.PaymentKit",
+      "harmony_import": "@kit.PaymentKit",
+      "confidence": "high",
+      "note": "@kit.PaymentKit is recommended for in-app payment and wallet flows."
+    },
+    {
+      "android_namespace": "com.google.firebase.messaging",
+      "android_display": "Firebase Cloud Messaging (FCM)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "@kit.PushKit is recommended as the direct FCM equivalent for push notifications.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/event-snap"
+    },
+    {
+      "android_namespace": "com.google.firebase.analytics",
+      "android_display": "Firebase Analytics",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "@kit.PerformanceAnalysisKit is recommended for analytics and event tracking.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "com.google.firebase.crashlytics",
+      "android_display": "Firebase Crashlytics",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "@kit.PerformanceAnalysisKit is recommended for crash reporting and diagnostics.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "com.google.firebase.auth",
+      "android_display": "Firebase Authentication",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "medium",
+      "note": "@kit.AccountKit combined with @kit.UserAuthenticationKit is recommended for authentication flows.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/demo-auth-scan"
+    },
+    {
+      "android_namespace": "com.google.firebase.database",
+      "android_display": "Firebase Realtime Database",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "@kit.CloudFoundationKit is recommended for cloud database functionality.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/secure-token-locker"
+    },
+    {
+      "android_namespace": "com.google.firebase.storage",
+      "android_display": "Firebase Storage",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "@kit.CloudFoundationKit is recommended for cloud file storage.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/secure-token-locker"
+    },
+    {
+      "android_namespace": "com.google.firebase.functions",
+      "android_display": "Firebase Cloud Functions",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "@kit.CloudFoundationKit is recommended for serverless cloud function invocation.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/secure-token-locker"
+    },
+    {
+      "android_namespace": "com.google.mlkit",
+      "android_display": "Google ML Kit",
+      "harmony_kit": "@kit.CoreVisionKit",
+      "harmony_import": "@kit.CoreVisionKit",
+      "confidence": "medium",
+      "note": "@kit.CoreVisionKit or @kit.VisionKit is recommended depending on the specific ML task."
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.barcode",
+      "android_display": "ML Kit Barcode Scanning",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "@kit.ScanKit is recommended for barcode and QR code scanning.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-generate-qr-code"
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.face",
+      "android_display": "ML Kit Face Detection",
+      "harmony_kit": "@kit.VisionKit",
+      "harmony_import": "@kit.VisionKit",
+      "confidence": "high",
+      "note": "@kit.VisionKit is recommended for face detection and analysis."
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.text",
+      "android_display": "ML Kit Text Recognition (OCR)",
+      "harmony_kit": "@kit.VisionKit",
+      "harmony_import": "@kit.VisionKit",
+      "confidence": "high",
+      "note": "@kit.VisionKit is recommended for OCR and text recognition."
+    },
+    {
+      "android_namespace": "com.google.mlkit.nl.translate",
+      "android_display": "ML Kit Translation",
+      "harmony_kit": "@kit.NaturalLanguageKit",
+      "harmony_import": "@kit.NaturalLanguageKit",
+      "confidence": "medium",
+      "note": "@kit.NaturalLanguageKit is recommended for translation and NLP tasks."
+    },
+    {
+      "android_namespace": "com.google.android.gms.vision",
+      "android_display": "Google Vision API (legacy)",
+      "harmony_kit": "@kit.VisionKit",
+      "harmony_import": "@kit.VisionKit",
+      "confidence": "medium",
+      "note": "@kit.VisionKit or @kit.CoreVisionKit is recommended as the HarmonyOS vision equivalent."
+    },
+    {
+      "android_namespace": "android.hardware.camera2",
+      "android_display": "Android Camera2 API",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "high",
+      "note": "@kit.CameraKit is recommended for camera capture and session management."
+    },
+    {
+      "android_namespace": "androidx.camera",
+      "android_display": "CameraX",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "high",
+      "note": "@kit.CameraKit is recommended as the HarmonyOS camera abstraction layer."
+    },
+    {
+      "android_namespace": "android.media",
+      "android_display": "Android Media API",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "@kit.MediaKit is recommended for media playback and recording.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
+    },
+    {
+      "android_namespace": "androidx.media3",
+      "android_display": "AndroidX Media3 (ExoPlayer)",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "@kit.MediaKit is recommended as the ExoPlayer equivalent for advanced media playback.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
+    },
+    {
+      "android_namespace": "com.google.android.exoplayer2",
+      "android_display": "ExoPlayer",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "@kit.MediaKit is recommended as the ExoPlayer equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
+    },
+    {
+      "android_namespace": "android.bluetooth",
+      "android_display": "Android Bluetooth API",
+      "harmony_kit": "@kit.ConnectivityKit",
+      "harmony_import": "@kit.ConnectivityKit",
+      "confidence": "high",
+      "note": "@kit.ConnectivityKit is recommended for Bluetooth Classic and BLE connectivity.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-make-bluetooth-connectivity-monitor"
+    },
+    {
+      "android_namespace": "android.net.wifi",
+      "android_display": "Android WiFi API",
+      "harmony_kit": "@kit.ConnectivityKit",
+      "harmony_import": "@kit.ConnectivityKit",
+      "confidence": "high",
+      "note": "@kit.ConnectivityKit is recommended for Wi-Fi scanning and connection management.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-make-p2p-wifi-connection"
+    },
+    {
+      "android_namespace": "android.nfc",
+      "android_display": "Android NFC",
+      "harmony_kit": "@kit.ConnectivityKit",
+      "harmony_import": "@kit.ConnectivityKit",
+      "confidence": "high",
+      "note": "@kit.ConnectivityKit is recommended for NFC tag reading and HCE card emulation.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/food-ticket-card"
+    },
+    {
+      "android_namespace": "android.telephony",
+      "android_display": "Android Telephony",
+      "harmony_kit": "@kit.TelephonyKit",
+      "harmony_import": "@kit.TelephonyKit",
+      "confidence": "high",
+      "note": "@kit.TelephonyKit is recommended for call, SIM, and SMS functionality.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-call-service-kit"
+    },
+    {
+      "android_namespace": "android.provider.ContactsContract",
+      "android_display": "Android Contacts",
+      "harmony_kit": "@kit.ContactsKit",
+      "harmony_import": "@kit.ContactsKit",
+      "confidence": "high",
+      "note": "@kit.ContactsKit is recommended for reading and writing device contacts.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-contact-kit-to-create-contact-group"
+    },
+    {
+      "android_namespace": "android.provider.CalendarContract",
+      "android_display": "Android Calendar",
+      "harmony_kit": "@kit.CalendarKit",
+      "harmony_import": "@kit.CalendarKit",
+      "confidence": "high",
+      "note": "@kit.CalendarKit is recommended for calendar event management.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-create-calender-picker-in-wearable"
+    },
+    {
+      "android_namespace": "android.speech",
+      "android_display": "Android Speech Recognition",
+      "harmony_kit": "@kit.CoreSpeechKit",
+      "harmony_import": "@kit.CoreSpeechKit",
+      "confidence": "high",
+      "note": "@kit.CoreSpeechKit is recommended for speech-to-text recognition.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-record-audio-over-audio"
+    },
+    {
+      "android_namespace": "android.speech.tts",
+      "android_display": "Android Text-To-Speech",
+      "harmony_kit": "@kit.SpeechKit",
+      "harmony_import": "@kit.SpeechKit",
+      "confidence": "high",
+      "note": "@kit.SpeechKit is recommended for text-to-speech synthesis."
+    },
+    {
+      "android_namespace": "android.hardware.fingerprint",
+      "android_display": "Android Fingerprint API",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "high",
+      "note": "@kit.UserAuthenticationKit is recommended for fingerprint and biometric authentication."
+    },
+    {
+      "android_namespace": "androidx.biometric",
+      "android_display": "AndroidX Biometric",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "high",
+      "note": "@kit.UserAuthenticationKit is recommended for unified biometric authentication.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-authentication-kit"
+    },
+    {
+      "android_namespace": "android.hardware.Sensor",
+      "android_display": "Android Sensor API",
+      "harmony_kit": "@kit.SensorServiceKit",
+      "harmony_import": "@kit.SensorServiceKit",
+      "confidence": "high",
+      "note": "@kit.SensorServiceKit is recommended for accelerometer, gyroscope, and other sensor access.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/workout-center"
+    },
+    {
+      "android_namespace": "android.app.NotificationManager",
+      "android_display": "Android Notifications",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "@kit.NotificationKit is recommended for local and system notifications."
+    },
+    {
+      "android_namespace": "androidx.work",
+      "android_display": "WorkManager",
+      "harmony_kit": "@kit.BackgroundTasksKit",
+      "harmony_import": "@kit.BackgroundTasksKit",
+      "confidence": "high",
+      "note": "@kit.BackgroundTasksKit is recommended for deferred and periodic background work."
+    },
+    {
+      "android_namespace": "android.app.job",
+      "android_display": "JobScheduler",
+      "harmony_kit": "@kit.BackgroundTasksKit",
+      "harmony_import": "@kit.BackgroundTasksKit",
+      "confidence": "high",
+      "note": "@kit.BackgroundTasksKit is recommended for scheduled background task execution."
+    },
+    {
+      "android_namespace": "androidx.room",
+      "android_display": "Android Room Database",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "@kit.ArkData is recommended for relational database and key-value storage."
+    },
+    {
+      "android_namespace": "android.database.sqlite",
+      "android_display": "SQLite API",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "@kit.ArkData is recommended for SQL-based relational data storage."
+    },
+    {
+      "android_namespace": "android.content.SharedPreferences",
+      "android_display": "SharedPreferences",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "@kit.ArkData is recommended for lightweight key-value preference storage."
+    },
+    {
+      "android_namespace": "android.security.keystore",
+      "android_display": "Android Keystore",
+      "harmony_kit": "@kit.UniversalKeystoreKit",
+      "harmony_import": "@kit.UniversalKeystoreKit",
+      "confidence": "high",
+      "note": "@kit.UniversalKeystoreKit is recommended for secure key generation and storage."
+    },
+    {
+      "android_namespace": "javax.crypto",
+      "android_display": "Java Crypto API",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "@kit.CryptoArchitectureKit is recommended for symmetric and asymmetric cryptographic operations.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
+    },
+    {
+      "android_namespace": "java.net",
+      "android_display": "Java Networking",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "@kit.NetworkKit is recommended for HTTP requests and socket communication.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "okhttp3",
+      "android_display": "OkHttp",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended as the HTTP client equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "retrofit2",
+      "android_display": "Retrofit",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended; note that no direct Retrofit equivalent exists — manual API client implementation is required.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "com.squareup.okhttp",
+      "android_display": "OkHttp (legacy)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended as the HTTP client equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "com.bumptech.glide",
+      "android_display": "Glide (Image Loading)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "@kit.ImageKit is recommended for image decoding and lazy loading.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-image-effect"
+    },
+    {
+      "android_namespace": "com.squareup.picasso",
+      "android_display": "Picasso (Image Loading)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "@kit.ImageKit is recommended for image loading and caching.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-image-effect"
+    },
+    {
+      "android_namespace": "android.graphics",
+      "android_display": "Android Graphics API",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "@kit.ArkGraphics2D is recommended for 2D drawing and canvas operations.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-micro-poster-renderer"
+    },
+    {
+      "android_namespace": "android.opengl",
+      "android_display": "Android OpenGL ES",
+      "harmony_kit": "@kit.ArkGraphics3D",
+      "harmony_import": "@kit.ArkGraphics3D",
+      "confidence": "medium",
+      "note": "@kit.ArkGraphics3D is recommended for 3D rendering via XComponent and WebGL.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
+    },
+    {
+      "android_namespace": "androidx.navigation",
+      "android_display": "AndroidX Navigation",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended; NavPathStack-based routing is the HarmonyOS navigation equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
+    },
+    {
+      "android_namespace": "androidx.fragment",
+      "android_display": "AndroidX Fragments",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended; custom components or NavDestination replace Fragment usage."
+    },
+    {
+      "android_namespace": "androidx.lifecycle",
+      "android_display": "AndroidX Lifecycle",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "@kit.AbilityKit is recommended; UIAbility lifecycle callbacks replace Android lifecycle observers.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-uiability-lifecycle"
+    },
+    {
+      "android_namespace": "androidx.viewmodel",
+      "android_display": "ViewModel",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is recommended; @ObservedV2 and AppStorageV2 cover ViewModel-style state management."
+    },
+    {
+      "android_namespace": "com.huawei.hms.push",
+      "android_display": "HMS Push Kit (Android)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "@kit.PushKit is the direct HarmonyOS NEXT equivalent — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.location",
+      "android_display": "HMS Location Kit (Android)",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "@kit.LocationKit is the direct HarmonyOS NEXT equivalent — migration is straightforward.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/map-explorer"
+    },
+    {
+      "android_namespace": "com.huawei.hms.maps",
+      "android_display": "HMS Map Kit (Android)",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/map-explorer",
+      "note": "@kit.MapKit is the direct HarmonyOS NEXT equivalent — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.scan",
+      "android_display": "HMS Scan Kit (Android)",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "@kit.ScanKit is the direct HarmonyOS NEXT equivalent — migration is straightforward.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-generate-qr-code"
+    },
+    {
+      "android_namespace": "com.huawei.hms.iap",
+      "android_display": "HMS IAP Kit (Android)",
+      "harmony_kit": "@kit.IAPKit",
+      "harmony_import": "@kit.IAPKit",
+      "confidence": "high",
+      "note": "@kit.IAPKit is the direct HarmonyOS NEXT equivalent — migration is straightforward.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-create-purchase-with-iap"
+    },
+    {
+      "android_namespace": "com.huawei.hms.ads",
+      "android_display": "HMS Ads Kit (Android)",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "high",
+      "note": "@kit.AdsKit is the direct HarmonyOS NEXT equivalent — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.android.billingclient",
+      "android_display": "Google Play Billing",
+      "harmony_kit": "@kit.IAPKit",
+      "harmony_import": "@kit.IAPKit",
+      "confidence": "high",
+      "note": "@kit.IAPKit is recommended as the in-app purchase equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-create-purchase-with-iap"
+    },
+    {
+      "android_namespace": "com.google.android.play",
+      "android_display": "Google Play Core",
+      "harmony_kit": "@kit.AppGalleryKit",
+      "harmony_import": "@kit.AppGalleryKit",
+      "confidence": "medium",
+      "note": "@kit.AppGalleryKit is recommended for app store integration and update management."
+    },
+    {
+      "android_namespace": "android.health",
+      "android_display": "Android Health Connect",
+      "harmony_kit": "@kit.HealthServiceKit",
+      "harmony_import": "@kit.HealthServiceKit",
+      "confidence": "medium",
+      "note": "@kit.HealthServiceKit is recommended for health data access and fitness tracking."
+    },
+    {
+      "android_namespace": "com.google.android.gms.fitness",
+      "android_display": "Google Fit",
+      "harmony_kit": "@kit.HealthServiceKit",
+      "harmony_import": "@kit.HealthServiceKit",
+      "confidence": "medium",
+      "note": "@kit.HealthServiceKit is recommended as the Google Fit equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/flowear"
+    },
+    {
+      "android_namespace": "android.accessibilityservice",
+      "android_display": "Android Accessibility Service",
+      "harmony_kit": "@kit.AccessibilityKit",
+      "harmony_import": "@kit.AccessibilityKit",
+      "confidence": "high",
+      "note": "@kit.AccessibilityKit is recommended for accessibility service implementation.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-audit-accessibility-state"
+    },
+    {
+      "android_namespace": "android.inputmethodservice",
+      "android_display": "Android IME",
+      "harmony_kit": "@kit.IMEKit",
+      "harmony_import": "@kit.IMEKit",
+      "confidence": "high",
+      "note": "@kit.IMEKit is recommended for custom input method development."
+    },
+    {
+      "android_namespace": "android.webkit",
+      "android_display": "Android WebView",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "high",
+      "note": "@kit.ArkWeb is recommended; the Web component replaces WebView.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/web-browser"
+    },
+    {
+      "android_namespace": "com.google.android.gms.nearby",
+      "android_display": "Google Nearby (P2P)",
+      "harmony_kit": "@kit.ServiceCollaborationKit",
+      "harmony_import": "@kit.ServiceCollaborationKit",
+      "confidence": "medium",
+      "note": "@kit.ServiceCollaborationKit is recommended for device-to-device discovery and communication."
+    },
+    {
+      "android_namespace": "android.app.DownloadManager",
+      "android_display": "Android DownloadManager",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended for background file download management."
+    },
+    {
+      "android_namespace": "android.content.ClipboardManager",
+      "android_display": "Android Clipboard",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "@kit.BasicServicesKit is recommended for clipboard read and write operations."
+    },
+    {
+      "android_namespace": "android.print",
+      "android_display": "Android Print Framework",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "low",
+      "note": "@kit.BasicServicesKit may be considered; note that print support is limited on HarmonyOS NEXT."
+    },
+    {
+      "android_namespace": "android.os.VibrationEffect",
+      "android_display": "Android Vibration",
+      "harmony_kit": "@kit.SensorServiceKit",
+      "harmony_import": "@kit.SensorServiceKit",
+      "confidence": "high",
+      "note": "@kit.SensorServiceKit is recommended for haptic feedback and vibration control.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-sensorkit-in-wearable"
+    },
+    {
+      "android_namespace": "com.google.zxing",
+      "android_display": "ZXing (Barcode)",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "@kit.ScanKit is recommended as the ZXing equivalent for barcode generation and scanning.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-generate-qr-code"
+    },
+    {
+      "android_namespace": "org.tensorflow.lite",
+      "android_display": "TensorFlow Lite",
+      "harmony_kit": "@kit.MindSporeLiteKit",
+      "harmony_import": "@kit.MindSporeLiteKit",
+      "confidence": "medium",
+      "note": "@kit.MindSporeLiteKit is recommended; note that model conversion from TFLite format may be required."
+    },
+    {
+      "android_namespace": "com.google.android.gms.games",
+      "android_display": "Google Play Games",
+      "harmony_kit": "@kit.GameServiceKit",
+      "harmony_import": "@kit.GameServiceKit",
+      "confidence": "high",
+      "note": "@kit.GameServiceKit is recommended for leaderboards, achievements, and game player management."
+    },
+    {
+      "android_namespace": "android.hardware.usb",
+      "android_display": "Android USB API",
+      "harmony_kit": "@kit.DriverDevelopmentKit",
+      "harmony_import": "@kit.DriverDevelopmentKit",
+      "confidence": "medium",
+      "note": "@kit.DriverDevelopmentKit is recommended for USB peripheral driver development."
+    },
+    {
+      "android_namespace": "android.media.audiofx",
+      "android_display": "Android AudioFx",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "high",
+      "note": "@kit.AudioKit is recommended for audio rendering and audio effects.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
+    },
+    {
+      "android_namespace": "android.media.projection",
+      "android_display": "Android Screen Capture",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "medium",
+      "note": "@kit.MediaKit is recommended for screen capture and recording functionality."
+    },
+    {
+      "android_namespace": "android.os.storage",
+      "android_display": "Android Storage",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "@kit.CoreFileKit is recommended for file I/O and storage volume management.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-cloud-file-sync"
+    },
+    {
+      "android_namespace": "androidx.documentfile",
+      "android_display": "AndroidX DocumentFile (SAF)",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "@kit.CoreFileKit is recommended as the Storage Access Framework equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-cloud-file-sync"
+    },
+    {
+      "android_namespace": "com.google.android.gms.ar",
+      "android_display": "Google ARCore",
+      "harmony_kit": "@kit.AREngine",
+      "harmony_import": "@kit.AREngine",
+      "confidence": "high",
+      "note": "@kit.AREngine is recommended as the direct ARCore equivalent for augmented reality."
+    },
+    {
+      "android_namespace": "android.drm",
+      "android_display": "Android DRM",
+      "harmony_kit": "@kit.DrmKit",
+      "harmony_import": "@kit.DrmKit",
+      "confidence": "medium",
+      "note": "@kit.DrmKit is recommended for digital rights management and protected content playback."
+    },
+    {
+      "android_namespace": "android.content.pm",
+      "android_display": "Android PackageManager",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "medium",
+      "note": "@kit.AbilityKit is recommended for bundle and application metadata querying."
+    },
+    {
+      "android_namespace": "android.app.usage",
+      "android_display": "Android UsageStats",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "low",
+      "note": "@kit.AbilityKit may be considered; note that usage statistics access is might be restricted on HarmonyOS NEXT."
+    },
+    {
+      "android_namespace": "com.google.android.recaptcha",
+      "android_display": "Google reCAPTCHA",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "medium",
+      "note": "@kit.UserAuthenticationKit is recommended for bot-detection and human identity verification. Use the interactiveLiveness API as the closest HarmonyOS NEXT equivalent to reCAPTCHA challenges."
+    },
+    {
+      "android_namespace": "com.google.crypto.tink",
+      "android_display": "Google Tink Cryptography",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "@kit.CryptoArchitectureKit is recommended as the Tink equivalent for high-level cryptographic operations.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
+    },
+    {
+      "android_namespace": "com.google.android.gms",
+      "android_display": "Google Mobile Services (GMS Core)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit covers device-info and core service APIs. For advertising ID specifically, @kit.AdsKit is recommended."
+    },
+    {
+      "android_namespace": "com.google.android.material",
+      "android_display": "Google Material Design Components",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is recommended; HDS (Harmony Design System) components replace Material Design widgets."
+    },
+    {
+      "android_namespace": "com.google.firebase.firestore",
+      "android_display": "Firebase Firestore",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "@kit.CloudFoundationKit (AGConnect Cloud DB) is recommended as the Firestore equivalent for document-based cloud storage."
+    },
+    {
+      "android_namespace": "com.google.firestore.v1",
+      "android_display": "Firestore Protocol Buffers (v1)",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "low",
+      "note": "Internal Firestore proto layer — no direct HarmonyOS equivalent. Migrate to @kit.CloudFoundationKit data model."
+    },
+    {
+      "android_namespace": "com.google.firebase.perf",
+      "android_display": "Firebase Performance Monitoring",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "high",
+      "note": "@kit.PerformanceAnalysisKit is recommended for app performance tracing, network monitoring, and custom traces.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "com.google.firebase.sessions",
+      "android_display": "Firebase Session Tracking",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "@kit.PerformanceAnalysisKit covers session lifecycle tracking and analytics integration.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "com.google.firebase.installations",
+      "android_display": "Firebase Installations SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "@kit.PushKit manages device registration tokens; @kit.PerformanceAnalysisKit handles app instance identification.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "androidx.recyclerview",
+      "android_display": "AndroidX RecyclerView",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended; List / Grid / WaterFlow components replace RecyclerView with lazy rendering support."
+    },
+    {
+      "android_namespace": "com.google.gson",
+      "android_display": "Gson (JSON serialization)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "low",
+      "note": "No direct Gson equivalent on HarmonyOS. JSON.stringify/parse or relationalStore serialization is recommended."
+    },
+    {
+      "android_namespace": "com.google.protobuf",
+      "android_display": "Protocol Buffers (protobuf)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "low",
+      "note": "Protocol Buffers serialization has no official HarmonyOS port. Migrate to JSON-based serialization via @kit.ArkData (structured data storage and encoding) — not a networking concern itself.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "com.google.firebase.remoteconfig",
+      "android_display": "Firebase Remote Config",
+      "harmony_kit": "@kit.CloudFoundationKit",
+      "harmony_import": "@kit.CloudFoundationKit",
+      "confidence": "medium",
+      "note": "AGConnect Remote Configuration is the HarmonyOS NEXT equivalent for dynamic config updates without app re-release. Use @hw-agconnect/remoteconfig-ohos for the migration target."
+    },
+    {
+      "android_namespace": "org.apache.cordova.file",
+      "android_display": "Apache Cordova File Plugin",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "medium",
+      "note": "@kit.CoreFileKit provides file system access for HarmonyOS NEXT. Cordova's file plugin (sandboxed storage, application data directory) maps to CoreFileKit file I/O APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-cloud-file-sync"
+    },
+    {
+      "android_namespace": "com.google.firebase.iid",
+      "android_display": "Firebase Instance ID (deprecated)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "@kit.PushKit manages device registration tokens on HarmonyOS NEXT. Firebase Instance ID (replaced by Firebase Installations) is the Android device token equivalent — migrate to PushKit token registration."
+    },
+    {
+      "android_namespace": "androidx.compose.ui",
+      "android_display": "Jetpack Compose UI",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI (ArkTS/ArkUI) is the HarmonyOS NEXT declarative UI framework equivalent to Jetpack Compose. All Compose UI components (graphics, text, layout, input, semantics, focus) map to ArkUI custom components."
+    },
+    {
+      "android_namespace": "androidx.compose.runtime",
+      "android_display": "Jetpack Compose Runtime",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI covers Compose runtime state management. Use @State, @ObservedV2, and AppStorageV2 for equivalent reactive state and side-effect handling."
+    },
+    {
+      "android_namespace": "com.mapbox",
+      "android_display": "Mapbox SDK (Maps, Navigation, Directions)",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/map-explorer",
+      "note": "@kit.MapKit is recommended for map rendering, route planning, and navigation. Mapbox SDK (maps plugin, navigation core, directions API) functionality maps to MapKit's interactive map and route APIs."
+    },
+    {
+      "android_namespace": "io.sentry.android.core",
+      "android_display": "Sentry SDK for Android",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "@kit.PerformanceAnalysisKit (AGConnect APM) is recommended for crash reporting, performance traces, and error monitoring — the HarmonyOS NEXT equivalent to Sentry.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "android.support.v4.app",
+      "android_display": "Android Support Library v4 (App/Fragment Compat)",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "medium",
+      "note": "@kit.AbilityKit is recommended. Support Library v4 app backport (Fragment, FragmentManager, NotificationCompat) maps to UIAbility and ExtensionAbility lifecycle management."
+    },
+    {
+      "android_namespace": "android.support.v7.app",
+      "android_display": "Android Support Library v7 (AppCompat)",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "medium",
+      "note": "@kit.AbilityKit is recommended. AppCompatActivity and ActionBar from AppCompat map to UIAbility with @kit.ArkUI for toolbar and navigation bar components.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
+    },
+    {
+      "android_namespace": "android.support.v4.media",
+      "android_display": "Android Support Library v4 (Media Compat)",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "medium",
+      "note": "@kit.MediaKit is recommended for Support Library media compat classes (MediaBrowserCompat, MediaSessionCompat). Use AVPlayer and AVSession APIs as equivalents.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
+    },
+    {
+      "android_namespace": "android.support",
+      "android_display": "Android Support Library (legacy compat)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is the general migration target for Android Support Library UI components. Replace support library views (DrawerLayout, CardView, CoordinatorLayout) with ArkUI components."
+    },
+    {
+      "android_namespace": "android.view.accessibility",
+      "android_display": "Android Accessibility APIs",
+      "harmony_kit": "@kit.AccessibilityKit",
+      "harmony_import": "@kit.AccessibilityKit",
+      "confidence": "high",
+      "note": "@kit.AccessibilityKit is recommended. Android Accessibility APIs (AccessibilityNodeInfo, AccessibilityRecord, AccessibilityEvent) map to HarmonyOS NEXT Accessibility Service APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-audit-accessibility-state"
+    },
+    {
+      "android_namespace": "android.view",
+      "android_display": "Android View Framework",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is recommended for Android View framework migration. Replace View/ViewGroup hierarchy, animations, and gesture handling with ArkUI components and gesture recognizers."
+    },
+    {
+      "android_namespace": "android.widget",
+      "android_display": "Android Widget (standard UI components)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is recommended. Android widget classes map to ArkUI equivalents: ListView → List, ImageView → Image, FrameLayout → Stack, TextView → Text."
+    },
+    {
+      "android_namespace": "android.app.Activity",
+      "android_display": "Android Activity",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "@kit.AbilityKit is recommended. Android Activity maps to UIAbility in HarmonyOS NEXT. Use UIAbility for lifecycle management and WindowStage context.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-uiability-lifecycle"
+    },
+    {
+      "android_namespace": "android.content.Intent",
+      "android_display": "Android Intent",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "@kit.AbilityKit is recommended. Android Intent maps to Want in HarmonyOS NEXT for inter-ability navigation, data passing, and implicit/explicit routing.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-uiability-lifecycle"
+    },
+    {
+      "android_namespace": "com.fasterxml.jackson",
+      "android_display": "Jackson JSON (databind / core)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "low",
+      "note": "No direct Jackson equivalent on HarmonyOS NEXT. Use ArkTS built-in JSON.stringify/parse or @kit.ArkData serialization for structured data handling."
+    },
+    {
+      "android_namespace": "io.requery.android.database",
+      "android_display": "Requery SQLite-Android (bundled SQLite)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "medium",
+      "note": "@kit.ArkData (RelationalStore) is recommended as the HarmonyOS NEXT equivalent. Requery's bundled SQLite wrapper maps to RelationalStore for SQL-based relational data storage."
+    },
+    {
+      "android_namespace": "org.apache.xml.security",
+      "android_display": "Apache XML Security (XML Sig / XML Enc)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "medium",
+      "note": "@kit.CryptoArchitectureKit provides the underlying cryptographic primitives (RSA, AES, SHA) for XML digital signatures and encryption. XML-level processing must be re-implemented using HarmonyOS NEXT crypto APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
+    },
+    {
+      "android_namespace": "androidx.credentials",
+      "android_display": "AndroidX Credential Manager (Passkeys / Passwords)",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "medium",
+      "note": "@kit.UserAuthenticationKit is recommended for passkey and biometric credential management. AndroidX Credential Manager maps to UserAuthenticationKit; use @kit.AccountKit for Huawei ID-based federated sign-in.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/secure-password-manager"
+    },
+    {
+      "android_namespace": "org.bouncycastle",
+      "android_display": "BouncyCastle Cryptography Library",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "medium",
+      "note": "@kit.CryptoArchitectureKit is recommended as the BouncyCastle equivalent. HarmonyOS NEXT provides cryptographic operations (AES, RSA, EC, hash, HMAC, PQC primitives) via the system crypto framework.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
+    },
+    {
+      "android_namespace": "com.intel.bluetooth.obex",
+      "android_display": "Intel Bluetooth OBEX (Object Exchange)",
+      "harmony_kit": "@kit.ConnectivityKit",
+      "harmony_import": "@kit.ConnectivityKit",
+      "confidence": "medium",
+      "note": "@kit.ConnectivityKit is recommended for Bluetooth-based file transfer. Bluetooth OBEX file push/pull functionality maps to ConnectivityKit's Bluetooth SPP and file transfer APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-make-bluetooth-connectivity-monitor"
+    },
+    {
+      "android_namespace": "org.joda.time",
+      "android_display": "Joda-Time (Date/Time library)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended. Joda-Time date/time utilities map to ArkTS built-in Date object and @kit.BasicServicesKit calendar and formatting APIs."
+    },
+    {
+      "android_namespace": "com.google.common",
+      "android_display": "Google Guava (Collections & Utilities)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended. Guava collections, caching, and utility classes map to ArkTS built-in data structures and @kit.BasicServicesKit utilities."
+    },
+    {
+      "android_namespace": "org.apache.commons.lang3",
+      "android_display": "Apache Commons Lang3 (Utility classes)",
+      "harmony_kit": "HarmonyOS NDK (libc++)",
+      "harmony_import": "HarmonyOS NDK (libc++)",
+      "confidence": "low",
+      "note": "Commons Lang3 string/array/reflection utilities have no ArkTS-level equivalent. Migrate to ArkTS built-in string methods for simple cases, or port to C++ using HarmonyOS NDK (libc++) for performance-critical native code."
+    },
+    {
+      "android_namespace": "org.apache.http.client",
+      "android_display": "Apache HTTP Client",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended. Apache HTTP Client (DefaultHttpClient, HttpGet, HttpPost) maps to @kit.NetworkKit HTTP request APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "org.json",
+      "android_display": "Android org.json (JSONObject/JSONArray)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "@kit.BasicServicesKit is recommended. JSONObject/JSONArray usage maps to ArkTS built-in JSON.parse/JSON.stringify. No additional library needed on HarmonyOS NEXT."
+    },
+    {
+      "android_namespace": "com.android.volley",
+      "android_display": "Volley (HTTP networking library)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended. Volley request queues and HTTP stack map to @kit.NetworkKit's HTTP request and connection pool APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "io.reactivex",
+      "android_display": "RxJava (Reactive Extensions for Java)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "low",
+      "note": "No direct RxJava equivalent on HarmonyOS NEXT. Replace Observable/Flowable chains with ArkTS async/await, Promise chains, or the @Concurrent decorator for parallel tasks."
+    },
+    {
+      "android_namespace": "com.google.android.datatransport",
+      "android_display": "Google Data Transport (Firebase internal)",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "@kit.AnalyticsKit is recommended. Google Data Transport is an internal Firebase telemetry layer; equivalent event dispatch is handled by AGConnect analytics pipelines."
+    },
+    {
+      "android_namespace": "com.google.firebase.inappmessaging",
+      "android_display": "Firebase In-App Messaging",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "@kit.PushKit combined with @kit.ArkUI is recommended. Firebase In-App Messaging maps to PushKit-triggered in-app notification flows built with ArkUI overlay components."
+    },
+    {
+      "android_namespace": "com.google.firebase.components",
+      "android_display": "Firebase Component Runtime (internal DI)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended. Firebase Components is an internal dependency-injection runtime; no direct HarmonyOS equivalent is needed — AGConnect SDK handles initialization internally."
+    },
+    {
+      "android_namespace": "com.google.firebase.encoders",
+      "android_display": "Firebase Encoders (internal serialization)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended. Firebase Encoders is an internal serialization layer; use ArkTS JSON.stringify or @kit.ArkData for equivalent data encoding."
+    },
+    {
+      "android_namespace": "com.google.firebase.concurrent",
+      "android_display": "Firebase Concurrent (internal executor utilities)",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "@kit.BasicServicesKit is recommended. Firebase Concurrent provides internal thread pool utilities; replace with ArkTS async/await and @Concurrent worker thread patterns."
+    },
+    {
+      "android_namespace": "io.sentry",
+      "android_display": "Sentry SDK (error monitoring)",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "@kit.PerformanceAnalysisKit (AGConnect APM) is recommended for crash reporting, performance tracing, and error monitoring as the HarmonyOS NEXT Sentry equivalent.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
+    },
+    {
+      "android_namespace": "com.freshchat.consumer.sdk",
+      "android_display": "Freshchat Customer Support SDK",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "low",
+      "note": "No native Freshchat SDK for HarmonyOS NEXT. Implement in-app chat using @kit.ArkWeb (WebView) with the Freshchat web widget, or evaluate alternative HarmonyOS-compatible customer support SDKs."
+    },
+    {
+      "android_namespace": "io.michaelrocks.libphonenumber.android",
+      "android_display": "libphonenumber (Phone number parsing)",
+      "harmony_kit": "@kit.TelephonyKit",
+      "harmony_import": "@kit.TelephonyKit",
+      "confidence": "medium",
+      "note": "@kit.TelephonyKit is recommended for phone number validation and formatting. For full libphonenumber feature parity, consider bundling the JS port via @kit.ArkWeb or porting to ArkTS.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-call-service-kit"
+    },
+    {
+      "android_namespace": "com.loopj.android.http",
+      "android_display": "Android Async HTTP (loopj)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "@kit.NetworkKit is recommended. Loopj AsyncHttpClient request/response patterns map directly to @kit.NetworkKit asynchronous HTTP APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "cz.msebera.android.httpclient",
+      "android_display": "Msebera HTTP Client (Apache fork for Android)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "@kit.NetworkKit is recommended. This Apache HTTP Client fork (used by loopj) maps to @kit.NetworkKit HTTP connection and request APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "android_namespace": "com.nostra13.universalimageloader",
+      "android_display": "Universal Image Loader (UIL)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "@kit.ImageKit is recommended for image loading, caching, and decoding. Universal Image Loader's display options and caching strategies map to ImageKit's lazy-loading and cache configuration APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-image-effect"
+    },
+    {
+      "android_namespace": "com.facebook.appevents",
+      "android_display": "Facebook App Events (Analytics)",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "@kit.AnalyticsKit is recommended for event tracking and app analytics. Facebook AppEvents custom event logging maps to AGConnect Analytics event reporting."
+    },
+    {
+      "android_namespace": "com.facebook.share",
+      "android_display": "Facebook Share SDK",
+      "harmony_kit": "@kit.ShareKit",
+      "harmony_import": "@kit.ShareKit",
+      "confidence": "low",
+      "note": "@kit.ShareKit is recommended for content sharing on HarmonyOS NEXT. Facebook Share SDK functionality maps to ShareKit's share sheet and UIExtensionAbility patterns; social platform targeting requires re-implementation."
+    },
+    {
+      "android_namespace": "com.facebook.login",
+      "android_display": "Facebook Login SDK",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "medium",
+      "note": "@kit.AccountKit is recommended for social login. Facebook Login (OAuth token flow) maps to AccountKit's Huawei ID authorization. Third-party Facebook login requires a web OAuth flow via @kit.ArkWeb.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/demo-auth-scan"
+    },
+    {
+      "android_namespace": "de.robv.android.xposed",
+      "android_display": "Xposed Framework (Android hooking)",
+      "harmony_kit": null,
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "No equivalent on HarmonyOS NEXT. Xposed-style runtime hooking is not supported. Review why hooking is used — functionality may need to be redesigned using supported extension points."
+    },
+    {
+      "android_namespace": "com.adjust.sdk",
+      "android_display": "Adjust SDK (Mobile attribution & analytics)",
+      "harmony_kit": "@kit.AnalyticsKit",
+      "harmony_import": "@kit.AnalyticsKit",
+      "confidence": "medium",
+      "note": "@kit.AnalyticsKit is recommended for attribution and event analytics. Adjust SDK install tracking and in-app event logging maps to AGConnect Analytics attribution and custom event APIs."
+    },
+    {
+      "android_namespace": "androidx.compose.foundation",
+      "android_display": "Jetpack Compose Foundation (layouts, text, drawing)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended. Compose Foundation primitives (BasicText, BasicTextField, Canvas, Box, Row, Column, LazyColumn) map to ArkUI built-in components and the Canvas drawing API."
+    },
+    {
+      "android_namespace": "androidx.constraintlayout",
+      "android_display": "AndroidX ConstraintLayout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended. ConstraintLayout constraint-based positioning maps to ArkUI RelativeContainer and Flex/Grid layout components."
+    },
+    {
+      "android_namespace": "androidx.appcompat",
+      "android_display": "AndroidX AppCompat",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended. AppCompatActivity, toolbar, and action bar functionality maps to UIAbility with ArkUI Navigation and toolbar components."
+    },
+    {
+      "android_namespace": "androidx.core",
+      "android_display": "AndroidX Core (KTX / compat utilities)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended. AndroidX Core KTX extensions (window insets, notifications compat, content resolver) map to ArkUI window management and @kit.NotificationKit APIs."
+    },
+    {
+      "android_namespace": "androidx.emoji2",
+      "android_display": "AndroidX Emoji2 (Emoji compatibility)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "@kit.ArkUI is recommended. HarmonyOS NEXT's ArkUI Text component handles emoji rendering natively via system font; no separate emoji compat library is required."
+    },
+    {
+      "android_namespace": "androidx.coordinatorlayout",
+      "android_display": "AndroidX CoordinatorLayout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "@kit.ArkUI is recommended. CoordinatorLayout scroll-linked behavior (collapsing toolbar, FAB hide/show) maps to ArkUI Scroll event callbacks and component visibility binding."
+    },
+    {
+      "android_namespace": "android.location",
+      "android_display": "Android Location APIs",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "Android Location APIs → @kit.LocationKit. geoLocationManager provides getCurrentLocation(), on() subscription, reverse geocoding and address resolution equivalents."
+    },
+    {
+      "android_namespace": "com.rnmaps.maps",
+      "android_display": "React Native Maps",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "React Native Maps wrappers → @kit.MapKit. MapComponent, Marker, Polyline, Polygon, Circle, Heatmap all have direct HarmonyOS MapKit equivalents."
+    },
+    {
+      "android_namespace": "com.agontuk.RNFusedLocation",
+      "android_display": "React Native Fused Location Provider",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "React Native Fused Location Provider → @kit.LocationKit. geoLocationManager.getCurrentLocation() is the direct equivalent."
+    },
+    {
+      "android_namespace": "android.renderscript",
+      "android_display": "Android RenderScript",
+      "harmony_kit": "HarmonyOS NDK (libc++ / BiSheng)",
+      "harmony_import": null,
+      "confidence": "low",
+      "note": "RenderScript GPU compute has no direct HarmonyOS equivalent. Migrate GPU workloads to Vulkan compute shaders or OpenCL via NDK."
+    },
+    {
+      "android_namespace": "android.webkit.MimeTypeMap",
+      "android_display": "Android MimeTypeMap",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "medium",
+      "note": "MimeTypeMap MIME type resolution → @kit.CoreFileKit uniformTypeDescriptor APIs."
+    },
+    {
+      "android_namespace": "android.view.KeyCharacterMap",
+      "android_display": "Android KeyCharacterMap",
+      "harmony_kit": "@kit.InputKit",
+      "harmony_import": "@kit.InputKit",
+      "confidence": "medium",
+      "note": "KeyCharacterMap keyboard input mapping → @kit.InputKit inputDevice APIs for keyboard descriptor and key event handling."
+    }
+  ],
+  "permission_mappings": [
+    {
+      "android": "android.permission.INTERNET",
+      "harmony": "ohos.permission.INTERNET",
+      "kit": "@kit.NetworkKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.CAMERA",
+      "harmony": "ohos.permission.CAMERA",
+      "kit": "@kit.CameraKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.RECORD_AUDIO",
+      "harmony": "ohos.permission.MICROPHONE",
+      "kit": "@kit.AudioKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.READ_CONTACTS",
+      "harmony": "ohos.permission.READ_CONTACTS",
+      "kit": "@kit.ContactsKit",
+      "grant_level": "restricted"
+    },
+    {
+      "android": "android.permission.WRITE_CONTACTS",
+      "harmony": "ohos.permission.WRITE_CONTACTS",
+      "kit": "@kit.ContactsKit",
+      "grant_level": "restricted"
+    },
+    {
+      "android": "android.permission.READ_EXTERNAL_STORAGE",
+      "harmony": "ohos.permission.READ_MEDIA",
+      "kit": "@kit.CoreFileKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.WRITE_EXTERNAL_STORAGE",
+      "harmony": "ohos.permission.WRITE_MEDIA",
+      "kit": "@kit.CoreFileKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_FINE_LOCATION",
+      "harmony": "ohos.permission.LOCATION",
+      "kit": "@kit.LocationKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_COARSE_LOCATION",
+      "harmony": "ohos.permission.APPROXIMATELY_LOCATION",
+      "kit": "@kit.LocationKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_BACKGROUND_LOCATION",
+      "harmony": "ohos.permission.LOCATION_IN_BACKGROUND",
+      "kit": "@kit.LocationKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.BLUETOOTH",
+      "harmony": "ohos.permission.USE_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.BLUETOOTH_ADMIN",
+      "harmony": "ohos.permission.MANAGE_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.BLUETOOTH_CONNECT",
+      "harmony": "ohos.permission.ACCESS_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.BLUETOOTH_SCAN",
+      "harmony": "ohos.permission.ACCESS_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.NFC",
+      "harmony": "ohos.permission.NFC_TAG",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.VIBRATE",
+      "harmony": "ohos.permission.VIBRATE",
+      "kit": "@kit.SensorServiceKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.RECEIVE_BOOT_COMPLETED",
+      "harmony": "ohos.permission.RECEIVE_BOOT_COMPLETED",
+      "kit": "@kit.BasicServicesKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.WAKE_LOCK",
+      "harmony": "ohos.permission.RUNNING_LOCK",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.USE_BIOMETRIC",
+      "harmony": "ohos.permission.ACCESS_BIOMETRIC",
+      "kit": "@kit.UserAuthenticationKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.USE_FINGERPRINT",
+      "harmony": "ohos.permission.ACCESS_BIOMETRIC",
+      "kit": "@kit.UserAuthenticationKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.READ_PHONE_STATE",
+      "harmony": "ohos.permission.GET_TELEPHONY_STATE",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.CALL_PHONE",
+      "harmony": "ohos.permission.PLACE_CALL",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.READ_CALL_LOG",
+      "harmony": "ohos.permission.READ_CALL_LOG",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.SEND_SMS",
+      "harmony": "ohos.permission.SEND_MESSAGES",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.RECEIVE_SMS",
+      "harmony": "ohos.permission.RECEIVE_MESSAGES",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.READ_SMS",
+      "harmony": "ohos.permission.READ_MESSAGES",
+      "kit": "@kit.TelephonyKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.READ_CALENDAR",
+      "harmony": "ohos.permission.READ_CALENDAR",
+      "kit": "@kit.CalendarKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.WRITE_CALENDAR",
+      "harmony": "ohos.permission.WRITE_CALENDAR",
+      "kit": "@kit.CalendarKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.BODY_SENSORS",
+      "harmony": "ohos.permission.READ_HEALTH_DATA",
+      "kit": "@kit.SensorServiceKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.ACTIVITY_RECOGNITION",
+      "harmony": "ohos.permission.ACTIVITY_MOTION",
+      "kit": "@kit.SensorServiceKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.SYSTEM_ALERT_WINDOW",
+      "harmony": "ohos.permission.SYSTEM_FLOAT_WINDOW",
+      "kit": "@kit.ArkUI",
+      "grant_level": "restricted"
+    },
+    {
+      "android": "android.permission.PACKAGE_USAGE_STATS",
+      "harmony": "ohos.permission.BUNDLE_ACTIVESTATE_CHANGED",
+      "kit": "@kit.AbilityKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.MANAGE_EXTERNAL_STORAGE",
+      "harmony": "ohos.permission.FILE_ACCESS_MANAGER",
+      "kit": "@kit.CoreFileKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.POST_NOTIFICATIONS",
+      "harmony": "ohos.permission.NOTIFICATION_CONTROLLER",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "unknown"
+    },
+    {
+      "android": "android.permission.ACCESS_WIFI_STATE",
+      "harmony": "ohos.permission.GET_WIFI_INFO",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.CHANGE_WIFI_STATE",
+      "harmony": "ohos.permission.SET_WIFI_INFO",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_NETWORK_STATE",
+      "harmony": "ohos.permission.GET_NETWORK_INFO",
+      "kit": "@kit.NetworkKit",
+      "grant_level": "system_grant"
+    }
+  ]
+}

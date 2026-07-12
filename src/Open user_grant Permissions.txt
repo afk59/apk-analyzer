@@ -1,0 +1,47 @@
+# HarmonyOS User-Grant Permissions List
+
+## Hardware & Connectivity
+* ohos.permission.ACCESS_BLUETOOTH
+  Allows an application to access Bluetooth to scan, discover, pair with, connect to nearby devices, and advertise BLE devices[cite: 3].
+* ohos.permission.CAMERA
+  Allows an application to open and use the device camera[cite: 3].
+* ohos.permission.MICROPHONE
+  Allows an application to access and record audio from the device microphone[cite: 3].
+* ohos.permission.ACCESS_NEARLINK
+  Allows an application to access and use NearLink for device pairing and connecting to nearby nodes[cite: 3].
+
+## Location & Fitness Tracking
+* ohos.permission.MEDIA_LOCATION
+  Allows an application to read the geographic location coordinates embedded within the user's media files[cite: 3].
+* ohos.permission.ACTIVITY_MOTION
+  Allows an application to detect user workout status and record step counts[cite: 3].
+* ohos.permission.LOCATION_IN_BACKGROUND
+  Allows an application running in the background to access the device location, requiring prior foreground location approval[cite: 3].
+* ohos.permission.LOCATION
+  Allows an application to obtain the precise device location, and must be requested together with approximate location[cite: 3].
+* ohos.permission.APPROXIMATELY_LOCATION
+  Allows an application to obtain only the approximate location information of the device[cite: 3].
+
+## Storage, Directories & Media
+* ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY
+  Allows an application to access and manage the public Download directory and its subdirectories on PCs, 2-in-1s, and tablets[cite: 3].
+* ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY
+  Allows an application to access and manage the public Documents directory and its subdirectories on PCs, 2-in-1s, and tablets[cite: 3].
+* ohos.permission.CUSTOM_SCREEN_CAPTURE
+  Allows an application to capture on-screen information, such as taking screenshots[cite: 3].
+* ohos.permission.READ_MEDIA
+  Allows an application to read media files from external storage (Deprecated from API 22)[cite: 3].
+* ohos.permission.WRITE_MEDIA
+  Allows an application to read from and write media files into external storage (Deprecated from API 22)[cite: 3].
+
+## Personal Data & Synchronization
+* ohos.permission.APP_TRACKING_CONSENT
+  Allows an application to read the Open Anonymous Device Identifier (OAID) for cross-app association tracking[cite: 3].
+* ohos.permission.DISTRIBUTED_DATASYNC
+  Allows application data to be exchanged and synchronized across multiple distributed devices[cite: 3].
+* ohos.permission.READ_CALENDAR
+  Allows an application to read system Calendar events and data[cite: 3].
+* ohos.permission.WRITE_CALENDAR
+  Allows an application to add, remove, and modify events within the system Calendar[cite: 3].
+* ohos.permission.READ_HEALTH_DATA
+  Allows an application to read the personal health data of the user[cite: 3].

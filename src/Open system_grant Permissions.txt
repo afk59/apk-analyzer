@@ -1,0 +1,127 @@
+# HarmonyOS System-Grant Permissions List
+
+## Hardware & Sensors
+* ohos.permission.USE_BLUETOOTH
+  Allows an application to access basic Bluetooth configurations like the device name, type, and switch status[cite: 2].
+* ohos.permission.DISCOVER_BLUETOOTH
+  Allows an application to configure Bluetooth, scan for nearby devices, and initiate pairing[cite: 2].
+* ohos.permission.ACCELEROMETER
+  Allows an application to read data from regular, uncalibrated, or linear acceleration sensors[cite: 2].
+* ohos.permission.GYROSCOPE
+  Allows an application to read motion data from a gyroscope or uncalibrated gyroscope sensor[cite: 2].
+* ohos.permission.VIBRATE
+  Allows an application to control haptic feedback, including one-time, preset, or custom vibrations[cite: 2].
+* ohos.permission.MANAGE_INPUT_INFRARED_EMITTER
+  Allows an application to obtain the maximum supported frequency and transmit custom infrared signals[cite: 2].
+
+## Network & Connectivity
+* ohos.permission.INTERNET
+  Allows an application to establish network connections and access the Internet[cite: 2].
+* ohos.permission.GET_NETWORK_INFO
+  Allows an application to obtain generic data network status and information[cite: 2].
+* ohos.permission.SET_NETWORK_INFO
+  Allows an application to activate or deactivate data networks and listen to network status updates[cite: 2].
+* ohos.permission.GET_WIFI_INFO
+  Allows an application to retrieve Wi-Fi states, scan results, connection details, and use Wi-Fi P2P capabilities[cite: 2].
+* ohos.permission.SET_WIFI_INFO
+  Allows an application to manage a Wi-Fi device, including enabling, scanning, connecting, or altering Wi-Fi settings[cite: 2].
+* ohos.permission.NFC_CARD_EMULATION
+  Allows an application to register card emulation services and execute secure contactless payment transactions[cite: 2].
+* ohos.permission.NFC_TAG
+  Allows an application to detect, read data from, and write data to physical NFC tags[cite: 2].
+
+## System Utilities & Customization
+* ohos.permission.PRINT
+  Allows an application to access and utilize the core system printing framework capabilities[cite: 2].
+* ohos.permission.PRIVACY_WINDOW
+  Allows an application to secure windows by blocking them from being screen-captured or screen-recorded[cite: 2].
+* ohos.permission.PUBLISH_AGENT_REMINDER
+  Allows an application to register and publish agent-powered user reminders via the system[cite: 2].
+* ohos.permission.COMMONEVENT_STICKY
+  Allows an application to publish sticky common events so late subscribers can receive previously broadcasted events[cite: 2].
+* ohos.permission.SET_ABILITY_INSTANCE_INFO
+  Allows an application to declare custom icons and label information for individual abilities in the Task Center[cite: 2].
+* ohos.permission.GET_FILE_ICON
+  Allows an application to request and retrieve the system visual icon designated for a specific file type[cite: 2].
+* ohos.permission.CUSTOMIZE_MENU_ICON
+  Allows an application to supply custom icons inside the native shortcut context menu of the Files application[cite: 2].
+* ohos.permission.HDR_BRIGHTNESS
+  Allows an application to target and apply specialized HDR brightening effects directly onto UI component content[cite: 2].
+
+## Account, Biometrics & Security
+* ohos.permission.ACCESS_BIOMETRIC
+  Allows an application to evaluate biometric capabilities, customize dialogs, and request biometric identity authentication[cite: 2].
+* ohos.permission.ACCESS_CERT_MANAGER
+  Allows an application to query security certificates and view private cryptographic credentials[cite: 2].
+* ohos.permission.READ_ACCOUNT_LOGIN_STATE
+  Allows an application to retrieve the active login status of device user accounts[cite: 2].
+* ohos.permission.PROTECT_SCREEN_LOCK_DATA
+  Allows an application to auto-create an encrypted directory in /el5 that restricts data access when the screen locks[cite: 2].
+
+## Window & Display Management
+* ohos.permission.WINDOW_TOPMOST
+  Allows an application to pin specific windows to remain on top of all other active windows on the screen[cite: 2].
+* ohos.permission.SET_WINDOW_TRANSPARENT
+  Allows an application to make its main window container transparent and strip away its outer border shadows[cite: 2].
+* ohos.permission.START_WINDOW_BELOW_LOCK_SCREEN
+  Allows an application to launch quietly while locked and display its UI immediately upon device unlock[cite: 2].
+* ohos.permission.TIMEOUT_SCREENOFF_DISABLE_LOCK
+  Allows an application to turn off the display screen on a timeout without forcing the device to enter a locked state[cite: 2].
+* ohos.permission.LOCK_WINDOW_CURSOR
+  Allows an application to trap and lock the mouse cursor inside its active window boundaries when focused[cite: 2].
+
+## Application Lifecycle & Process Control
+* ohos.permission.GET_BUNDLE_INFO
+  Allows an application to query basic structure and bundle information about other applications on the device[cite: 2].
+* ohos.permission.PREPARE_APP_TERMINATE
+  Allows an application to execute custom logic or show a verification pop-up before being terminated[cite: 2].
+* ohos.permission.KEEP_BACKGROUND_RUNNING
+  Allows a Service ability to continuous run and execute background processes without system suspension[cite: 2].
+* ohos.permission.CLEAN_BACKGROUND_PROCESSES
+  Allows an application to identify and terminate associated background tasks by their bundle names to free resources[cite: 2].
+* ohos.permission.STORE_PERSISTENT_DATA
+  Allows an application to store highly persistent data that survives everything except a factory reset or system reinstall[cite: 2].
+
+## Input Methods & Extension Abilities
+* ohos.permission.INPUT_KEYBOARD_CONTROLLER
+  Allows authorized input method applications to toggle the state of keyboard hardware function keys like CapsLock[cite: 2].
+* ohos.permission.CONNECT_OBJECTEDITOR_EXTENSION
+  Allows an application to query and launch ObjectEditorExtensionAbility components to edit embedded pluggable fragments[cite: 2].
+
+## Low-Level Kernel & Debugging
+* ohos.permission.RUN_DYN_CODE
+  Allows specific system applications to execute dynamic ArkCompiler bytecode while the runtime engine is restricted[cite: 2].
+* ohos.permission.NDK_START_SELF_UI_ABILITY
+  Allows an application to launch its own UIAbility components programmatically using C APIs[cite: 2].
+* ohos.permission.kernel.NET_RAW
+  Allows an application to capture raw network data packets following a mandatory user authentication prompt[cite: 2].
+* ohos.permission.kernel.DEBUGGER
+  Allows an application process to obtain ptrace debugging capabilities as a primary master process[cite: 2].
+* ohos.permission.kernel.ALLOW_DEBUG
+  Allows developer programs to trace and debug C/C++ applications, though runtime memory may be dumped[cite: 2].
+* ohos.permission.BACKGROUND_MANAGER_POWER_SAVE_MODE
+  Allows an unfocused, resource-constrained application executing heavy computing to force its own processes into power saving[cite: 2].
+* ohos.permission.kernel.IGNORE_LIBRARY_VALIDATION
+  Allows an independent binary program to load shared `.so` libraries that belong to different owner IDs[cite: 2].
+* ohos.permission.kernel.EXEMPT_ANONYMOUS_EXECUTABLE_MEMORY
+  Allows a low-level binary program to successfully declare and allocate anonymous executable memory[cite: 2].
+* ohos.permission.INHERIT_PARENT_PERMISSION
+  Allows a spawned binary child process to completely inherit the system permissions of its parent process[cite: 2].
+* ohos.permission.ALLOW_COREDUMP
+  Allows the system to write out and dump the active memory of an application process directly into its sandbox[cite: 2].
+
+## Travel, Cloud & Notification Policies
+* ohos.permission.ACCESS_NOTIFICATION_POLICY
+  Allows an application to alter the device notification ringtone state specifically from mute to unmute[cite: 2].
+* ohos.permission.READ_CLOUD_SYNC_CONFIG
+  Allows an application with cloud access to query its specific active device-to-cloud synchronization profiles[cite: 2].
+* ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER
+  Allows an application to execute enhanced features on external devices connected directly to the primary host[cite: 2].
+* ohos.permission.ACCESS_SERVICE_NAVIGATION_INFO
+  Allows an application to query and access the underlying system navigation service data[cite: 2].
+* ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE
+  Allows an application to fetch connection states and display IDs linking a mobile device to a vehicle head unit[cite: 2].
+* ohos.permission.DETECT_GESTURE
+  Allows an application to detect device telemetry including the user's hand posture and active operating hand[cite: 2].
+* ohos.permission.GET_DONOTDISTURB_STATE
+  Allows an application to query via API whether the global system is currently operating in Do Not Disturb mode[cite: 2].

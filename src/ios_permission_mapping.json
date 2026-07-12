@@ -1,0 +1,139 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-06-25",
+  "description": "iOS NSUsageDescription keys → HarmonyOS NEXT permission + kit mapping",
+  "permission_mappings": [
+    {
+      "ios_key": "NSLocationWhenInUseUsageDescription",
+      "ios_display": "Location (When In Use)",
+      "harmony": "ohos.permission.APPROXIMATELY_LOCATION",
+      "kit": "@kit.LocationKit"
+    },
+    {
+      "ios_key": "NSLocationAlwaysUsageDescription",
+      "ios_display": "Location (Always)",
+      "harmony": "ohos.permission.LOCATION",
+      "kit": "@kit.LocationKit"
+    },
+    {
+      "ios_key": "NSLocationAlwaysAndWhenInUseUsageDescription",
+      "ios_display": "Location (Always and When In Use)",
+      "harmony": "ohos.permission.LOCATION",
+      "kit": "@kit.LocationKit"
+    },
+    {
+      "ios_key": "NSCameraUsageDescription",
+      "ios_display": "Camera",
+      "harmony": "ohos.permission.CAMERA",
+      "kit": "@kit.CameraKit"
+    },
+    {
+      "ios_key": "NSMicrophoneUsageDescription",
+      "ios_display": "Microphone",
+      "harmony": "ohos.permission.MICROPHONE",
+      "kit": "@kit.AudioKit"
+    },
+    {
+      "ios_key": "NSPhotoLibraryUsageDescription",
+      "ios_display": "Photo Library (Read)",
+      "harmony": "ohos.permission.READ_MEDIA_IMAGES",
+      "kit": "@kit.MediaLibraryKit"
+    },
+    {
+      "ios_key": "NSPhotoLibraryAddUsageDescription",
+      "ios_display": "Photo Library (Add Only)",
+      "harmony": "ohos.permission.WRITE_MEDIA_IMAGES",
+      "kit": "@kit.MediaLibraryKit"
+    },
+    {
+      "ios_key": "NSContactsUsageDescription",
+      "ios_display": "Contacts",
+      "harmony": "ohos.permission.READ_CONTACTS",
+      "kit": "@kit.ContactsKit"
+    },
+    {
+      "ios_key": "NSCalendarsUsageDescription",
+      "ios_display": "Calendars",
+      "harmony": "ohos.permission.READ_CALENDAR",
+      "kit": "@kit.CalendarKit"
+    },
+    {
+      "ios_key": "NSRemindersUsageDescription",
+      "ios_display": "Reminders",
+      "harmony": "ohos.permission.READ_WHOLE_CALENDAR",
+      "kit": "@kit.CalendarKit"
+    },
+    {
+      "ios_key": "NSBluetoothAlwaysUsageDescription",
+      "ios_display": "Bluetooth (Always)",
+      "harmony": "ohos.permission.USE_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit"
+    },
+    {
+      "ios_key": "NSBluetoothPeripheralUsageDescription",
+      "ios_display": "Bluetooth Peripheral",
+      "harmony": "ohos.permission.USE_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit"
+    },
+    {
+      "ios_key": "NSMotionUsageDescription",
+      "ios_display": "Motion and Fitness",
+      "harmony": "ohos.permission.ACTIVITY_MOTION",
+      "kit": "@kit.SensorServiceKit"
+    },
+    {
+      "ios_key": "NSHealthShareUsageDescription",
+      "ios_display": "Health Data (Read)",
+      "harmony": "ohos.permission.READ_HEALTH_DATA",
+      "kit": "@kit.HealthServiceKit"
+    },
+    {
+      "ios_key": "NSHealthUpdateUsageDescription",
+      "ios_display": "Health Data (Write)",
+      "harmony": "ohos.permission.WRITE_HEALTH_DATA",
+      "kit": "@kit.HealthServiceKit"
+    },
+    {
+      "ios_key": "NSFaceIDUsageDescription",
+      "ios_display": "Face ID / Biometrics",
+      "harmony": "ohos.permission.ACCESS_BIOMETRIC",
+      "kit": "@kit.UserAuthenticationKit"
+    },
+    {
+      "ios_key": "NSAppleMusicUsageDescription",
+      "ios_display": "Media Library (Apple Music)",
+      "harmony": "ohos.permission.READ_MEDIA_AUDIO",
+      "kit": "@kit.AudioKit"
+    },
+    {
+      "ios_key": "NSSpeechRecognitionUsageDescription",
+      "ios_display": "Speech Recognition",
+      "harmony": "ohos.permission.MICROPHONE",
+      "kit": "@kit.CoreSpeechKit"
+    },
+    {
+      "ios_key": "NSLocalNetworkUsageDescription",
+      "ios_display": "Local Network Access",
+      "harmony": "ohos.permission.GET_NETWORK_INFO",
+      "kit": "@kit.NetworkKit"
+    },
+    {
+      "ios_key": "NSUserTrackingUsageDescription",
+      "ios_display": "App Tracking Transparency (ATT)",
+      "harmony": "ohos.permission.APP_TRACKING_CONSENT",
+      "kit": "@kit.AnalyticsKit"
+    },
+    {
+      "ios_key": "NSLocationTemporaryUsageDescriptionDictionary",
+      "ios_display": "Temporary Precise Location",
+      "harmony": "ohos.permission.APPROXIMATELY_LOCATION",
+      "kit": "@kit.LocationKit"
+    },
+    {
+      "ios_key": "NSVideoSubscriberAccountUsageDescription",
+      "ios_display": "TV Provider Account",
+      "harmony": "ohos.permission.READ_MEDIA_VIDEO",
+      "kit": "@kit.MediaKit"
+    }
+  ]
+}

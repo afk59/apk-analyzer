@@ -1,0 +1,964 @@
+{
+  "version": "1.1.0",
+  "last_updated": "2026-07",
+  "target": "hms",
+  "namespace_mappings": [
+    {
+      "android_namespace": "com.google.android.gms.auth",
+      "android_display": "Google Sign-In / Auth",
+      "hms_kit": "Account Kit",
+      "confidence": "high",
+      "note": "Account Kit is recommended as the Huawei ID-based authentication equivalent."
+    },
+    {
+      "android_namespace": "com.google.firebase.auth",
+      "android_display": "Firebase Authentication",
+      "hms_kit": "Account Kit",
+      "confidence": "medium",
+      "note": "Account Kit is recommended for Huawei ID sign-in; combine with Safety Detect for advanced verification flows."
+    },
+    {
+      "android_namespace": "com.google.android.gms.ads",
+      "android_display": "Google Ads (AdMob)",
+      "hms_kit": "Ads Kit",
+      "confidence": "high",
+      "note": "Ads Kit is recommended as the AdMob equivalent for banner, native, rewarded, and interstitial ads."
+    },
+    {
+      "android_namespace": "com.google.firebase.analytics",
+      "android_display": "Firebase Analytics",
+      "hms_kit": "Analytics Kit",
+      "confidence": "high",
+      "note": "Analytics Kit is recommended for user behavior tracking, funnel analysis, and custom events."
+    },
+    {
+      "android_namespace": "com.google.android.gms.analytics",
+      "android_display": "Google Analytics (legacy)",
+      "hms_kit": "Analytics Kit",
+      "confidence": "high",
+      "note": "Analytics Kit is recommended as the Google Analytics equivalent."
+    },
+    {
+      "android_namespace": "com.google.firebase.dynamiclinks",
+      "android_display": "Firebase Dynamic Links",
+      "hms_kit": "App Linking",
+      "confidence": "high",
+      "note": "App Linking is recommended as the Firebase Dynamic Links equivalent for cross-platform deep linking."
+    },
+    {
+      "android_namespace": "com.google.android.gms.location",
+      "android_display": "Google Location Services (Fused)",
+      "hms_kit": "Location Kit",
+      "confidence": "high",
+      "note": "Location Kit is recommended for fused location, geofencing, and activity identification."
+    },
+    {
+      "android_namespace": "com.google.android.gms.maps",
+      "android_display": "Google Maps",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "Map Kit is recommended as the Google Maps equivalent for interactive map rendering and markers."
+    },
+    {
+      "android_namespace": "com.google.android.gms.wallet",
+      "android_display": "Google Pay / Wallet",
+      "hms_kit": "Wallet Kit",
+      "confidence": "high",
+      "note": "Wallet Kit is recommended for passes (boarding, loyalty, transit); Payment Service for in-app payments."
+    },
+    {
+      "android_namespace": "com.android.billingclient",
+      "android_display": "Google Play Billing",
+      "hms_kit": "In-App Purchases",
+      "confidence": "high",
+      "note": "In-App Purchases (IAP Kit) is recommended as the Play Billing equivalent for consumables and subscriptions."
+    },
+    {
+      "android_namespace": "com.google.android.play",
+      "android_display": "Google Play Core",
+      "hms_kit": "Analytics Kit",
+      "confidence": "medium",
+      "note": "Analytics Kit and AppGallery Connect services are recommended for app update and review management flows."
+    },
+    {
+      "android_namespace": "com.google.firebase.messaging",
+      "android_display": "Firebase Cloud Messaging (FCM)",
+      "hms_kit": "Push Kit",
+      "confidence": "high",
+      "note": "Push Kit is recommended as the direct FCM equivalent for push notifications on Huawei devices."
+    },
+    {
+      "android_namespace": "com.google.firebase.crashlytics",
+      "android_display": "Firebase Crashlytics",
+      "hms_kit": "Analytics Kit",
+      "confidence": "medium",
+      "note": "Analytics Kit (AGConnect Crash) is recommended for crash reporting and diagnostics."
+    },
+    {
+      "android_namespace": "com.google.firebase.database",
+      "android_display": "Firebase Realtime Database",
+      "hms_kit": "Drive Kit",
+      "confidence": "medium",
+      "note": "Drive Kit (AGConnect Cloud DB) is recommended for real-time cloud data sync with offline support."
+    },
+    {
+      "android_namespace": "com.google.firebase.storage",
+      "android_display": "Firebase Storage",
+      "hms_kit": "Drive Kit",
+      "confidence": "medium",
+      "note": "Drive Kit (AGConnect Cloud Storage) is recommended for file upload/download with resume support."
+    },
+    {
+      "android_namespace": "com.google.firebase.functions",
+      "android_display": "Firebase Cloud Functions",
+      "hms_kit": "Analytics Kit",
+      "confidence": "low",
+      "note": "AGConnect Cloud Functions may be considered; serverless compute support is limited compared to Firebase."
+    },
+    {
+      "android_namespace": "com.google.firebase.remoteconfig",
+      "android_display": "Firebase Remote Config",
+      "hms_kit": "Dynamic Tag Manager",
+      "confidence": "high",
+      "note": "Dynamic Tag Manager and AGConnect Remote Configuration are recommended for dynamic config updates without re-release."
+    },
+    {
+      "android_namespace": "com.google.android.gms.games",
+      "android_display": "Google Play Games",
+      "hms_kit": "Game Service",
+      "confidence": "high",
+      "note": "Game Service is recommended for leaderboards, achievements, saved games, and game player management."
+    },
+    {
+      "android_namespace": "com.google.android.gms.fitness",
+      "android_display": "Google Fit",
+      "hms_kit": "Health Kit",
+      "confidence": "medium",
+      "note": "Health Kit is recommended for fitness and health data: steps, calories, heart rate, and activity records."
+    },
+    {
+      "android_namespace": "android.health",
+      "android_display": "Android Health Connect",
+      "hms_kit": "Health Kit",
+      "confidence": "medium",
+      "note": "Health Kit is recommended as the Health Connect equivalent for structured health data access."
+    },
+    {
+      "android_namespace": "com.google.android.gms.nearby",
+      "android_display": "Google Nearby (P2P)",
+      "hms_kit": "Nearby Service",
+      "confidence": "high",
+      "note": "Nearby Service is recommended for device discovery and file transfer over BT/BLE/Wi-Fi without internet."
+    },
+    {
+      "android_namespace": "com.google.android.gms.vision",
+      "android_display": "Google Vision API (legacy)",
+      "hms_kit": "ML Kit",
+      "confidence": "medium",
+      "note": "ML Kit is recommended for vision tasks: face detection, object detection, and image classification."
+    },
+    {
+      "android_namespace": "com.google.mlkit",
+      "android_display": "Google ML Kit",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit is recommended as the direct equivalent covering OCR, face, object, barcode, ASR, TTS, and translation."
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.barcode",
+      "android_display": "ML Kit Barcode Scanning",
+      "hms_kit": "Scan Kit",
+      "confidence": "high",
+      "note": "Scan Kit is recommended for high-accuracy barcode and QR code scanning and generation."
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.face",
+      "android_display": "ML Kit Face Detection",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit (Face Detection) is recommended for face detection, facial attribute analysis, and liveness detection."
+    },
+    {
+      "android_namespace": "com.google.mlkit.vision.text",
+      "android_display": "ML Kit Text Recognition (OCR)",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit (Text Recognition) is recommended for on-device and cloud OCR."
+    },
+    {
+      "android_namespace": "com.google.mlkit.nl.translate",
+      "android_display": "ML Kit Translation",
+      "hms_kit": "ML Kit",
+      "confidence": "medium",
+      "note": "ML Kit (Translation) is recommended for on-device language translation."
+    },
+    {
+      "android_namespace": "com.google.zxing",
+      "android_display": "ZXing (Barcode)",
+      "hms_kit": "Scan Kit",
+      "confidence": "high",
+      "note": "Scan Kit is recommended as the ZXing equivalent for barcode generation and scanning."
+    },
+    {
+      "android_namespace": "org.tensorflow.lite",
+      "android_display": "TensorFlow Lite",
+      "hms_kit": "ML Kit",
+      "confidence": "medium",
+      "note": "ML Kit or CANN is recommended; note that model conversion from TFLite format may be required."
+    },
+    {
+      "android_namespace": "com.google.android.gms.ar",
+      "android_display": "Google ARCore",
+      "hms_kit": "AR Engine",
+      "confidence": "high",
+      "note": "AR Engine is recommended as the direct ARCore equivalent for motion tracking, environment sensing, and hand/face tracking."
+    },
+    {
+      "android_namespace": "android.hardware.camera2",
+      "android_display": "Android Camera2 API",
+      "hms_kit": "Camera Engine",
+      "confidence": "high",
+      "note": "Camera Engine is recommended for advanced camera controls with AI scene detection and HDR capture."
+    },
+    {
+      "android_namespace": "androidx.camera",
+      "android_display": "CameraX",
+      "hms_kit": "Camera Engine",
+      "confidence": "high",
+      "note": "Camera Engine is recommended as the CameraX equivalent with AI-powered capture features."
+    },
+    {
+      "android_namespace": "android.media",
+      "android_display": "Android Media API",
+      "hms_kit": "Video Kit",
+      "confidence": "high",
+      "note": "Video Kit is recommended for adaptive streaming playback; Audio Kit for audio-only use cases."
+    },
+    {
+      "android_namespace": "androidx.media3",
+      "android_display": "AndroidX Media3 (ExoPlayer)",
+      "hms_kit": "Video Kit",
+      "confidence": "high",
+      "note": "Video Kit is recommended as the ExoPlayer equivalent for HLS, DASH, and DRM video playback."
+    },
+    {
+      "android_namespace": "com.google.android.exoplayer2",
+      "android_display": "ExoPlayer",
+      "hms_kit": "Video Kit",
+      "confidence": "high",
+      "note": "Video Kit is recommended as the ExoPlayer equivalent."
+    },
+    {
+      "android_namespace": "android.media.audiofx",
+      "android_display": "Android AudioFx",
+      "hms_kit": "Audio Kit",
+      "confidence": "high",
+      "note": "Audio Kit is recommended for audio playback with effects; Audio Engine for 3D spatial audio."
+    },
+    {
+      "android_namespace": "android.media.projection",
+      "android_display": "Android Screen Capture",
+      "hms_kit": "CaaS Engine",
+      "confidence": "medium",
+      "note": "CaaS Engine (Screen Sharing) is recommended for real-time in-app screen sharing via MeeTime."
+    },
+    {
+      "android_namespace": "com.huawei.hms.avpipeline",
+      "android_display": "HMS AV Pipeline Kit (existing)",
+      "hms_kit": "AV Pipeline Kit",
+      "confidence": "high",
+      "note": "AV Pipeline Kit is recommended for custom media processing pipelines: video playback, super-resolution, and sound event detection."
+    },
+    {
+      "android_namespace": "android.bluetooth",
+      "android_display": "Android Bluetooth API",
+      "hms_kit": "Nearby Service",
+      "confidence": "medium",
+      "note": "Nearby Service is recommended for BT/BLE-based peer-to-peer device discovery and communication."
+    },
+    {
+      "android_namespace": "android.net.wifi",
+      "android_display": "Android WiFi API",
+      "hms_kit": "Wireless Kit",
+      "confidence": "medium",
+      "note": "Wireless Kit is recommended for Wi-Fi management and enhanced connectivity features."
+    },
+    {
+      "android_namespace": "android.nfc",
+      "android_display": "Android NFC",
+      "hms_kit": "Wallet Kit",
+      "confidence": "medium",
+      "note": "Wallet Kit is recommended for NFC-based passes; OneHop Engine for device-to-device NFC transfer."
+    },
+    {
+      "android_namespace": "android.speech",
+      "android_display": "Android Speech Recognition",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit (ASR) is recommended for automatic speech recognition and voice-to-text conversion."
+    },
+    {
+      "android_namespace": "android.speech.tts",
+      "android_display": "Android Text-To-Speech",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit (TTS) is recommended for text-to-speech synthesis with multiple timbres."
+    },
+    {
+      "android_namespace": "android.hardware.fingerprint",
+      "android_display": "Android Fingerprint API",
+      "hms_kit": "FIDO",
+      "confidence": "high",
+      "note": "FIDO Kit is recommended for FIDO2/WebAuthn-compliant biometric authentication including fingerprint."
+    },
+    {
+      "android_namespace": "androidx.biometric",
+      "android_display": "AndroidX Biometric",
+      "hms_kit": "LocalAuthentication Engine",
+      "confidence": "high",
+      "note": "LocalAuthentication Engine is recommended for on-device face and fingerprint verification without server dependency. Use FIDO Kit for FIDO2/WebAuthn server-side flows."
+    },
+    {
+      "android_namespace": "com.huawei.facerecognition",
+      "android_display": "Huawei Face Recognition (local)",
+      "hms_kit": "LocalAuthentication Engine",
+      "confidence": "high",
+      "note": "LocalAuthentication Engine provides 2D/3D face verification for login and payment scenarios without a server challenge."
+    },
+    {
+      "android_namespace": "android.hardware.sensor",
+      "android_display": "Android Sensor API",
+      "hms_kit": "Awareness Kit",
+      "confidence": "medium",
+      "note": "Awareness Kit is recommended for high-level contextual sensing; raw sensor access remains platform-native."
+    },
+    {
+      "android_namespace": "android.os.VibrationEffect",
+      "android_display": "Android Vibration",
+      "hms_kit": "Awareness Kit",
+      "confidence": "low",
+      "note": "No direct HMS vibration equivalent; standard Android Vibrator API is used on Huawei devices natively."
+    },
+    {
+      "android_namespace": "android.app.NotificationManager",
+      "android_display": "Android Notifications",
+      "hms_kit": "Push Kit",
+      "confidence": "medium",
+      "note": "Push Kit is recommended for remote notifications; local notifications remain platform-native."
+    },
+    {
+      "android_namespace": "android.security.keystore",
+      "android_display": "Android Keystore",
+      "hms_kit": "Keyring",
+      "confidence": "medium",
+      "note": "Keyring is recommended for secure credential sharing across apps; Safety Detect for integrity attestation."
+    },
+    {
+      "android_namespace": "javax.crypto",
+      "android_display": "Java Crypto API",
+      "hms_kit": "Safety Detect",
+      "confidence": "low",
+      "note": "Standard Java Crypto remains platform-native; Safety Detect adds SysIntegrity attestation on top."
+    },
+    {
+      "android_namespace": "com.google.crypto.tink",
+      "android_display": "Google Tink Cryptography",
+      "hms_kit": "Safety Detect",
+      "confidence": "medium",
+      "note": "Safety Detect (with DataSecurity Engine) is recommended for high-level cryptographic security needs."
+    },
+    {
+      "android_namespace": "okhttp3",
+      "android_display": "OkHttp",
+      "hms_kit": "Network Kit",
+      "confidence": "high",
+      "note": "Network Kit is recommended as an optimized HTTP client with certificate pinning and DNS acceleration."
+    },
+    {
+      "android_namespace": "retrofit2",
+      "android_display": "Retrofit",
+      "hms_kit": "Network Kit",
+      "confidence": "high",
+      "note": "Network Kit is recommended as the HTTP layer; no direct Retrofit abstraction exists — manual API client implementation required."
+    },
+    {
+      "android_namespace": "com.squareup.okhttp",
+      "android_display": "OkHttp (legacy)",
+      "hms_kit": "Network Kit",
+      "confidence": "high",
+      "note": "Network Kit is recommended as the HTTP client equivalent."
+    },
+    {
+      "android_namespace": "com.bumptech.glide",
+      "android_display": "Glide (Image Loading)",
+      "hms_kit": "Image Kit",
+      "confidence": "medium",
+      "note": "Image Kit is recommended for hardware-accelerated image rendering, SVG, and animation."
+    },
+    {
+      "android_namespace": "com.squareup.picasso",
+      "android_display": "Picasso (Image Loading)",
+      "hms_kit": "Image Kit",
+      "confidence": "medium",
+      "note": "Image Kit is recommended for image loading and rendering."
+    },
+    {
+      "android_namespace": "android.graphics",
+      "android_display": "Android Graphics API",
+      "hms_kit": "Computer Graphics Kit",
+      "confidence": "medium",
+      "note": "Computer Graphics Kit is recommended for GPU-accelerated 2D/3D rendering beyond standard Canvas."
+    },
+    {
+      "android_namespace": "android.opengl",
+      "android_display": "Android OpenGL ES",
+      "hms_kit": "Computer Graphics Kit",
+      "confidence": "medium",
+      "note": "Computer Graphics Kit is recommended for OpenGL ES and Vulkan-based 3D rendering with PBR materials."
+    },
+    {
+      "android_namespace": "android.drm",
+      "android_display": "Android DRM",
+      "hms_kit": "WisePlay DRM",
+      "confidence": "high",
+      "note": "WisePlay DRM is recommended for hardware-backed content protection and premium video playback."
+    },
+    {
+      "android_namespace": "com.google.android.recaptcha",
+      "android_display": "Google reCAPTCHA",
+      "hms_kit": "Safety Detect",
+      "confidence": "medium",
+      "note": "Safety Detect (fake user detection / UserDetect) is recommended as the reCAPTCHA equivalent for bot prevention."
+    },
+    {
+      "android_namespace": "com.google.android.gms.search",
+      "android_display": "Google Search Integration",
+      "hms_kit": "Search Kit",
+      "confidence": "high",
+      "note": "Search Kit is recommended for integrating Petal Search: web, image, news, and video search."
+    },
+    {
+      "android_namespace": "com.google.android.gms.panorama",
+      "android_display": "Google Panorama / Street View",
+      "hms_kit": "Panorama Kit",
+      "confidence": "medium",
+      "note": "Panorama Kit is recommended for 360-degree spherical and cylindrical panoramic image rendering."
+    },
+    {
+      "android_namespace": "com.google.android.gms.cast",
+      "android_display": "Google Cast",
+      "hms_kit": "Cast Engine",
+      "confidence": "high",
+      "note": "Cast Engine is recommended as the Google Cast equivalent for streaming to Huawei large-screen devices."
+    },
+    {
+      "android_namespace": "com.google.android.gms.wearable",
+      "android_display": "Google Wear OS / Wearable API",
+      "hms_kit": "Wear Engine",
+      "confidence": "high",
+      "note": "Wear Engine is recommended for connecting Android apps with Huawei wearables for data sync and messaging."
+    },
+    {
+      "android_namespace": "android.app.DownloadManager",
+      "android_display": "Android DownloadManager",
+      "hms_kit": "Network Kit",
+      "confidence": "medium",
+      "note": "Network Kit is recommended for managed HTTP downloads with resume and progress tracking."
+    },
+    {
+      "android_namespace": "android.app.admin",
+      "android_display": "Android Device Policy Manager (MDM)",
+      "hms_kit": "MDM Engine",
+      "confidence": "high",
+      "note": "MDM Engine is recommended for enterprise device management: Wi-Fi, camera, VPN, USB, and policy control on Huawei devices. Requires enterprise license via HEM Kit."
+    },
+    {
+      "android_namespace": "com.huawei.mdm",
+      "android_display": "Huawei MDM Engine SDK",
+      "hms_kit": "MDM Engine",
+      "confidence": "high",
+      "note": "MDM Engine provides Huawei-specific device policy APIs beyond standard Android DPM. Requires HEM Kit for license activation."
+    },
+    {
+      "android_namespace": "com.huawei.hms.hemsdk",
+      "android_display": "HEM Kit (MDM License Manager)",
+      "hms_kit": "HEM Kit",
+      "confidence": "high",
+      "note": "HEM Kit is recommended for activating MDM licenses in enterprise DPC apps deployed via HUAWEI Enterprise Manager."
+    },
+    {
+      "android_namespace": "com.huawei.quickapp",
+      "android_display": "Huawei Quick App Runtime",
+      "hms_kit": "Quick App",
+      "confidence": "high",
+      "note": "Quick App is recommended for building installation-free lightweight apps distributed via AppGallery and HUAWEI Assistant."
+    },
+    {
+      "android_namespace": "org.hapjs",
+      "android_display": "Quick App Alliance Runtime (HAP)",
+      "hms_kit": "Quick App",
+      "confidence": "high",
+      "note": "Quick App is recommended; HAP-based quick apps run natively on Huawei devices via Quick App Center."
+    },
+    {
+      "android_namespace": "com.huawei.hiai",
+      "android_display": "HUAWEI HiAI Engine (On-device AI)",
+      "hms_kit": "HUAWEI HiAI Engine",
+      "confidence": "high",
+      "note": "HiAI Engine is recommended for NPU-accelerated on-device AI: CV (vision), ASR (speech), and NLU (language understanding)."
+    },
+    {
+      "android_namespace": "com.huawei.hms.mlsdk",
+      "android_display": "HMS ML Kit",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit is recommended for on-device and cloud AI: OCR, face detection, object detection, ASR, TTS, and translation."
+    },
+    {
+      "android_namespace": "com.huawei.hmf",
+      "android_display": "HMS ML Kit Foundation",
+      "hms_kit": "ML Kit",
+      "confidence": "high",
+      "note": "ML Kit foundation layer for model management and ML framework initialization."
+    },
+    {
+      "android_namespace": "com.huawei.hms.ar",
+      "android_display": "HMS AR Engine SDK",
+      "hms_kit": "AR Engine",
+      "confidence": "high",
+      "note": "AR Engine is recommended for motion tracking, environment tracking, and body/hand/face tracking."
+    },
+    {
+      "android_namespace": "com.huawei.arengine",
+      "android_display": "HMS AR Engine (alternate namespace)",
+      "hms_kit": "AR Engine",
+      "confidence": "high",
+      "note": "AR Engine is recommended for augmented reality development on Huawei devices."
+    },
+    {
+      "android_namespace": "com.huawei.hms.push",
+      "android_display": "HMS Push Kit (Android)",
+      "hms_kit": "Push Kit",
+      "confidence": "high",
+      "note": "Push Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.location",
+      "android_display": "HMS Location Kit (Android)",
+      "hms_kit": "Location Kit",
+      "confidence": "high",
+      "note": "Location Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.maps",
+      "android_display": "HMS Map Kit (Android)",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "Map Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.scan",
+      "android_display": "HMS Scan Kit (Android)",
+      "hms_kit": "Scan Kit",
+      "confidence": "high",
+      "note": "Scan Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.iap",
+      "android_display": "HMS IAP Kit (Android)",
+      "hms_kit": "In-App Purchases",
+      "confidence": "high",
+      "note": "In-App Purchases is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.ads",
+      "android_display": "HMS Ads Kit (Android)",
+      "hms_kit": "Ads Kit",
+      "confidence": "high",
+      "note": "Ads Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.analytics",
+      "android_display": "HMS Analytics Kit (Android)",
+      "hms_kit": "Analytics Kit",
+      "confidence": "high",
+      "note": "Analytics Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.health",
+      "android_display": "HMS Health Kit (Android)",
+      "hms_kit": "Health Kit",
+      "confidence": "high",
+      "note": "Health Kit is the direct HMS equivalent — migration from HMS Android SDK to HMS Core is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.wearengine",
+      "android_display": "HMS Wear Engine (Android)",
+      "hms_kit": "Wear Engine",
+      "confidence": "high",
+      "note": "Wear Engine is the direct HMS equivalent for connecting Android apps with Huawei wearables."
+    },
+    {
+      "android_namespace": "com.huawei.hms.site",
+      "android_display": "HMS Site Kit (Android)",
+      "hms_kit": "Site Kit",
+      "confidence": "high",
+      "note": "Site Kit is the direct HMS equivalent for place search and autocomplete — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.wallet",
+      "android_display": "HMS Wallet Kit (Android)",
+      "hms_kit": "Wallet Kit",
+      "confidence": "high",
+      "note": "Wallet Kit is the direct HMS equivalent for Huawei Wallet passes — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.awareness",
+      "android_display": "HMS Awareness Kit (Android)",
+      "hms_kit": "Awareness Kit",
+      "confidence": "high",
+      "note": "Awareness Kit is the direct HMS equivalent for contextual sensing — migration is straightforward."
+    },
+    {
+      "android_namespace": "com.huawei.hms.audioeditor",
+      "android_display": "HMS Audio Editor Kit (Android)",
+      "hms_kit": "Audio Editor Kit",
+      "confidence": "high",
+      "note": "Audio Editor Kit provides AI-powered audio editing: noise reduction, voice changer, spatial audio, and mixing."
+    },
+    {
+      "android_namespace": "com.huawei.hms.videoeditor",
+      "android_display": "HMS Video Editor Kit (Android)",
+      "hms_kit": "Video Editor Kit",
+      "confidence": "high",
+      "note": "Video Editor Kit provides AI-based video editing: trimming, filters, effects, stickers, and subtitles."
+    },
+    {
+      "android_namespace": "com.huawei.hms.panorama",
+      "android_display": "HMS Panorama Kit (Android)",
+      "hms_kit": "Panorama Kit",
+      "confidence": "high",
+      "note": "Panorama Kit renders 360-degree panoramic images with gyroscope support."
+    },
+    {
+      "android_namespace": "com.huawei.hms.nearby",
+      "android_display": "HMS Nearby Service (Android)",
+      "hms_kit": "Nearby Service",
+      "confidence": "high",
+      "note": "Nearby Service is the direct HMS equivalent for peer-to-peer discovery and file transfer."
+    },
+    {
+      "android_namespace": "com.huawei.hms.network",
+      "android_display": "HMS Network Kit (Android)",
+      "hms_kit": "Network Kit",
+      "confidence": "high",
+      "note": "Network Kit is the direct HMS equivalent for HTTP with certificate pinning and DNS optimization."
+    },
+    {
+      "android_namespace": "com.huawei.hms.fido",
+      "android_display": "HMS FIDO Kit (Android)",
+      "hms_kit": "FIDO",
+      "confidence": "high",
+      "note": "FIDO Kit provides FIDO2/WebAuthn-compliant passwordless authentication."
+    },
+    {
+      "android_namespace": "com.huawei.hms.safetydetect",
+      "android_display": "HMS Safety Detect (Android)",
+      "hms_kit": "Safety Detect",
+      "confidence": "high",
+      "note": "Safety Detect provides SysIntegrity attestation, app security scanning, URL check, and fake user detection."
+    },
+    {
+      "android_namespace": "com.huawei.hms.jos",
+      "android_display": "HMS Game Service (Android)",
+      "hms_kit": "Game Service",
+      "confidence": "high",
+      "note": "Game Service is the direct HMS equivalent for achievements, leaderboards, and game player management."
+    },
+    {
+      "android_namespace": "com.huawei.caaskit",
+      "android_display": "HMS CaaS Engine (Android)",
+      "hms_kit": "CaaS Engine",
+      "confidence": "high",
+      "note": "CaaS Engine embeds MeeTime-based video/voice calling and screen sharing capabilities into apps."
+    },
+    {
+      "android_namespace": "com.huawei.hms.cast",
+      "android_display": "HMS Cast Engine (Android)",
+      "hms_kit": "Cast Engine",
+      "confidence": "high",
+      "note": "Cast Engine enables casting media content from mobile to Huawei TV or large-screen devices."
+    },
+    {
+      "android_namespace": "com.huawei.hms.share",
+      "android_display": "HMS Share Engine (Android)",
+      "hms_kit": "Share Engine",
+      "confidence": "high",
+      "note": "Share Engine provides Huawei Share for peer-to-peer file transfer between nearby Huawei devices."
+    },
+    {
+      "android_namespace": "com.huawei.hms.image",
+      "android_display": "HMS Image Kit (Android)",
+      "hms_kit": "Image Kit",
+      "confidence": "high",
+      "note": "Image Kit provides hardware-accelerated image rendering, animation, and SVG support."
+    },
+    {
+      "android_namespace": "com.huawei.hms.scene",
+      "android_display": "HMS Scene Kit (Android)",
+      "hms_kit": "Scene Kit",
+      "confidence": "medium",
+      "note": "Scene Kit provides high-fidelity 3D scene rendering with PBR materials and animations."
+    },
+    {
+      "android_namespace": "com.huawei.hms.cg",
+      "android_display": "HMS Computer Graphics Kit (Android)",
+      "hms_kit": "Computer Graphics Kit",
+      "confidence": "medium",
+      "note": "Computer Graphics Kit provides GPU-accelerated rendering and physically-based materials."
+    },
+    {
+      "android_namespace": "com.huawei.gameturbo",
+      "android_display": "HMS GameTurbo Engine (Android)",
+      "hms_kit": "GameTurbo Engine",
+      "confidence": "medium",
+      "note": "GameTurbo Engine optimizes CPU/GPU scheduling and thermal management for mobile games."
+    },
+    {
+      "android_namespace": "com.google.android.gms",
+      "android_display": "Google Mobile Services (GMS Core)",
+      "hms_kit": "Analytics Kit",
+      "confidence": "medium",
+      "note": "Analytics Kit covers device-info and app analytics. For advertising ID, Ads Kit is recommended."
+    },
+    {
+      "android_namespace": "com.google.android.material",
+      "android_display": "Google Material Design Components",
+      "hms_kit": "HUAWEI HiAI Service",
+      "confidence": "low",
+      "note": "No direct HMS Material Design equivalent. UI components are platform-native on Huawei devices."
+    },
+    {
+      "android_namespace": "com.google.firebase.firestore",
+      "android_display": "Firebase Firestore",
+      "hms_kit": "Drive Kit",
+      "confidence": "medium",
+      "note": "Drive Kit (AGConnect Cloud DB) is recommended as the Firestore equivalent for real-time document storage."
+    },
+    {
+      "android_namespace": "com.google.firestore.v1",
+      "android_display": "Firestore Protocol Buffers (v1)",
+      "hms_kit": "Drive Kit",
+      "confidence": "low",
+      "note": "Internal Firestore proto layer. Migrate data model to AGConnect Cloud DB schema."
+    },
+    {
+      "android_namespace": "com.google.firebase.perf",
+      "android_display": "Firebase Performance Monitoring",
+      "hms_kit": "Analytics Kit",
+      "confidence": "high",
+      "note": "Analytics Kit is recommended for performance tracing, crash reporting, and network monitoring on HMS."
+    },
+    {
+      "android_namespace": "com.google.firebase.sessions",
+      "android_display": "Firebase Session Tracking",
+      "hms_kit": "Analytics Kit",
+      "confidence": "medium",
+      "note": "Analytics Kit handles session lifecycle and user engagement tracking."
+    },
+    {
+      "android_namespace": "com.google.firebase.installations",
+      "android_display": "Firebase Installations SDK",
+      "hms_kit": "Push Kit",
+      "confidence": "medium",
+      "note": "Push Kit manages HMS device registration tokens as the Firebase Installations equivalent."
+    },
+    {
+      "android_namespace": "androidx.recyclerview",
+      "android_display": "AndroidX RecyclerView",
+      "hms_kit": "HUAWEI HiAI Service",
+      "confidence": "low",
+      "note": "No direct HMS equivalent. RecyclerView is a platform-native Android UI component."
+    },
+    {
+      "android_namespace": "com.google.protobuf",
+      "android_display": "Protocol Buffers (protobuf)",
+      "hms_kit": "Network Kit",
+      "confidence": "low",
+      "note": "Protobuf has no direct HMS equivalent. Network Kit supports JSON-based API communication as an alternative."
+    },
+    {
+      "android_namespace": "com.huawei.hms.support",
+      "android_display": "HMS Support Library",
+      "hms_kit": "Account Kit",
+      "confidence": "medium",
+      "note": "HMS Support library contains base account sign-in UI and HMS service connection components (HuaweiIdSignInOptions, HuaweiApiClient). Sign-in flows are provided by Account Kit — this is a required transitive dependency."
+    },
+    {
+      "android_namespace": "com.huawei.hms.framework",
+      "android_display": "HMS Framework (Core Runtime)",
+      "hms_kit": "Account Kit",
+      "confidence": "low",
+      "note": "HMS Framework is the base runtime layer initializing HMS service connections. It is a required transitive dependency for all HMS kits; presence indicates the app integrates at least one HMS service."
+    },
+    {
+      "android_namespace": "com.huawei.hms.common",
+      "android_display": "HMS Common Utilities",
+      "hms_kit": "Account Kit",
+      "confidence": "low",
+      "note": "HMS Common provides shared utilities (HmsApiException, BuildConfig, HmsMobileServiceConnector) used across all HMS kits. Presence indicates HMS Core is integrated; no single feature kit is implied."
+    },
+    {
+      "android_namespace": "android.location",
+      "android_display": "Android Location APIs",
+      "hms_kit": "Location Kit",
+      "confidence": "high",
+      "note": "Android location APIs → HMS Location Kit. FusedLocationProviderClient, GeofenceService, ActivityIdentification all available as HMS equivalents."
+    },
+    {
+      "android_namespace": "com.rnmaps.maps",
+      "android_display": "React Native Maps",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "React Native Maps → HMS Map Kit. MapView, markers, polylines, polygons, circles and heatmaps all supported."
+    },
+    {
+      "android_namespace": "com.agontuk.RNFusedLocation",
+      "android_display": "React Native Fused Location Provider",
+      "hms_kit": "Location Kit",
+      "confidence": "high",
+      "note": "RN Fused Location → HMS Location Kit FusedLocationProviderClient."
+    },
+    {
+      "android_namespace": "android.renderscript",
+      "android_display": "Android RenderScript",
+      "hms_kit": "Accelerate Kit",
+      "confidence": "low",
+      "note": "RenderScript GPU compute → HMS Accelerate Kit provides some GPU acceleration primitives but full RenderScript parity requires NDK Vulkan/OpenCL."
+    },
+    {
+      "android_namespace": "android.webkit.MimeTypeMap",
+      "android_display": "Android MimeTypeMap",
+      "hms_kit": "Network Kit",
+      "confidence": "medium",
+      "note": "MIME type utilities → HMS Network Kit includes HTTP content type handling."
+    },
+    {
+      "android_namespace": "android.view.KeyCharacterMap",
+      "android_display": "Android KeyCharacterMap",
+      "hms_kit": "Wireless Kit",
+      "confidence": "low",
+      "note": "KeyCharacterMap has no direct HMS equivalent — closest is Wireless Kit for peripheral input device management."
+    }
+  ],
+  "permission_mappings": [
+    {
+      "android": "android.permission.INTERNET",
+      "hms_note": "Required by all HMS network-dependent kits."
+    },
+    {
+      "android": "android.permission.ACCESS_FINE_LOCATION",
+      "hms_note": "Required by Location Kit, Awareness Kit, Nearby Service."
+    },
+    {
+      "android": "android.permission.ACCESS_COARSE_LOCATION",
+      "hms_note": "Required by Location Kit (approximate mode)."
+    },
+    {
+      "android": "android.permission.ACCESS_BACKGROUND_LOCATION",
+      "hms_note": "Required by Location Kit background geofencing."
+    },
+    {
+      "android": "android.permission.CAMERA",
+      "hms_note": "Required by Camera Engine, AR Engine, ML Kit (vision), Scan Kit, LocalAuthentication Engine."
+    },
+    {
+      "android": "android.permission.RECORD_AUDIO",
+      "hms_note": "Required by ML Kit (ASR), Audio Editor Kit, Audio Engine."
+    },
+    {
+      "android": "android.permission.BLUETOOTH",
+      "hms_note": "Required by Nearby Service, Wear Engine."
+    },
+    {
+      "android": "android.permission.BLUETOOTH_CONNECT",
+      "hms_note": "Required by Nearby Service, Wear Engine (Android 12+)."
+    },
+    {
+      "android": "android.permission.BLUETOOTH_SCAN",
+      "hms_note": "Required by Nearby Service device discovery (Android 12+)."
+    },
+    {
+      "android": "android.permission.NFC",
+      "hms_note": "Required by Wallet Kit NFC passes."
+    },
+    {
+      "android": "android.permission.READ_EXTERNAL_STORAGE",
+      "hms_note": "Required by Video Editor Kit, Audio Editor Kit, Drive Kit."
+    },
+    {
+      "android": "android.permission.WRITE_EXTERNAL_STORAGE",
+      "hms_note": "Required by Video Editor Kit, Audio Editor Kit, Drive Kit, AV Pipeline Kit."
+    },
+    {
+      "android": "android.permission.ACTIVITY_RECOGNITION",
+      "hms_note": "Required by Awareness Kit (activity detection), Health Kit."
+    },
+    {
+      "android": "android.permission.BODY_SENSORS",
+      "hms_note": "Required by Health Kit sensor data access."
+    },
+    {
+      "android": "android.permission.USE_BIOMETRIC",
+      "hms_note": "Required by FIDO Kit, LocalAuthentication Engine."
+    },
+    {
+      "android": "android.permission.USE_FINGERPRINT",
+      "hms_note": "Required by FIDO Kit, LocalAuthentication Engine."
+    },
+    {
+      "android": "android.permission.USE_FACERECOGNITION",
+      "hms_note": "Required by LocalAuthentication Engine facial recognition."
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE",
+      "hms_note": "Required by Location Kit background mode, Audio Kit."
+    },
+    {
+      "android": "android.permission.ACCESS_NETWORK_STATE",
+      "hms_note": "Required by most HMS kits for connectivity checks."
+    },
+    {
+      "android": "android.permission.ACCESS_WIFI_STATE",
+      "hms_note": "Required by Nearby Service, Wireless Kit."
+    },
+    {
+      "android": "android.permission.CHANGE_WIFI_STATE",
+      "hms_note": "Required by Nearby Service Wi-Fi Direct mode."
+    },
+    {
+      "android": "android.permission.READ_CONTACTS",
+      "hms_note": "Required by CaaS Engine (contact-based calling)."
+    },
+    {
+      "android": "android.permission.POST_NOTIFICATIONS",
+      "hms_note": "Required by Push Kit (Android 13+)."
+    },
+    {
+      "android": "com.huawei.permission.sec.MDM_WIFI",
+      "hms_note": "Required by MDM Engine for Wi-Fi policy management."
+    },
+    {
+      "android": "com.huawei.permission.sec.MDM_CAMERA",
+      "hms_note": "Required by MDM Engine for camera restriction management."
+    },
+    {
+      "android": "com.huawei.permission.sec.MDM_VPN",
+      "hms_note": "Required by MDM Engine for VPN policy management."
+    },
+    {
+      "android": "com.huawei.permission.sec.MDM_APP_MANAGEMENT",
+      "hms_note": "Required by MDM Engine for app installation/uninstallation control."
+    }
+  ]
+}
