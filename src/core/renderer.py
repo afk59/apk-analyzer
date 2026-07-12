@@ -894,10 +894,14 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         f'Restricted: {_grant_counts["restricted"]}'
     )
 
+    coverage_sublabel = (
+        f'<div class="sublabel" style="color:{coverage_color};font-weight:700">{coverage_pct}% coverage</div>'
+        if is_hmos else ""
+    )
     stat_cards = (
         f'<a class="stat clickable" href="#kit-matches-section">'
         f'<div class="num">{kit_count}</div>'
-        f'<div class="sublabel" style="color:{coverage_color};font-weight:700">{coverage_pct}% coverage</div>'
+        f'{coverage_sublabel}'
         f'<div class="label">Number of Libraries Mapped</div>'
         f'</a>'
         f'<a class="stat clickable" href="#private-libs-section"'
@@ -1949,7 +1953,6 @@ def export_excel_ipa(result: dict, output_path: Path):
 def export_excel_batch(
     rows: list,
     output_path: Path,
-    unmapped_ns: list | None = None,
     unmapped_dlls: list | None = None,
     unmapped_frameworks: list | None = None,
 ) -> None:
@@ -1996,36 +1999,13 @@ def export_excel_batch(
     ws.freeze_panes = "A3"
     ws.auto_filter.ref = f"A2:{get_column_letter(4)}2"
 
-    if unmapped_ns:
-        ws2 = wb.create_sheet("Unmapped Namespaces")
+    if unmapped_dlls:
+        ws2 = wb.create_sheet("Unmapped DLLs")
         ws2.sheet_view.showGridLines = False
-        hdrs2 = ["Namespace", "App Count", "Total Class Count", "Total Method Count", "Apps", "Sample Methods"]
+        hdrs2 = ["DLL Name", "App Count", "Total Func Count", "Apps", "Sample Functions"]
         for ci, h in enumerate(hdrs2, 1):
             hdr(ws2.cell(row=1, column=ci, value=h), bg=DKBLUE)
         ws2.row_dimensions[1].height = 22
-        for ri, u in enumerate(unmapped_ns, start=2):
-            bg = WHITE if ri % 2 == 0 else GRAY
-            vals = [
-                u["namespace"], len(u["apps"]), u["class_count"], u["method_count"],
-                ", ".join(u["apps"]), ", ".join(u["sample_methods"]),
-            ]
-            for ci, v in enumerate(vals, 1):
-                c = ws2.cell(row=ri, column=ci, value=v)
-                dat(c, align=("center" if ci in (2, 3, 4) else "left"), wrap=(ci in (5, 6)))
-                c.fill = PatternFill("solid", start_color=bg)
-            ws2.row_dimensions[ri].height = 16
-        for ci, w in enumerate([50, 11, 15, 16, 40, 55], 1):
-            ws2.column_dimensions[get_column_letter(ci)].width = w
-        ws2.freeze_panes = "A2"
-        ws2.auto_filter.ref = f"A1:{get_column_letter(len(hdrs2))}1"
-
-    if unmapped_dlls:
-        ws3 = wb.create_sheet("Unmapped DLLs")
-        ws3.sheet_view.showGridLines = False
-        hdrs3 = ["DLL Name", "App Count", "Total Func Count", "Apps", "Sample Functions"]
-        for ci, h in enumerate(hdrs3, 1):
-            hdr(ws3.cell(row=1, column=ci, value=h), bg=DKBLUE)
-        ws3.row_dimensions[1].height = 22
         for ri, u in enumerate(unmapped_dlls, start=2):
             bg = WHITE if ri % 2 == 0 else GRAY
             vals = [
@@ -2033,37 +2013,93 @@ def export_excel_batch(
                 ", ".join(u["apps"]), ", ".join(u["sample_funcs"]),
             ]
             for ci, v in enumerate(vals, 1):
-                c = ws3.cell(row=ri, column=ci, value=v)
+                c = ws2.cell(row=ri, column=ci, value=v)
                 dat(c, align=("center" if ci in (2, 3) else "left"), wrap=(ci in (4, 5)))
                 c.fill = PatternFill("solid", start_color=bg)
-            ws3.row_dimensions[ri].height = 16
+            ws2.row_dimensions[ri].height = 16
         for ci, w in enumerate([40, 11, 16, 40, 55], 1):
-            ws3.column_dimensions[get_column_letter(ci)].width = w
-        ws3.freeze_panes = "A2"
-        ws3.auto_filter.ref = f"A1:{get_column_letter(len(hdrs3))}1"
+            ws2.column_dimensions[get_column_letter(ci)].width = w
+        ws2.freeze_panes = "A2"
+        ws2.auto_filter.ref = f"A1:{get_column_letter(len(hdrs2))}1"
 
     if unmapped_frameworks:
-        ws4 = wb.create_sheet("Unmapped Frameworks")
-        ws4.sheet_view.showGridLines = False
-        hdrs4 = ["Framework", "App Count", "Apps"]
-        for ci, h in enumerate(hdrs4, 1):
-            hdr(ws4.cell(row=1, column=ci, value=h), bg=DKBLUE)
-        ws4.row_dimensions[1].height = 22
+        ws3 = wb.create_sheet("Unmapped Frameworks")
+        ws3.sheet_view.showGridLines = False
+        hdrs3 = ["Framework", "App Count", "Apps"]
+        for ci, h in enumerate(hdrs3, 1):
+            hdr(ws3.cell(row=1, column=ci, value=h), bg=DKBLUE)
+        ws3.row_dimensions[1].height = 22
         for ri, u in enumerate(unmapped_frameworks, start=2):
             bg = WHITE if ri % 2 == 0 else GRAY
             vals = [u["framework"], len(u["apps"]), ", ".join(u["apps"])]
             for ci, v in enumerate(vals, 1):
-                c = ws4.cell(row=ri, column=ci, value=v)
+                c = ws3.cell(row=ri, column=ci, value=v)
                 dat(c, align=("center" if ci == 2 else "left"), wrap=(ci == 3))
                 c.fill = PatternFill("solid", start_color=bg)
-            ws4.row_dimensions[ri].height = 16
+            ws3.row_dimensions[ri].height = 16
         for ci, w in enumerate([45, 11, 55], 1):
-            ws4.column_dimensions[get_column_letter(ci)].width = w
-        ws4.freeze_panes = "A2"
-        ws4.auto_filter.ref = f"A1:{get_column_letter(len(hdrs4))}1"
+            ws3.column_dimensions[get_column_letter(ci)].width = w
+        ws3.freeze_panes = "A2"
+        ws3.auto_filter.ref = f"A1:{get_column_letter(len(hdrs3))}1"
 
     wb.save(output_path)
     _print_ok(f"Batch Excel: {output_path}")
+
+
+def export_excel_batch_unmapped(per_file_unmapped: dict, output_path: Path) -> None:
+    hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C = _excel_styles()
+
+    wb = Workbook()
+    ws0 = wb.active
+    used_names: set = set()
+    sheets_written = False
+
+    for file_stem, unmapped in per_file_unmapped.items():
+        if not unmapped:
+            continue
+
+        raw_name = re.sub(r'[\[\]:*?/\\]', "_", file_stem)[:31]
+        sheet_name, n = raw_name, 1
+        while sheet_name in used_names:
+            suffix = f"_{n}"
+            sheet_name = raw_name[:31 - len(suffix)] + suffix
+            n += 1
+        used_names.add(sheet_name)
+
+        ws = ws0 if not sheets_written else wb.create_sheet(sheet_name)
+        if not sheets_written:
+            ws.title = sheet_name
+        sheets_written = True
+
+        ws.sheet_view.showGridLines = False
+        hdrs = ["Namespace", "Class Count", "Method Count", "Sample Methods"]
+        for ci, h in enumerate(hdrs, 1):
+            hdr(ws.cell(row=1, column=ci, value=h))
+        ws.row_dimensions[1].height = 22
+        row = 2
+        for u in unmapped:
+            bg = WHITE if row % 2 == 0 else GRAY
+            vals = [u["namespace"], u["class_count"], u["method_count"],
+                    ", ".join(u["sample_methods"])]
+            for ci, v in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=v)
+                dat(c, wrap=(ci == 4))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws.row_dimensions[row].height = 16
+            row += 1
+        for ci, w in enumerate([50, 12, 14, 60], 1):
+            ws.column_dimensions[get_column_letter(ci)].width = w
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(hdrs))}1"
+
+    if not sheets_written:
+        ws0.title = "No Unmapped"
+        ws0["A1"] = "No unmapped namespaces found in any analyzed file."
+        ws0["A1"].font = Font(italic=True, name="Arial", size=10, color="4B5270")
+        ws0.column_dimensions["A"].width = 55
+
+    wb.save(output_path)
+    _print_ok(f"Batch unmapped Excel: {output_path}")
 
 
 def build_agent_json(result: dict) -> dict:

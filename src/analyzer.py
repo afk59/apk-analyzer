@@ -49,7 +49,7 @@ from core.exe_engine import analyze_exe
 from core.ipa_engine import analyze_ipa
 from core.renderer import (render_html_apk, render_html_exe, render_html_ipa,
                            export_excel_apk, export_excel_exe, export_excel_ipa,
-                           export_excel_batch,
+                           export_excel_batch, export_excel_batch_unmapped,
                            write_agent_json, build_agent_json)
 from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_ipa
 
@@ -78,9 +78,10 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
 
     rows        = []
     agent_files = []
-    unmapped_ns_agg    = {}
-    unmapped_dll_agg   = {}
-    unmapped_fw_agg    = {}
+    unmapped_ns_agg      = {}
+    unmapped_dll_agg     = {}
+    unmapped_fw_agg      = {}
+    apk_unmapped_by_file = {}
     for file_path in all_files:
         sfx = file_path.suffix.lower()
         if sfx == ".ipa":
@@ -113,6 +114,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     "permission_count": len(result.get("permissions", [])),
                     "html_path":        str(output_html),
                 })
+                apk_unmapped_by_file[file_path.stem] = result.get("unmapped_namespaces", [])
                 for u in result.get("unmapped_namespaces", []):
                     agg = unmapped_ns_agg.setdefault(u["namespace"], {
                         "namespace": u["namespace"], "class_count": 0, "method_count": 0,
@@ -191,7 +193,10 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
         )
 
         batch_xlsx = result_dir / "batch_summary.xlsx"
-        export_excel_batch(rows, batch_xlsx, unmapped_ns_list, unmapped_dll_list, unmapped_fw_list)
+        export_excel_batch(rows, batch_xlsx, unmapped_dll_list, unmapped_fw_list)
+
+        batch_unmapped_xlsx = result_dir / "batch_unmapped.xlsx"
+        export_excel_batch_unmapped(apk_unmapped_by_file, batch_unmapped_xlsx)
 
         if unmapped_ns_list or unmapped_dll_list or unmapped_fw_list:
             print_ok(

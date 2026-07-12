@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "last_updated": "2026-07",
   "namespace_mappings": [
     {
@@ -1297,6 +1297,126 @@
       "harmony_import": "@kit.InputKit",
       "confidence": "medium",
       "note": "KeyCharacterMap keyboard input mapping → @kit.InputKit inputDevice APIs for keyboard descriptor and key event handling."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.googlemaps",
+      "android_display": "Flutter Google Maps Plugin",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "Flutter Google Maps plugin → @kit.MapKit. MapComponent with markers, polylines and camera controls available."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.googlesignin",
+      "android_display": "Flutter Google Sign-In Plugin",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "high",
+      "note": "Flutter Google Sign-In → @kit.AccountKit for Huawei ID authentication. AuthenticationKit for broader OAuth flows."
+    },
+    {
+      "android_namespace": "com.baseflow.permissionhandler",
+      "android_display": "Flutter permission_handler Plugin",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "Flutter permission_handler plugin → @kit.BasicServicesKit for runtime permission requests (abilityAccessCtrl)."
+    },
+    {
+      "android_namespace": "com.dexterous.flutterlocalnotifications",
+      "android_display": "Flutter flutter_local_notifications Plugin",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Flutter local_notifications → @kit.NotificationKit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.sharedpreferences",
+      "android_display": "Flutter shared_preferences Plugin",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "Flutter shared_preferences → @kit.ArkData preferences store."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.pathprovider",
+      "android_display": "Flutter path_provider Plugin",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "Flutter path_provider → @kit.CoreFileKit for app directory paths."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.urllauncher",
+      "android_display": "Flutter url_launcher Plugin",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "Flutter url_launcher → @kit.BasicServicesKit openLink API."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.camera",
+      "android_display": "Flutter camera Plugin",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "high",
+      "note": "Flutter camera plugin → @kit.CameraKit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.videoplayer",
+      "android_display": "Flutter video_player Plugin",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "Flutter video_player → @kit.MediaKit AVPlayer."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.imagepicker",
+      "android_display": "Flutter image_picker Plugin",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Flutter image_picker → @kit.ImageKit ImageSource picker."
+    },
+    {
+      "android_namespace": "com.tekartik.sqflite",
+      "android_display": "Flutter sqflite Plugin",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "Flutter sqflite SQLite plugin → @kit.ArkData relationalStore."
+    },
+    {
+      "android_namespace": "com.mapbox.mapboxsdk",
+      "android_display": "Mapbox Maps SDK (Android)",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "Mapbox Maps SDK → @kit.MapKit."
+    },
+    {
+      "android_namespace": "com.google.maps.flutter",
+      "android_display": "Google Maps Flutter Plugin",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "Google Maps Flutter plugin → @kit.MapKit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins",
+      "android_display": "Flutter Plugin Package Root",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Flutter plugins package root → evaluate each plugin individually; UI plugins map to @kit.ArkUI."
+    },
+    {
+      "android_namespace": "io.flutter",
+      "android_display": "Flutter Framework",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Flutter framework classes → ArkUI is the HarmonyOS NEXT UI framework equivalent for Flutter-based UIs."
     }
   ],
   "permission_mappings": [

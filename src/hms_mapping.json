@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "last_updated": "2026-07",
   "target": "hms",
   "namespace_mappings": [
@@ -849,6 +849,104 @@
       "hms_kit": "Wireless Kit",
       "confidence": "low",
       "note": "KeyCharacterMap has no direct HMS equivalent — closest is Wireless Kit for peripheral input device management."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.googlemaps",
+      "android_display": "Flutter Google Maps Plugin",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "Flutter Google Maps → HMS Map Kit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.googlesignin",
+      "android_display": "Flutter Google Sign-In Plugin",
+      "hms_kit": "Account Kit",
+      "confidence": "high",
+      "note": "Flutter Google Sign-In → HMS Account Kit for Huawei ID auth."
+    },
+    {
+      "android_namespace": "com.baseflow.permissionhandler",
+      "android_display": "Flutter permission_handler Plugin",
+      "hms_kit": "Safety Detect",
+      "confidence": "low",
+      "note": "Flutter permission_handler → HMS Safety Detect for runtime permission and security checks."
+    },
+    {
+      "android_namespace": "com.dexterous.flutterlocalnotifications",
+      "android_display": "Flutter flutter_local_notifications Plugin",
+      "hms_kit": "Push Kit",
+      "confidence": "medium",
+      "note": "Flutter local notifications → HMS Push Kit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.sharedpreferences",
+      "android_display": "Flutter shared_preferences Plugin",
+      "hms_kit": "Drive Kit",
+      "confidence": "low",
+      "note": "Flutter shared_preferences → HMS Drive Kit for data sync, or standard Android SharedPreferences (native support)."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.pathprovider",
+      "android_display": "Flutter path_provider Plugin",
+      "hms_kit": "Drive Kit",
+      "confidence": "low",
+      "note": "Flutter path_provider → standard Android file paths (natively supported in HMS)."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.camera",
+      "android_display": "Flutter camera Plugin",
+      "hms_kit": "Camera Engine",
+      "confidence": "high",
+      "note": "Flutter camera plugin → HMS Camera Engine."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.videoplayer",
+      "android_display": "Flutter video_player Plugin",
+      "hms_kit": "Video Kit",
+      "confidence": "high",
+      "note": "Flutter video_player → HMS Video Kit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins.imagepicker",
+      "android_display": "Flutter image_picker Plugin",
+      "hms_kit": "Image Kit",
+      "confidence": "medium",
+      "note": "Flutter image_picker → HMS Image Kit."
+    },
+    {
+      "android_namespace": "com.tekartik.sqflite",
+      "android_display": "Flutter sqflite Plugin",
+      "hms_kit": "Drive Kit",
+      "confidence": "low",
+      "note": "Flutter sqflite → HMS Drive Kit or native SQLite (natively supported in Android)."
+    },
+    {
+      "android_namespace": "com.mapbox.mapboxsdk",
+      "android_display": "Mapbox Maps SDK (Android)",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "Mapbox → HMS Map Kit."
+    },
+    {
+      "android_namespace": "com.google.maps.flutter",
+      "android_display": "Google Maps Flutter Plugin",
+      "hms_kit": "Map Kit",
+      "confidence": "high",
+      "note": "Google Maps Flutter → HMS Map Kit."
+    },
+    {
+      "android_namespace": "io.flutter.plugins",
+      "android_display": "Flutter Plugin Package Root",
+      "hms_kit": "Network Kit",
+      "confidence": "low",
+      "note": "Flutter plugins root — evaluate each plugin individually."
+    },
+    {
+      "android_namespace": "io.flutter",
+      "android_display": "Flutter Framework",
+      "hms_kit": "Network Kit",
+      "confidence": "low",
+      "note": "Flutter framework — HMS has no direct Flutter equivalent; native Android HMS SDK is the target."
     }
   ],
   "permission_mappings": [

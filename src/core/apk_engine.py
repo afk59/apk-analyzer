@@ -246,6 +246,15 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
     matched_kits: dict = {}
     matched_ns:   set  = set()
 
+    skip_prefixes = [
+        "java.", "javax.", "kotlin.", "android.os", "sun.",
+        "dalvik.", "libcore.", "com.android.internal.",
+        "android.app", "android.content", "android.database",
+        "android.net", "android.text", "android.util", "android.hardware",
+    ]
+    if target == "hms":
+        skip_prefixes = skip_prefixes + ["android.", "androidx."]
+
     for ns, ns_info in result["detected_namespaces"].items():
         if _is_unresolvable(ns):
             result["unresolvable_namespaces"].append({
@@ -346,12 +355,6 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
             matched_ns.add(ns)
 
         else:
-            skip_prefixes = [
-                "java.", "javax.", "kotlin.", "android.os", "sun.",
-                "dalvik.", "libcore.", "com.android.internal.",
-                "android.app", "android.content", "android.database",
-                "android.net", "android.text", "android.util", "android.hardware",
-            ]
             if (
                 not any(ns.startswith(p) for p in skip_prefixes)
                 and ns_info["method_count"] >= 2
