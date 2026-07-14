@@ -45,30 +45,31 @@ _ensure_deps()
 from ui.terminal   import print_info, print_ok, print_warn, _c, C, interactive_session
 from core.mapping  import load_mapping
 from core.apk_engine import analyze_apk
-from core.exe_engine import analyze_exe
+from core.exe_engine import analyze_exe, analyze_exe_folder
 from core.ipa_engine import analyze_ipa
-from core.renderer import (render_html_apk, render_html_exe, render_html_ipa,
+from core.renderer import (render_html_apk, render_html_exe, render_html_exe_folder, render_html_ipa,
                            export_excel_apk, export_excel_exe, export_excel_ipa,
                            export_excel_batch, export_excel_batch_unmapped,
                            write_agent_json, build_agent_json)
-from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_ipa
+from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_exe_folder, print_summary_ipa
 
 
 def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str = "hmos") -> None:
     apk_files = sorted(input_dir.glob("*.apk"))
-    exe_files = sorted(input_dir.glob("*.exe"))
+    exe_files = sorted(input_dir.glob("*.exe")) + sorted(input_dir.glob("*.dll"))
     ipa_files = sorted(input_dir.glob("*.ipa"))
     all_files = apk_files + exe_files + ipa_files
 
     if not all_files:
-        print_warn("No APK, EXE, or IPA files found in input/")
+        print_warn("No APK, EXE, DLL, or IPA files found in input/")
         sys.exit(0)
 
     print_info(f"Batch mode: {len(all_files)} file(s) found")
 
-    apk_mapping_path = script_dir / ("hms_mapping.json" if target == "hms" else "mapping.json")
-    exe_mapping_path = script_dir / "win_mapping.json"
-    ipa_mapping_path = script_dir / "ios_mapping.json"
+    mappings_dir = script_dir / "data" / "mappings"
+    apk_mapping_path = mappings_dir / ("hms_mapping.json" if target == "hms" else "mapping.json")
+    exe_mapping_path = mappings_dir / "win_mapping.json"
+    ipa_mapping_path = mappings_dir / "ios_mapping.json"
     apk_mapping = load_mapping(apk_mapping_path) if apk_files else None
     exe_mapping = load_mapping(exe_mapping_path) if exe_files else None
     ipa_mapping = load_mapping(ipa_mapping_path) if ipa_files else None
@@ -223,6 +224,34 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     print_ok(f"Batch complete — {len(rows)} file(s) processed.")
 
 
+def run_exe_folder(folder_path: Path, result_dir: Path, agent_dir: Path, mapping: dict, no_open: bool = False) -> None:
+    sep = "  " + _c("-" * 58, C.BOLD, C.DRED)
+    print(sep)
+    print(f"  {_c('Migration Analyzer v2.0', C.BOLD, C.WHITE)}")
+    print(f"  {_c('Mode    :', C.CYAN)}  {_c('EXE FOLDER', C.BOLD, C.WHITE)}")
+    print(f"  {_c('Target  :', C.CYAN)}  {_c('HarmonyOS NEXT', C.BOLD, C.WHITE)}")
+    print(f"  {_c('Folder  :', C.CYAN)}  {_c(folder_path.name, C.WHITE)}")
+    print(f"  {_c('Huawei DTSE Turkey', C.GRAY)}")
+    print(sep)
+
+    result = analyze_exe_folder(str(folder_path), mapping)
+    html   = render_html_exe_folder(result)
+
+    output_html = result_dir / f"{folder_path.name}_exe_folder_hmos_report.html"
+    output_html.write_text(html, encoding="utf-8")
+    print_summary_exe_folder(result)
+    print_ok(f"HTML report: {output_html}")
+
+    agent_json_path = agent_dir / f"{folder_path.name}_exe_folder_hmos_agent.json"
+    write_agent_json(result, agent_json_path)
+
+    if not no_open:
+        webbrowser.open(output_html.resolve().as_uri())
+
+    print()
+    print_ok("Done.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Migration Analyzer v2.0 -- Huawei DTSE Turkey",
@@ -286,17 +315,22 @@ CLI (EXE):
         run_batch(input_dir, result_dir, script_dir, target)
         return
 
+    if mode == "exe_folder":
+        mapping = load_mapping(script_dir / "data" / "mappings" / "win_mapping.json")
+        run_exe_folder(file_path, result_dir, agent_dir, mapping, args.no_open)
+        return
+
 
     if args.mapping:
         mapping_path = Path(args.mapping)
     elif mode == "exe":
-        mapping_path = script_dir / "win_mapping.json"
+        mapping_path = script_dir / "data" / "mappings" / "win_mapping.json"
     elif mode == "ipa":
-        mapping_path = script_dir / "ios_mapping.json"
+        mapping_path = script_dir / "data" / "mappings" / "ios_mapping.json"
     elif target == "hms":
-        mapping_path = script_dir / "hms_mapping.json"
+        mapping_path = script_dir / "data" / "mappings" / "hms_mapping.json"
     else:
-        mapping_path = script_dir / "mapping.json"
+        mapping_path = script_dir / "data" / "mappings" / "mapping.json"
 
 
     output_html = (

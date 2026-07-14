@@ -104,7 +104,7 @@ def _is_binary_encrypted(zf: zipfile.ZipFile, executable_name: str | None) -> bo
 
 
 def _load_permission_map() -> dict:
-    perm_path = Path(__file__).parent.parent / "ios_permission_mapping.json"
+    perm_path = Path(__file__).parent.parent / "data" / "mappings" / "ios_permission_mapping.json"
     if not perm_path.exists():
         print_warn("ios_permission_mapping.json not found — permission matching disabled")
         return {}

@@ -29,6 +29,22 @@ def confidence_badge(c: str) -> str:
     return f'<span class="badge {c}">{label}</span>'
 
 
+def _qt6_banner(qt6_dlls: list) -> str:
+    if not qt6_dlls:
+        return ""
+    dlls_list = ", ".join(qt6_dlls)
+    return (
+        f'<div style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:8px;'
+        f'padding:14px 18px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start">'
+        f'<span style="font-size:1.3rem">&#9888;&#65039;</span>'
+        f'<div><div style="font-weight:700;color:#92400e;margin-bottom:4px">'
+        f'Qt6 — HarmonyOS support not yet available</div>'
+        f'<div style="font-size:.84rem;color:#78350f">'
+        f'Detected: {_esc(dlls_list)}. Qt 6.x has no official HarmonyOS port yet — Qt 6.12 formal release '
+        f'expected ~Q4 2026. Migration path not yet available; monitor before planning.</div></div></div>'
+    )
+
+
 _HTML_BASE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -276,6 +292,13 @@ function toggleGroupRow(gi){
   document.querySelectorAll('.group-child-'+gi).forEach(el=>el.classList.toggle('hidden',!open));
   if(!open) collapseChildren(r);
 }
+function toggleDllRow(i){
+  const r=document.getElementById('dll-row-'+i);
+  if(!r)return;
+  const open=r.classList.toggle('open');
+  const d=document.getElementById('dll-detail-'+i);
+  if(d) d.classList.toggle('hidden',!open);
+}
 function toggleSection(id){
   const body=document.getElementById('body-'+id);
   if(!body)return;
@@ -323,7 +346,6 @@ function buildExcel() {
   const d  = REPORT_DATA;
 
   if (d.mode === 'ipa') {
-    /* ── IPA: Overview ── */
     const ov = [
       ['IPA → HarmonyOS NEXT Migration Report'], [],
       ['Field','Value'],
@@ -345,7 +367,6 @@ function buildExcel() {
     ws1['!cols'] = [{wch:28},{wch:52}];
     XLSX.utils.book_append_sheet(wb, ws1, 'Overview');
 
-    /* ── IPA: Kit Matches ── */
     const km_rows = [['Framework Name','Framework Display','HarmonyOS Kit','Import Path','Coverage','Recommendation']];
     d.kit_matches.forEach(km => km.framework_sources.forEach(src =>
       km_rows.push([src.framework_name, src.framework_display, km.kit_name,
@@ -354,7 +375,6 @@ function buildExcel() {
     ws2['!cols'] = [{wch:28},{wch:36},{wch:32},{wch:28},{wch:12},{wch:55}];
     XLSX.utils.book_append_sheet(wb, ws2, 'Kit Matches');
 
-    /* ── IPA: Permissions ── */
     const pm_rows = [['iOS Key','iOS Display','HarmonyOS Permission','HarmonyOS Kit']];
     const mapped_keys = new Set(d.permission_matches.map(p=>p.ios_key));
     d.permission_matches.forEach(p => pm_rows.push([p.ios_key, p.ios_display||'', p.harmony||'', p.kit||'']));
@@ -364,7 +384,6 @@ function buildExcel() {
     XLSX.utils.book_append_sheet(wb, ws3, 'Permissions');
 
   } else if (d.mode === 'exe') {
-    /* ── EXE: Overview ── */
     const ov = [
       ['EXE → HarmonyOS NEXT Migration Report'], [],
       ['Field','Value'],
@@ -390,7 +409,6 @@ function buildExcel() {
     ws1['!cols'] = [{wch:28},{wch:52}];
     XLSX.utils.book_append_sheet(wb, ws1, 'Overview');
 
-    /* ── EXE: Kit Matches ── */
     const km_rows = [['DLL Name','DLL Description','HarmonyOS Kit','Import Path','Coverage','Recommendation','Delay Import']];
     d.kit_matches.forEach(km => km.dll_sources.forEach(src =>
       km_rows.push([src.dll_name, src.dll_display, km.kit_name,
@@ -400,7 +418,6 @@ function buildExcel() {
     ws2['!cols'] = [{wch:28},{wch:36},{wch:32},{wch:28},{wch:12},{wch:55},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws2, 'Kit Matches');
 
-    /* ── EXE: Imports ── */
     const imp_rows = [['DLL','Function','Type']];
     Object.entries(d.imports||{}).forEach(([dll,funcs]) =>
       funcs.forEach(f => imp_rows.push([dll, f, 'Import'])));
@@ -410,7 +427,6 @@ function buildExcel() {
     ws3['!cols'] = [{wch:36},{wch:48},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws3, 'Imports');
 
-    /* ── EXE: Unmapped DLLs ── */
     const un_rows = [['DLL Name','Function Count','Sample Functions','Delay Import']];
     (d.unmapped_dlls||[]).forEach(u =>
       un_rows.push([u.dll_name, u.func_count, (u.sample_funcs||[]).join(', '), u.is_delay ? 'Yes' : 'No']));
@@ -418,8 +434,59 @@ function buildExcel() {
     ws4['!cols'] = [{wch:34},{wch:14},{wch:60},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws4, 'Unmapped DLLs');
 
+  } else if (d.mode === 'exe_folder') {
+    const ov = [
+      ['EXE Folder → HarmonyOS NEXT Migration Report'], [],
+      ['Folder', d.folder_name],
+      ['Files Analyzed', d.file_count],
+      ['Analysis Date', d.report_date],
+      ['Analysis Time (s)', d.analysis_time_sec],
+      [], ['Metric','Count'],
+      ['Kit Matches', d.kit_matches.length],
+      ['Unmapped DLLs', d.unmapped_dlls.length],
+      ['Total Imported DLLs', Object.keys(d.imports||{}).length],
+    ];
+    const ws1 = XLSX.utils.aoa_to_sheet(ov);
+    ws1['!cols'] = [{wch:28},{wch:52}];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Overview');
+
+    const f_rows = [['File','Architecture','Subsystem','Type','Packed','Packer Hint','Error']];
+    (d.files||[]).forEach(f => f_rows.push([
+      f.file_name, f.machine||'', f.is_dll ? 'N/A (library)' : (f.subsystem||''),
+      f.is_dll ? 'DLL' : 'EXE', f.is_packed ? 'Yes' : 'No',
+      f.packer_hint || '', f.error || '',
+    ]));
+    const wsF = XLSX.utils.aoa_to_sheet(f_rows);
+    wsF['!cols'] = [{wch:30},{wch:16},{wch:20},{wch:10},{wch:10},{wch:30},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, wsF, 'Files');
+
+    const km_rows = [['DLL Name','DLL Description','Source Files','HarmonyOS Kit','Import Path','Coverage','Recommendation','Delay Import']];
+    d.kit_matches.forEach(km => km.dll_sources.forEach(src =>
+      km_rows.push([src.dll_name, src.dll_display, (src.source_files||[]).join(', '), km.kit_name,
+        km.harmony_import||'', km.confidence,
+        km.note, src.is_delay ? 'Yes' : 'No'])));
+    const ws2 = XLSX.utils.aoa_to_sheet(km_rows);
+    ws2['!cols'] = [{wch:28},{wch:36},{wch:30},{wch:32},{wch:28},{wch:12},{wch:55},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Kit Matches');
+
+    const imp_rows = [['DLL','Function','Type','Source Files']];
+    Object.entries(d.imports||{}).forEach(([dll,funcs]) => {
+      const isDelay = (d.delay_dlls||[]).includes(dll);
+      const srcs = (d.import_sources||{})[dll] || [];
+      funcs.forEach(f => imp_rows.push([dll, f, isDelay ? 'Delay Import' : 'Import', srcs.join(', ')]));
+    });
+    const ws3 = XLSX.utils.aoa_to_sheet(imp_rows);
+    ws3['!cols'] = [{wch:36},{wch:48},{wch:14},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Imports');
+
+    const un_rows = [['DLL Name','Function Count','Source Files','Sample Functions','Delay Import']];
+    (d.unmapped_dlls||[]).forEach(u =>
+      un_rows.push([u.dll_name, u.func_count, (u.source_files||[]).join(', '), (u.sample_funcs||[]).join(', '), u.is_delay ? 'Yes' : 'No']));
+    const ws4 = XLSX.utils.aoa_to_sheet(un_rows);
+    ws4['!cols'] = [{wch:34},{wch:14},{wch:30},{wch:60},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Unmapped DLLs');
+
   } else {
-    /* ── APK sheets (Sprint 8 — 6 sheets) ── */
     const isHmos = d.target === 'hmos';
     const ov = [
       ['APK Migration Report -- ' + (isHmos ? 'HarmonyOS NEXT' : 'HMS Core')], [],
@@ -468,7 +535,6 @@ function buildExcel() {
     ws3['!cols'] = isHmos ? [{wch:52},{wch:52},{wch:30},{wch:14}] : [{wch:52},{wch:60},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws3, 'Permissions');
 
-    /* ── APK: Unmapped Libraries ── */
     const un_rows = [['Namespace','Class Count','Method Count','Sample Methods']];
     (d.unmapped_namespaces||[]).forEach(u =>
       un_rows.push([u.namespace, u.class_count, u.method_count, (u.sample_methods||[]).join(', ')]));
@@ -476,7 +542,6 @@ function buildExcel() {
     ws4['!cols'] = [{wch:50},{wch:12},{wch:14},{wch:60}];
     XLSX.utils.book_append_sheet(wb, ws4, 'Unmapped Libraries');
 
-    /* ── APK: Filtered Libraries (obfuscated + unresolvable) ── */
     const fl_rows = [['Obfuscated Count', d.obfuscated_count||0],[],
       ['Namespace','Class Count','Method Count','Sample Methods']];
     (d.unresolvable_namespaces||[]).forEach(u =>
@@ -485,7 +550,6 @@ function buildExcel() {
     ws5['!cols'] = [{wch:50},{wch:12},{wch:14},{wch:60}];
     XLSX.utils.book_append_sheet(wb, ws5, 'Filtered Libraries');
 
-    /* ── APK: Custom Private Libs ── */
     const pl_rows = [['Namespace','Class Count','Method Count','Sample Methods']];
     (d.private_libs||[]).forEach(pl =>
       pl_rows.push([pl.namespace, pl.class_count, pl.method_count, (pl.sample_methods||[]).join(', ')]));
@@ -530,23 +594,28 @@ def _render_kit_cards(kit_matches, mode="apk", is_hmos=True) -> str:
         else:
             for src in km["dll_sources"]:
                 delay = '<span class="delay-badge">delay</span> ' if src["is_delay"] else ""
-                funcs = "".join(
-                    f'<span class="method-tag">{_esc(f)}</span>'
-                    for f in src["sample_funcs"]
+                src_files = src.get("source_files")
+                src_files_html = (
+                    f'<div class="source-counts">from: {_esc(", ".join(src_files))}</div>'
+                    if src_files else ""
                 )
                 sources_html += (
                     f'<div class="source-item">'
                     f'<div class="source-ns">{delay}{_esc(src["dll_name"])}</div>'
                     f'<div class="source-display">{_esc(src["dll_display"])}</div>'
                     f'<div class="source-counts">{src["func_count"]} imported functions</div>'
-                    f'<div class="methods-list">{funcs}</div></div>'
+                    f'{src_files_html}'
+                    f'</div>'
                 )
 
         import_tag = ""
         if km.get("harmony_import"):
             import_tag = f'<span class="import-tag">{_esc(km["harmony_import"])}</span>'
 
-        badge    = confidence_badge(km["confidence"])
+        if mode == "exe" and km.get("status"):
+            badge = f'<span class="badge status-{km["status_color"]}">{_esc(km["status"])}</span>'
+        else:
+            badge = confidence_badge(km["confidence"])
 
         _target  = "hms" if (mode == "apk" and not is_hmos) else "hmos"
         doc_url  = get_doc_url(km["kit_name"], _target)
@@ -709,6 +778,134 @@ def _render_kit_table_apk(flat_rows: list, ns_lookup: dict, is_hmos: bool = True
         f'<table class="kit-table">'
         f'<thead><tr>'
         f'<th>Namespaces</th><th>Count</th><th>HarmonyOS Kit</th>'
+        f'<th>Status</th><th>Links</th><th></th>'
+        f'</tr></thead>'
+        f'<tbody>{"".join(rows)}</tbody>'
+        f'</table>'
+        f'</div>'
+    )
+
+
+def _flatten_dll_rows(kit_matches: list) -> list:
+    rows = [
+        (km, src)
+        for km in kit_matches
+        for src in km.get("dll_sources", [])
+    ]
+    rows.sort(key=lambda pair: pair[1]["dll_name"])
+    return rows
+
+
+def _group_dll_families(dll_names: list, min_group_size: int = 3) -> dict:
+    stems = {name: re.sub(r'\.dll$', '', name, flags=re.IGNORECASE).split('-') for name in dll_names}
+    assigned: set = set()
+    family_of: dict = {}
+    max_tokens = max((len(toks) for toks in stems.values()), default=0)
+
+    for k in range(max_tokens, 1, -1):
+        buckets: dict = {}
+        for name, toks in stems.items():
+            if name in assigned or len(toks) <= k:
+                continue
+            key = tuple(t.lower() for t in toks[:k])
+            buckets.setdefault(key, []).append(name)
+        for key, names in buckets.items():
+            if len(names) >= min_group_size:
+                label = "-".join(key) + "-*"
+                for name in names:
+                    family_of[name] = label
+                assigned.update(names)
+
+    return family_of
+
+
+def _render_kit_table_exe(kit_matches: list) -> str:
+    flat_rows = _flatten_dll_rows(kit_matches)
+    if not flat_rows:
+        return '<p style="color:var(--text3);font-size:.85rem">No kit matches found.</p>'
+
+    family_of = _group_dll_families([src["dll_name"] for _, src in flat_rows])
+    group_index_by_label: dict = {}
+
+    rows = []
+    for i, (km, src) in enumerate(flat_rows):
+        dll_name = src["dll_name"]
+        label = family_of.get(dll_name)
+        group_idx = None
+
+        if label is not None:
+            if label not in group_index_by_label:
+                group_idx = len(group_index_by_label)
+                group_index_by_label[label] = group_idx
+                member_count = sum(1 for v in family_of.values() if v == label)
+                rows.append(
+                    f'<tr class="group-row" id="group-row-{group_idx}" onclick="toggleGroupRow({group_idx})">'
+                    f'<td colspan="6">'
+                    f'<span class="group-chevron">&#9654;</span> '
+                    f'<span>{_esc(label)}</span> '
+                    f'<span style="font-weight:400;color:var(--text2);font-size:.78rem">'
+                    f'({member_count} file{"s" if member_count != 1 else ""})</span>'
+                    f'</td></tr>'
+                )
+            else:
+                group_idx = group_index_by_label[label]
+
+        delay = '<span class="delay-badge">delay</span> ' if src.get("is_delay") else ""
+
+        doc_url  = get_doc_url(km["kit_name"], "hmos")
+        doc_link = (f'<a class="doc-link" href="{doc_url}" target="_blank">Official Docs</a>'
+                    if doc_url else "")
+        sample_url  = km.get("sample_url")
+        sample_link = (f'<a class="doc-link sample-link" href="{sample_url}" target="_blank">Sample App</a>'
+                       if sample_url else "")
+
+        status  = km.get("status", "Should Confirm")
+        s_color = km.get("status_color", "blue")
+
+        source_files = src.get("source_files")
+        has_children = bool(source_files)
+        row_onclick  = f' onclick="toggleDllRow({i})"' if has_children else ""
+        row_cursor   = "cursor:pointer;" if has_children else ""
+        chevron      = '<span class="kit-chevron">&#9660;</span>' if has_children else ""
+
+        row_classes = "kit-row"
+        row_cell_style = row_cursor
+        if group_idx is not None:
+            row_classes += f" hidden group-child-{group_idx}"
+            row_cell_style = f"padding-left:28px;{row_cursor}"
+
+        rows.append(
+            f'<tr class="{row_classes}" id="dll-row-{i}"{row_onclick} style="{row_cell_style}">'
+            f'<td>'
+            f'<span class="ns-name" style="font-family:monospace;color:#6d28d9;font-size:.87rem">'
+            f'{delay}{_esc(src["dll_name"])}</span>'
+            f'<div class="source-display">{_esc(src.get("dll_display",""))}</div>'
+            f'</td>'
+            f'<td class="source-counts" style="white-space:nowrap">{src["func_count"]} funcs</td>'
+            f'<td><span class="import-tag">{_esc(km["kit_name"])}</span></td>'
+            f'<td><span class="badge status-{s_color}">{_esc(status)}</span></td>'
+            f'<td style="white-space:nowrap">{doc_link} {sample_link}</td>'
+            f'<td style="width:24px;text-align:right">{chevron}</td>'
+            f'</tr>'
+        )
+
+        if source_files:
+            detail_classes = "ns-row hidden"
+            if group_idx is not None:
+                detail_classes += f" group-child-{group_idx}"
+            rows.append(
+                f'<tr class="{detail_classes}" id="dll-detail-{i}">'
+                f'<td colspan="6">'
+                f'<span style="font-size:.78rem;color:var(--text2)">Found in: '
+                f'{_esc(", ".join(source_files))}</span>'
+                f'</td></tr>'
+            )
+
+    return (
+        f'<div class="kit-table-wrapper">'
+        f'<table class="kit-table">'
+        f'<thead><tr>'
+        f'<th>DLLs</th><th>Count</th><th>HarmonyOS Kit</th>'
         f'<th>Status</th><th>Links</th><th></th>'
         f'</tr></thead>'
         f'<tbody>{"".join(rows)}</tbody>'
@@ -1061,10 +1258,11 @@ def render_html_exe(result: dict) -> str:
 
 
     vi = result["version_info"]
+    subsystem_label = "N/A (library)" if result["is_dll"] else result["subsystem"]
     pe_meta = ""
     for label, val in [
         ("Architecture",   result["machine"]),
-        ("Subsystem",      result["subsystem"]),
+        ("Subsystem",      subsystem_label),
         ("Entry Point",    result["entry_point"]),
         ("Image Base",     result["image_base"]),
         ("Image Size",     f"{result['image_size']:,} bytes"),
@@ -1084,9 +1282,9 @@ def render_html_exe(result: dict) -> str:
             f'<div class="pe-meta-value">{_esc(str(val))}</div></div>'
         )
 
-    pe_meta_section = (
-        f'<div class="section"><div class="section-title">PE Metadata</div>'
-        f'<div class="pe-meta-grid">{pe_meta}</div></div>'
+    pe_meta_section = _collapsible_section(
+        "pe-metadata-section", "PE Metadata",
+        f'<div class="pe-meta-grid">{pe_meta}</div>'
     )
 
 
@@ -1100,18 +1298,18 @@ def render_html_exe(result: dict) -> str:
             f'<td>{s["entropy"]}</td>'
             f'<td>{exec_badge}</td></tr>'
         )
-    sections_section = (
-        f'<div class="section"><div class="section-title">PE Sections ({len(result["sections"])})</div>'
+    sections_section = _collapsible_section(
+        "pe-sections-section", f'PE Sections ({len(result["sections"])})',
         f'<table class="section-table">'
         f'<tr><th>Name</th><th>Virtual Size</th><th>Raw Size</th><th>Entropy</th><th>Flags</th></tr>'
-        f'{sec_rows}</table></div>'
+        f'{sec_rows}</table>'
     )
 
 
-    kit_cards = _render_kit_cards(result["kit_matches"], mode="exe")
-    kit_section = (
-        f'<div class="section"><div class="section-title">HarmonyOS NEXT Kit Matches</div>'
-        f'{kit_cards}</div>'
+    kit_table = _render_kit_table_exe(result["kit_matches"])
+    kit_section = _collapsible_section(
+        "kit-matches-section", "HarmonyOS NEXT Kit Matches",
+        f'{_qt6_banner(result.get("qt6_dlls", []))}{kit_table}'
     )
 
 
@@ -1120,22 +1318,19 @@ def render_html_exe(result: dict) -> str:
     for dll, funcs in sorted(all_imports.items()):
         is_delay = dll in result["delay_imports"]
         delay    = '<span class="delay-badge">delay</span> ' if is_delay else ""
-        func_tags = "".join(f'<span class="method-tag">{_esc(f)}</span>' for f in funcs)
         import_cards += (
-            f'<div class="kit-card">'
-            f'<div class="kit-header">'
-            f'<span class="kit-name">{delay}{_esc(dll)}</span>'
-            f'<span class="badge medium">{len(funcs)} funcs</span>'
-            f'<span class="chevron">&#9660;</span></div>'
-            f'<div class="kit-body"><div class="methods-list">{func_tags}</div></div></div>'
+            f'<div class="source-item">'
+            f'<div class="source-ns">{delay}{_esc(dll)}</div>'
+            f'<div class="source-counts">{len(funcs)} imported functions</div>'
+            f'</div>'
         )
 
     exports_section = ""
     if result["exports"]:
         tags = "".join(f'<span class="tag">{_esc(e)}</span>' for e in result["exports"][:100])
-        exports_section = (
-            f'<div class="section"><div class="section-title">Export Table ({len(result["exports"])} symbols)</div>'
-            f'<div class="tag-list">{tags}</div></div>'
+        exports_section = _collapsible_section(
+            "exports-section", f'Export Table ({len(result["exports"])} symbols)',
+            f'<div class="tag-list">{tags}</div>'
         )
 
 
@@ -1151,25 +1346,41 @@ def render_html_exe(result: dict) -> str:
                 f'<div class="source-counts">{u["func_count"]} imported functions</div>'
                 f'<div class="methods-list">{func_tags}</div></div>'
             )
-        unmapped = (
-            f'<div class="section"><div class="section-title">Unmapped DLLs ({len(result["unmapped_dlls"])})</div>'
+        unmapped = _collapsible_section(
+            "unmapped-dlls-section", f'Unmapped DLLs ({len(result["unmapped_dlls"])})',
             f'<p style="font-size:.83rem;color:var(--text2);margin-bottom:11px;">'
             f'DLLs with no current HarmonyOS NEXT mapping. May need manual research.</p>'
-            f'{items}</div>'
+            f'{items}'
         )
 
     total_funcs = sum(len(v) for v in result["imports"].values())
+    mapped_dll_count = sum(len(km.get("dll_sources", [])) for km in result["kit_matches"])
+    total_dll_count  = mapped_dll_count + len(result["unmapped_dlls"])
+    dll_coverage_pct = round(mapped_dll_count / total_dll_count * 100, 1) if total_dll_count > 0 else 0
+    if dll_coverage_pct >= 70:
+        dll_coverage_color = "var(--high)"
+    elif dll_coverage_pct >= 40:
+        dll_coverage_color = "var(--med)"
+    else:
+        dll_coverage_color = "var(--low)"
     stat_cards = (
-        f'<div class="stat"><div class="num">{len(result["kit_matches"])}</div><div class="label">Kit Matches</div></div>'
-        f'<div class="stat"><div class="num">{len(result["imports"])}</div><div class="label">Imported DLLs</div></div>'
-        f'<div class="stat"><div class="num">{total_funcs}</div><div class="label">Imported Functions</div></div>'
-        f'<div class="stat"><div class="num">{len(result["exports"])}</div><div class="label">Exported Symbols</div></div>'
-        f'<div class="stat"><div class="num">{len(result["unmapped_dlls"])}</div><div class="label">Unmapped DLLs</div></div>'
+        f'<a class="stat clickable" href="#kit-matches-section">'
+        f'<div class="num">{len(result["kit_matches"])}</div><div class="label">Kit Matches</div></a>'
+        f'<a class="stat clickable" href="#import-table-section">'
+        f'<div class="num">{len(result["imports"])}</div><div class="label">Imported DLLs</div></a>'
+        f'<a class="stat clickable" href="#import-table-section">'
+        f'<div class="num">{total_funcs}</div><div class="label">Imported Functions</div></a>'
+        f'<a class="stat clickable" href="#exports-section">'
+        f'<div class="num">{len(result["exports"])}</div><div class="label">Exported Symbols</div></a>'
+        f'<a class="stat clickable" href="#kit-matches-section">'
+        f'<div class="num">{mapped_dll_count}/{total_dll_count}</div>'
+        f'<div class="sublabel" style="color:{dll_coverage_color};font-weight:700">{dll_coverage_pct}% coverage</div>'
+        f'<div class="label">Mapped DLLs</div></a>'
     )
 
     header_meta = (
         f'<span>{_esc(result["machine"])}</span>'
-        f'<span>{_esc(result["subsystem"])}</span>'
+        f'<span>{_esc(subsystem_label)}</span>'
         f'<span>Analysis: {result["analysis_time_sec"]}s</span>'
         f'<span>{now}</span>'
     )
@@ -1179,10 +1390,9 @@ def render_html_exe(result: dict) -> str:
     if result.get("string_scan_mode"):
         import_title_note = ' <span style="font-size:.75rem;color:#d97706;font-weight:600">[string-scan — best effort]</span>'
 
-    imports_section = (
-        f'<div class="section"><div class="section-title">Import Table ({len(all_imports)} DLLs)'
-        f'{import_title_note}</div>'
-        f'{import_cards}</div>'
+    imports_section = _collapsible_section(
+        "import-table-section", f'Import Table ({len(all_imports)} DLLs){import_title_note}',
+        import_cards
     )
 
     body_sections = (
@@ -1195,12 +1405,26 @@ def render_html_exe(result: dict) -> str:
         + unmapped
     )
 
+    sidebar_links = [
+        ("PE Metadata", "pe-metadata-section"),
+        ("PE Sections", "pe-sections-section"),
+        ("HarmonyOS NEXT Kit Matches", "kit-matches-section"),
+        ("Import Table", "import-table-section"),
+        ("Export Table", "exports-section"),
+        ("Unmapped DLLs", "unmapped-dlls-section"),
+    ]
+    sidebar_html = (
+        '<div class="sidebar"><nav>'
+        + "".join(f'<a href="#{sid}">{_esc(label)}</a>' for label, sid in sidebar_links)
+        + '</nav></div>'
+    )
+
     report_data = {
         "mode":          "exe",
         "target":        "hmos",
         "file_name":     result["file_name"],
         "machine":       result["machine"],
-        "subsystem":     result["subsystem"],
+        "subsystem":     subsystem_label,
         "entry_point":   result["entry_point"],
         "image_base":    result["image_base"],
         "image_size":    result["image_size"],
@@ -1227,10 +1451,186 @@ def render_html_exe(result: dict) -> str:
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
         "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
-        "SIDEBAR_HTML":   "",
-        "CONTAINER_EXTRA_CLASS": "",
-        "SIDEBAR_TOGGLE_HTML": "",
-        "HEADER_EXTRA_CLASS": "",
+        "SIDEBAR_HTML":   sidebar_html,
+        "CONTAINER_EXTRA_CLASS": "with-sidebar",
+        "SIDEBAR_TOGGLE_HTML": (
+            '<button class="sidebar-toggle" onclick="toggleSidebar()" '
+            'title="Toggle navigation">&#9776;</button>'
+        ),
+        "HEADER_EXTRA_CLASS": "with-toggle",
+    }
+    html = _HTML_BASE
+    for k, v in subs.items():
+        html = html.replace(f"%%{k}%%", v)
+    return html
+
+
+def render_html_exe_folder(result: dict) -> str:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    files_rows = ""
+    for f in result["files"]:
+        if f.get("error"):
+            files_rows += (
+                f'<tr><td>{_esc(f["file_name"])}</td>'
+                f'<td colspan="4" style="color:#b91c1c">Failed to parse: {_esc(f["error"])}</td></tr>'
+            )
+            continue
+        packed_badge = (
+            f'<span class="badge low">{_esc(f["packer_hint"] or "packed")}</span>'
+            if f["is_packed"] else '<span class="badge high">clean</span>'
+        )
+        subsystem_label = "N/A (library)" if f["is_dll"] else f["subsystem"]
+        files_rows += (
+            f'<tr><td>{_esc(f["file_name"])}</td>'
+            f'<td>{_esc(f["machine"])}</td>'
+            f'<td>{_esc(subsystem_label)}</td>'
+            f'<td>{"DLL" if f["is_dll"] else "EXE"}{" / .NET" if f["is_dotnet"] else ""}</td>'
+            f'<td>{packed_badge}</td></tr>'
+        )
+    files_section = _collapsible_section(
+        "analyzed-files-section", f'Analyzed Files ({result["file_count"]})',
+        f'<table class="section-table">'
+        f'<tr><th>File</th><th>Architecture</th><th>Subsystem</th><th>Type</th><th>Packer</th></tr>'
+        f'{files_rows}</table>'
+    )
+
+    kit_table = _render_kit_table_exe(result["kit_matches"])
+    kit_section = _collapsible_section(
+        "kit-matches-section", "HarmonyOS NEXT Kit Matches",
+        f'{_qt6_banner(result.get("qt6_dlls", []))}{kit_table}'
+    )
+
+    import_cards = ""
+    for dll, funcs in sorted(result["imports"].items()):
+        is_delay = dll in result["delay_dlls"]
+        delay    = '<span class="delay-badge">delay</span> ' if is_delay else ""
+        src_files = result["import_sources"].get(dll, [])
+        src_html  = (
+            f'<div class="source-counts">from: {_esc(", ".join(src_files))}</div>' if src_files else ""
+        )
+        import_cards += (
+            f'<div class="source-item">'
+            f'<div class="source-ns">{delay}{_esc(dll)}</div>'
+            f'<div class="source-counts">{len(funcs)} imported functions</div>'
+            f'{src_html}'
+            f'</div>'
+        )
+    imports_section = _collapsible_section(
+        "import-table-section", f'Merged Import Table ({len(result["imports"])} DLLs)',
+        import_cards
+    )
+
+    unmapped = ""
+    if result["unmapped_dlls"]:
+        items = ""
+        for u in result["unmapped_dlls"]:
+            delay     = '<span class="delay-badge">delay</span> ' if u["is_delay"] else ""
+            src_files = u.get("source_files") or []
+            src_html  = (
+                f'<div class="source-counts">from: {_esc(", ".join(src_files))}</div>' if src_files else ""
+            )
+            func_tags = "".join(f'<span class="method-tag">{_esc(f)}</span>' for f in u["sample_funcs"])
+            items += (
+                f'<div class="unmapped-item">'
+                f'<div class="unmapped-ns">{delay}{_esc(u["dll_name"])}</div>'
+                f'<div class="source-counts">{u["func_count"]} imported functions</div>'
+                f'{src_html}'
+                f'<div class="methods-list">{func_tags}</div></div>'
+            )
+        unmapped = _collapsible_section(
+            "unmapped-dlls-section", f'Unmapped DLLs ({len(result["unmapped_dlls"])})',
+            f'<p style="font-size:.83rem;color:var(--text2);margin-bottom:11px;">'
+            f'DLLs with no current HarmonyOS NEXT mapping. May need manual research.</p>'
+            f'{items}'
+        )
+
+    total_funcs = sum(len(v) for v in result["imports"].values())
+
+    self_names = {f["file_name"].lower() for f in result["files"] if not f.get("error")}
+    mapped_dll_count = sum(
+        1 for km in result["kit_matches"] for src in km.get("dll_sources", [])
+        if src["dll_name"].lower() not in self_names
+    )
+    unmapped_ext_count = sum(
+        1 for u in result["unmapped_dlls"] if u["dll_name"].lower() not in self_names
+    )
+    total_dll_count  = mapped_dll_count + unmapped_ext_count
+    dll_coverage_pct = round(mapped_dll_count / total_dll_count * 100, 1) if total_dll_count > 0 else 0
+    if dll_coverage_pct >= 70:
+        dll_coverage_color = "var(--high)"
+    elif dll_coverage_pct >= 40:
+        dll_coverage_color = "var(--med)"
+    else:
+        dll_coverage_color = "var(--low)"
+
+    stat_cards = (
+        f'<a class="stat clickable" href="#kit-matches-section">'
+        f'<div class="num">{len(result["kit_matches"])}</div><div class="label">Kit Matches</div></a>'
+        f'<a class="stat clickable" href="#analyzed-files-section">'
+        f'<div class="num">{result["file_count"]}</div><div class="label">Files Analyzed</div></a>'
+        f'<a class="stat clickable" href="#import-table-section">'
+        f'<div class="num">{len(result["imports"])}</div><div class="label">Imported DLLs</div></a>'
+        f'<a class="stat clickable" href="#import-table-section">'
+        f'<div class="num">{total_funcs}</div><div class="label">Imported Functions</div></a>'
+        f'<a class="stat clickable" href="#kit-matches-section">'
+        f'<div class="num">{mapped_dll_count}/{total_dll_count}</div>'
+        f'<div class="sublabel" style="color:{dll_coverage_color};font-weight:700">{dll_coverage_pct}% coverage</div>'
+        f'<div class="label">Mapped DLLs</div></a>'
+    )
+
+    header_meta = (
+        f'<span>{result["file_count"]} dosya</span>'
+        f'<span>Analysis: {result["analysis_time_sec"]}s</span>'
+        f'<span>{now}</span>'
+    )
+
+    body_sections = files_section + kit_section + imports_section + unmapped
+
+    sidebar_links = [
+        ("Analyzed Files", "analyzed-files-section"),
+        ("HarmonyOS NEXT Kit Matches", "kit-matches-section"),
+        ("Merged Import Table", "import-table-section"),
+        ("Unmapped DLLs", "unmapped-dlls-section"),
+    ]
+    sidebar_html = (
+        '<div class="sidebar"><nav>'
+        + "".join(f'<a href="#{sid}">{_esc(label)}</a>' for label, sid in sidebar_links)
+        + '</nav></div>'
+    )
+
+    report_data = {
+        "mode":           "exe_folder",
+        "target":         "hmos",
+        "folder_name":    result["folder_name"],
+        "file_count":     result["file_count"],
+        "files":          result["files"],
+        "imports":        result["imports"],
+        "delay_dlls":     result["delay_dlls"],
+        "import_sources": result["import_sources"],
+        "kit_matches":    result["kit_matches"],
+        "unmapped_dlls":  result["unmapped_dlls"],
+        "report_date":    now,
+        "analysis_time_sec": result["analysis_time_sec"],
+    }
+
+    subs = {
+        "REPORT_TITLE":   "EXE Folder → HarmonyOS NEXT Report",
+        "REPORT_HEADING": "EXE Folder Migration Report",
+        "REPORT_SUB":     f'{_esc(result["folder_name"])} &nbsp;&middot;&nbsp; {result["file_count"]} dosya analiz edildi',
+        "HEADER_META":    header_meta,
+        "TARGET_LABEL":   "Target: HarmonyOS NEXT",
+        "STAT_CARDS":     stat_cards,
+        "BODY_SECTIONS":  body_sections,
+        "REPORT_DATE":    now,
+        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "SIDEBAR_HTML":   sidebar_html,
+        "CONTAINER_EXTRA_CLASS": "with-sidebar",
+        "SIDEBAR_TOGGLE_HTML": (
+            '<button class="sidebar-toggle" onclick="toggleSidebar()" '
+            'title="Toggle navigation">&#9776;</button>'
+        ),
+        "HEADER_EXTRA_CLASS": "with-toggle",
     }
     html = _HTML_BASE
     for k, v in subs.items():
@@ -1691,10 +2091,11 @@ def export_excel_exe(result: dict, output_path: Path):
     ws1["A3"] = "PE Metadata"
     hdr(ws1["A3"])
     vi = result["version_info"]
+    subsystem_label = "N/A (library)" if result["is_dll"] else result["subsystem"]
     meta_rows = [
         ("File",          result["file_name"]),
         ("Architecture",  result["machine"]),
-        ("Subsystem",     result["subsystem"]),
+        ("Subsystem",     subsystem_label),
         ("Entry Point",   result["entry_point"]),
         ("Image Base",    result["image_base"]),
         ("Image Size",    f"{result['image_size']:,} bytes"),
@@ -2156,6 +2557,14 @@ def build_agent_json(result: dict) -> dict:
             "framework_count":    len(result["frameworks"]),
             "permission_count":   len(result["permissions"]),
             "analysis_time_sec":  result["analysis_time_sec"],
+        }
+    elif mode == "exe_folder":
+        app_metadata = {
+            "folder_name":       result["folder_name"],
+            "file_count":        result["file_count"],
+            "files":             [f["file_name"] for f in result["files"]],
+            "dll_count":         len(result["imports"]),
+            "analysis_time_sec": result["analysis_time_sec"],
         }
     else:
         app_metadata = {

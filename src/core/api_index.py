@@ -2,8 +2,8 @@ import re
 import json
 from pathlib import Path
 
-_XLSX_PATH  = Path(__file__).parent.parent / "hmos_api.xlsx"
-_INDEX_PATH = Path(__file__).parent.parent / "hmos_api_index.json"
+_XLSX_PATH  = Path(__file__).parent.parent / "data" / "reference" / "hmos_api.xlsx"
+_INDEX_PATH = Path(__file__).parent.parent / "data" / "reference" / "hmos_api_index.json"
 _VER_RE     = re.compile(r'\d+\+?\s*$')
 
 
