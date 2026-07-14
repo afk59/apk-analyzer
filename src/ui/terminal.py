@@ -162,6 +162,7 @@ def interactive_session(script_dir: Path):
         "EXE  (Windows → HarmonyOS NEXT)",
         "IPA  (iOS → HarmonyOS NEXT)  [limited: App Store binaries are encrypted]",
         "Batch  (all APK + EXE + IPA files in input/)",
+        "EXE Folder  (analyze all .exe/.dll in an input/pc/<folder>/)",
     ]
     type_idx = tui_select("Select input type  (arrow keys + Enter):", input_types)
     print()
@@ -174,6 +175,22 @@ def interactive_session(script_dir: Path):
         print(f"  {_c('Selected target :', C.CYAN)}  {_c(label_t, C.BOLD, C.WHITE)}")
         print()
         return None, "batch", target
+
+    if type_idx == 4:
+        pc_dir = script_dir / "pc"
+        pc_dir.mkdir(exist_ok=True)
+        subfolders = sorted(p for p in pc_dir.iterdir() if p.is_dir())
+        if not subfolders:
+            print_warn(f"No subfolders found in {pc_dir}")
+            print(f"         {_c('Create a folder like input/pc/cppcheck/ with .exe/.dll files and run again.', C.GRAY)}\n")
+            sys.exit(0)
+        folder_idx  = tui_select("Select folder to analyze  (arrow keys + Enter):", [p.name for p in subfolders])
+        folder_path = subfolders[folder_idx]
+        print()
+        print(f"  {_c('Selected folder :', C.CYAN)}  {_c(folder_path.name, C.BOLD, C.WHITE)}")
+        print(f"  {_c('Selected target :', C.CYAN)}  {_c('HarmonyOS NEXT', C.BOLD, C.WHITE)}")
+        print()
+        return folder_path, "exe_folder", "hmos"
 
     if type_idx == 0:
         mode, ext, label = "apk", "*.apk", "APK"
@@ -244,6 +261,28 @@ def print_summary_exe(result: dict) -> None:
     print(f"  {_c('Subsystem   :', C.CYAN)}  {result['subsystem']}")
     if result["is_dotnet"]:
         print(f"  {_c('Runtime     :', C.CYAN)}  {_c('.NET / CLR detected', C.BOLD, C.YELLOW)}")
+    print(f"  {_c('Imports     :', C.CYAN)}  {len(result['imports'])} DLLs  /  {total_funcs} functions")
+    print(f"  {_c('Kit matches :', C.CYAN)}  {_c(str(len(result['kit_matches'])), C.BOLD, C.WHITE)}")
+    print(f"  {_c('Unmapped    :', C.CYAN)}  {len(result['unmapped_dlls'])} DLLs")
+    print()
+    for km in result["kit_matches"]:
+        conf  = km["confidence"]
+        clrs  = conf_colors.get(conf, (C.RESET,))
+        label = _c(f"[{conf_labels.get(conf,'???')}]", *clrs)
+        print(f"  {label}  {_c(km['kit_name'], C.WHITE)}")
+
+
+def print_summary_exe_folder(result: dict) -> None:
+    conf_colors = {"high": (C.BOLD, C.GREEN), "medium": (C.BOLD, C.YELLOW), "low": (C.BOLD, C.RED)}
+    conf_labels = {"high": "HIGH", "medium": "MED ", "low": "LOW "}
+    total_funcs = sum(len(v) for v in result["imports"].values())
+    errors = [f for f in result["files"] if f.get("error")]
+    print()
+    print(f"  {_c('-' * 50, C.DRED)}")
+    print(f"  {_c('SUMMARY  —  EXE FOLDER', C.BOLD, C.WHITE)}")
+    print(f"  {_c('-' * 50, C.DRED)}")
+    print(f"  {_c('Folder      :', C.CYAN)}  {result['folder_name']}")
+    print(f"  {_c('Files       :', C.CYAN)}  {result['file_count']} analyzed" + (f"  ({len(errors)} failed)" if errors else ""))
     print(f"  {_c('Imports     :', C.CYAN)}  {len(result['imports'])} DLLs  /  {total_funcs} functions")
     print(f"  {_c('Kit matches :', C.CYAN)}  {_c(str(len(result['kit_matches'])), C.BOLD, C.WHITE)}")
     print(f"  {_c('Unmapped    :', C.CYAN)}  {len(result['unmapped_dlls'])} DLLs")

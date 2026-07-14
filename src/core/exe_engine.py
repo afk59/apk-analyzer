@@ -210,6 +210,80 @@ def _string_scan_imports(exe_path: str, dll_map: dict, pe_sections: list = None)
     return {dll: sorted(funcs) for dll, funcs in found_imports.items()}, all_strings
 
 
+_QT_VERSION_RE = re.compile(r'^qt(\d)', re.IGNORECASE)
+
+
+def _detect_qt6_dlls(dll_names) -> list:
+    return sorted(
+        d for d in dll_names
+        if (m := _QT_VERSION_RE.match(Path(d).stem)) and m.group(1) == "6"
+    )
+
+
+_STATUS_MAP   = {"high": "Supported", "medium": "Replaceable", "low": "Should Confirm"}
+_STATUS_COLOR = {"high": "green",     "medium": "amber",       "low": "blue"}
+_CATEGORY_COLOR = {"Supported": "green", "Replaceable": "amber", "Should Confirm": "blue"}
+
+
+def _match_kits(all_dlls: dict, delay_dlls: set, dll_map_full: dict, source_map: dict = None) -> tuple[list, list]:
+    matched_kits: dict = {}
+    unmapped_dlls: list = []
+
+    for dll, funcs in all_dlls.items():
+        entry = dll_map_full.get(dll)
+        if not entry:
+            stem = Path(dll).stem
+            for key in dll_map_full:
+                if dll.startswith(Path(key).stem) or Path(key).stem == stem:
+                    entry = dll_map_full[key]
+                    break
+
+        if entry:
+            kit = entry["harmony_kit"]
+            if kit not in matched_kits:
+                matched_kits[kit] = {
+                    "kit_name":      kit,
+                    "harmony_import": entry.get("harmony_import"),
+                    "confidence":    entry["confidence"],
+                    "category":      entry.get("category"),
+                    "note":          entry["note"],
+                    "sample_url":    entry.get("sample_url"),
+                    "codelab_url":   entry.get("codelab_url"),
+                    "dll_sources":   [],
+                }
+            src_entry = {
+                "dll_name":     dll,
+                "dll_display":  entry["dll_display"],
+                "func_count":   len(funcs),
+                "sample_funcs": funcs[:10],
+                "is_delay":     dll in delay_dlls,
+            }
+            if source_map is not None:
+                src_entry["source_files"] = sorted(source_map.get(dll, []))
+            matched_kits[kit]["dll_sources"].append(src_entry)
+        else:
+            if not any(dll.startswith(s) for s in ["api-ms-win", "ext-ms-win", "_codegen"]):
+                u_entry = {
+                    "dll_name":     dll,
+                    "func_count":   len(funcs),
+                    "sample_funcs": funcs[:8],
+                    "is_delay":     dll in delay_dlls,
+                }
+                if source_map is not None:
+                    u_entry["source_files"] = sorted(source_map.get(dll, []))
+                unmapped_dlls.append(u_entry)
+
+    for kit_data in matched_kits.values():
+        kit_data["dll_sources"].sort(key=lambda x: x["func_count"], reverse=True)
+        status = kit_data.get("category") or _STATUS_MAP.get(kit_data["confidence"], "Should Confirm")
+        kit_data["status"]       = status
+        kit_data["status_color"] = _CATEGORY_COLOR.get(status, _STATUS_COLOR.get(kit_data["confidence"], "blue"))
+
+    kit_matches = sorted(matched_kits.values(), key=lambda x: x["kit_name"])
+    unmapped_dlls.sort(key=lambda x: x["func_count"], reverse=True)
+    return kit_matches, unmapped_dlls
+
+
 def analyze_exe(exe_path: str, mapping: dict) -> dict:
     print_info(f"Loading EXE: {_c(Path(exe_path).name, C.CYAN)}")
     t0 = time.time()
@@ -240,6 +314,7 @@ def analyze_exe(exe_path: str, mapping: dict) -> dict:
         "exports":           [],
         "kit_matches":       [],
         "unmapped_dlls":     [],
+        "qt6_dlls":          [],
         "is_packed":         False,
         "packer_hint":       None,
         "string_scan_mode":  False,
@@ -302,52 +377,82 @@ def analyze_exe(exe_path: str, mapping: dict) -> dict:
 
     print_info(f"Matching {_c('HarmonyOS NEXT', C.BOLD, C.CYAN)} kits...")
 
-    matched_kits: dict = {}
     all_dlls = {**result["imports"], **result["delay_imports"]}
-
-    for dll, funcs in all_dlls.items():
-        entry = dll_map_full.get(dll)
-        if not entry:
-            stem = Path(dll).stem
-            for key in dll_map_full:
-                if dll.startswith(Path(key).stem) or Path(key).stem == stem:
-                    entry = dll_map_full[key]
-                    break
-
-        if entry:
-            kit = entry["harmony_kit"]
-            if kit not in matched_kits:
-                matched_kits[kit] = {
-                    "kit_name":      kit,
-                    "harmony_import": entry.get("harmony_import"),
-                    "confidence":    entry["confidence"],
-                    "note":          entry["note"],
-                    "sample_url":    entry.get("sample_url"),
-                    "codelab_url":   entry.get("codelab_url"),
-                    "dll_sources":   [],
-                }
-            matched_kits[kit]["dll_sources"].append({
-                "dll_name":     dll,
-                "dll_display":  entry["dll_display"],
-                "func_count":   len(funcs),
-                "sample_funcs": funcs[:10],
-                "is_delay":     dll in result["delay_imports"],
-            })
-        else:
-            if not any(dll.startswith(s) for s in ["api-ms-win", "ext-ms-win", "_codegen"]):
-                result["unmapped_dlls"].append({
-                    "dll_name":     dll,
-                    "func_count":   len(funcs),
-                    "sample_funcs": funcs[:8],
-                    "is_delay":     dll in result["delay_imports"],
-                })
-
-    for kit_data in matched_kits.values():
-        kit_data["dll_sources"].sort(key=lambda x: x["func_count"], reverse=True)
-
-    result["kit_matches"]  = sorted(matched_kits.values(), key=lambda x: x["kit_name"])
-    result["unmapped_dlls"].sort(key=lambda x: x["func_count"], reverse=True)
+    delay_dlls = set(result["delay_imports"].keys())
+    result["kit_matches"], result["unmapped_dlls"] = _match_kits(all_dlls, delay_dlls, dll_map_full)
+    result["qt6_dlls"] = _detect_qt6_dlls(all_dlls.keys())
 
     result["analysis_time_sec"] = round(time.time() - t0, 2)
     print_ok(f"Analysis complete in {_c(str(result['analysis_time_sec']) + 's', C.BOLD, C.GREEN)}")
+    return result
+
+
+def analyze_exe_folder(folder_path: str, mapping: dict) -> dict:
+    folder = Path(folder_path)
+    print_info(f"Loading folder: {_c(folder.name, C.CYAN)}")
+    t0 = time.time()
+
+    targets = sorted(folder.glob("*.exe")) + sorted(folder.glob("*.dll"))
+    if not targets:
+        print_warn(f"No .exe or .dll files found in {folder}")
+
+    dll_map_full = {m["dll_name"].lower(): m for m in mapping.get("dll_mappings", [])}
+
+    files_meta: list = []
+    merged_imports: dict = defaultdict(set)
+    merged_delay: set = set()
+    source_map: dict = defaultdict(set)
+
+    for f in targets:
+        try:
+            file_result = analyze_exe(str(f), mapping)
+        except SystemExit:
+            files_meta.append({"file_name": f.name, "error": "Not a valid PE file"})
+            continue
+        except Exception as exc:
+            files_meta.append({"file_name": f.name, "error": str(exc)})
+            continue
+
+        files_meta.append({
+            "file_name":        file_result["file_name"],
+            "machine":          file_result["machine"],
+            "subsystem":        file_result["subsystem"],
+            "is_dll":           file_result["is_dll"],
+            "is_dotnet":        file_result["is_dotnet"],
+            "is_packed":        file_result["is_packed"],
+            "packer_hint":      file_result["packer_hint"],
+            "avg_entropy":      file_result["avg_entropy"],
+            "string_scan_mode": file_result["string_scan_mode"],
+            "error":            None,
+        })
+
+        for dll, funcs in file_result["imports"].items():
+            merged_imports[dll].update(funcs)
+            source_map[dll].add(f.name)
+        for dll, funcs in file_result["delay_imports"].items():
+            merged_imports[dll].update(funcs)
+            merged_delay.add(dll)
+            source_map[dll].add(f.name)
+
+    all_imports_sorted = {dll: sorted(funcs) for dll, funcs in merged_imports.items()}
+
+    print_info(f"Matching {_c('HarmonyOS NEXT', C.BOLD, C.CYAN)} kits against merged import set...")
+    kit_matches, unmapped_dlls = _match_kits(all_imports_sorted, merged_delay, dll_map_full, source_map)
+
+    result = {
+        "mode":              "exe_folder",
+        "target":            "hmos",
+        "folder_path":       str(folder),
+        "folder_name":       folder.name,
+        "file_count":        len(targets),
+        "files":             files_meta,
+        "imports":           all_imports_sorted,
+        "delay_dlls":        sorted(merged_delay),
+        "import_sources":    {dll: sorted(names) for dll, names in source_map.items()},
+        "kit_matches":       kit_matches,
+        "unmapped_dlls":     unmapped_dlls,
+        "qt6_dlls":          _detect_qt6_dlls(all_imports_sorted.keys()),
+        "analysis_time_sec": round(time.time() - t0, 2),
+    }
+    print_ok(f"Folder analysis complete in {_c(str(result['analysis_time_sec']) + 's', C.BOLD, C.GREEN)} — {len(targets)} file(s)")
     return result

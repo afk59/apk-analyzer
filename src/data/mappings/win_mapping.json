@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2025-05-07",
+  "version": "1.1.0",
+  "last_updated": "2026-07-13",
   "target": "hmos",
   "description": "Windows DLL / API namespace → HarmonyOS NEXT kit mapping for PC migration analysis",
   "dll_mappings": [
@@ -10,7 +10,8 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "Core Win32 UI (windows, messages, dialogs) → ArkUI component model. Full architectural rewrite required; no 1-to-1 API mapping."
+      "note": "Core Win32 UI (windows, messages, dialogs) → ArkUI component model. Full architectural rewrite required; no 1-to-1 API mapping.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "kernel32.dll",
@@ -34,7 +35,8 @@
       "harmony_kit": "@kit.ArkGraphics2D",
       "harmony_import": "@kit.ArkGraphics2D",
       "confidence": "medium",
-      "note": "GDI 2D drawing primitives → ArkGraphics2D / Canvas API. Custom rendering can use @ohos.graphics.drawing."
+      "note": "GDI 2D drawing primitives → ArkGraphics2D / Canvas API. Custom rendering can use @ohos.graphics.drawing.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-micro-poster-renderer"
     },
     {
       "dll_name": "gdi32full.dll",
@@ -42,7 +44,8 @@
       "harmony_kit": "@kit.ArkGraphics2D",
       "harmony_import": "@kit.ArkGraphics2D",
       "confidence": "medium",
-      "note": "Extended GDI functions → ArkGraphics2D. Same mapping as gdi32.dll."
+      "note": "Extended GDI functions → ArkGraphics2D. Same mapping as gdi32.dll.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-micro-poster-renderer"
     },
     {
       "dll_name": "opengl32.dll",
@@ -50,7 +53,8 @@
       "harmony_kit": "@kit.ArkGraphics3D",
       "harmony_import": "@kit.ArkGraphics3D",
       "confidence": "high",
-      "note": "OpenGL ES 3.x is supported on HarmonyOS NEXT via NDK. @kit.ArkGraphics3D provides XComponent + EGL surface. Port GL code with minimal changes."
+      "note": "OpenGL ES 3.x is supported on HarmonyOS NEXT via NDK. @kit.ArkGraphics3D provides XComponent + EGL surface. Port GL code with minimal changes.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
     },
     {
       "dll_name": "d3d11.dll",
@@ -58,7 +62,8 @@
       "harmony_kit": "@kit.ArkGraphics3D",
       "harmony_import": "@kit.ArkGraphics3D",
       "confidence": "low",
-      "note": "DirectX 11 not available. HarmonyOS supports OpenGL ES 3.x and Vulkan via NDK. D3D → Vulkan/GLES port required."
+      "note": "DirectX 11 not available. HarmonyOS supports OpenGL ES 3.x and Vulkan via NDK. D3D → Vulkan/GLES port required.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
     },
     {
       "dll_name": "d3d12.dll",
@@ -66,7 +71,8 @@
       "harmony_kit": "@kit.ArkGraphics3D",
       "harmony_import": "@kit.ArkGraphics3D",
       "confidence": "low",
-      "note": "DirectX 12 not available. Vulkan is the closest equivalent and is supported on HarmonyOS NEXT via NDK."
+      "note": "DirectX 12 not available. Vulkan is the closest equivalent and is supported on HarmonyOS NEXT via NDK.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
     },
     {
       "dll_name": "vulkan-1.dll",
@@ -74,7 +80,8 @@
       "harmony_kit": "@kit.ArkGraphics3D",
       "harmony_import": "@kit.ArkGraphics3D",
       "confidence": "high",
-      "note": "Vulkan is natively supported on HarmonyOS NEXT via NDK. libvulkan.so is available. High portability."
+      "note": "Vulkan is natively supported on HarmonyOS NEXT via NDK. libvulkan.so is available. High portability.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
     },
     {
       "dll_name": "dxgi.dll",
@@ -82,7 +89,8 @@
       "harmony_kit": "@kit.ArkGraphics3D",
       "harmony_import": "@kit.ArkGraphics3D",
       "confidence": "low",
-      "note": "DXGI swap chains and adapters are Windows-specific. EGL + XComponent serves a similar role on HarmonyOS."
+      "note": "DXGI swap chains and adapters are Windows-specific. EGL + XComponent serves a similar role on HarmonyOS.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-control3d-models-with-arkgraphics3d"
     },
     {
       "dll_name": "ole32.dll",
@@ -106,7 +114,8 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "Windows common controls (TreeView, ListView, etc.) → ArkUI built-in components (List, Grid, Tree, etc.)."
+      "note": "Windows common controls (TreeView, ListView, etc.) → ArkUI built-in components (List, Grid, Tree, etc.).",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "comdlg32.dll",
@@ -114,7 +123,8 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "File/color/font picker dialogs → ArkUI picker components + @ohos.file.picker."
+      "note": "File/color/font picker dialogs → ArkUI picker components + @ohos.file.picker.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "shell32.dll",
@@ -122,7 +132,8 @@
       "harmony_kit": "@kit.CoreFileKit",
       "harmony_import": "@kit.CoreFileKit",
       "confidence": "medium",
-      "note": "Shell operations (file associations, shortcuts, tray icons) → CoreFileKit + AbilityKit. Desktop shell integration differs significantly."
+      "note": "Shell operations (file associations, shortcuts, tray icons) → CoreFileKit + AbilityKit. Desktop shell integration differs significantly.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-cloud-file-sync"
     },
     {
       "dll_name": "shlwapi.dll",
@@ -130,7 +141,8 @@
       "harmony_kit": "@kit.CoreFileKit",
       "harmony_import": "@kit.CoreFileKit",
       "confidence": "medium",
-      "note": "Path manipulation, registry helpers, URL functions → CoreFileKit + built-in ArkTS string/URL utilities."
+      "note": "Path manipulation, registry helpers, URL functions → CoreFileKit + built-in ArkTS string/URL utilities.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-cloud-file-sync"
     },
     {
       "dll_name": "advapi32.dll",
@@ -154,7 +166,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "high",
-      "note": "CNG symmetric/asymmetric crypto → @kit.CryptoArchitectureKit. AES-GCM, RSA, ECDH, SHA-2/3 all available."
+      "note": "CNG symmetric/asymmetric crypto → @kit.CryptoArchitectureKit. AES-GCM, RSA, ECDH, SHA-2/3 all available.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "ncrypt.dll",
@@ -170,7 +183,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "high",
-      "note": "TCP/UDP sockets → @kit.NetworkKit (@ohos.net.socket). BSD socket API also available via NDK for native code."
+      "note": "TCP/UDP sockets → @kit.NetworkKit (@ohos.net.socket). BSD socket API also available via NDK for native code.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "winhttp.dll",
@@ -178,7 +192,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "high",
-      "note": "HTTP/HTTPS client → @ohos.net.http (NetworkKit). Supports GET/POST, TLS, cookies, headers."
+      "note": "HTTP/HTTPS client → @ohos.net.http (NetworkKit). Supports GET/POST, TLS, cookies, headers.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "wininet.dll",
@@ -186,7 +201,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "high",
-      "note": "WinINet HTTP/FTP/cookie API → @kit.NetworkKit. @ohos.net.http covers HTTP; FTP not natively supported."
+      "note": "WinINet HTTP/FTP/cookie API → @kit.NetworkKit. @ohos.net.http covers HTTP; FTP not natively supported.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "dnsapi.dll",
@@ -194,7 +210,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "medium",
-      "note": "DNS resolution → NetworkKit. Direct DNS query API limited; rely on hostname resolution in socket/http APIs."
+      "note": "DNS resolution → NetworkKit. Direct DNS query API limited; rely on hostname resolution in socket/http APIs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "iphlpapi.dll",
@@ -202,7 +219,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "medium",
-      "note": "Network adapter enumeration, routing tables → @ohos.net.connection (NetworkKit). Not all adapter-level details exposed."
+      "note": "Network adapter enumeration, routing tables → @ohos.net.connection (NetworkKit). Not all adapter-level details exposed.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "mfplat.dll",
@@ -210,7 +228,8 @@
       "harmony_kit": "@kit.MediaKit",
       "harmony_import": "@kit.MediaKit",
       "confidence": "medium",
-      "note": "Media Foundation pipeline → @kit.MediaKit (AVPlayer/AVRecorder). Codec pipeline is abstracted; direct MFT transforms not supported."
+      "note": "Media Foundation pipeline → @kit.MediaKit (AVPlayer/AVRecorder). Codec pipeline is abstracted; direct MFT transforms not supported.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "mf.dll",
@@ -218,7 +237,8 @@
       "harmony_kit": "@kit.MediaKit",
       "harmony_import": "@kit.MediaKit",
       "confidence": "medium",
-      "note": "Media Foundation session/topology → AVPlayer/AVRecorder in MediaKit."
+      "note": "Media Foundation session/topology → AVPlayer/AVRecorder in MediaKit.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "mfreadwrite.dll",
@@ -226,7 +246,8 @@
       "harmony_kit": "@kit.MediaKit",
       "harmony_import": "@kit.MediaKit",
       "confidence": "medium",
-      "note": "MF source reader/sink writer → @ohos.multimedia.media AVMuxer/AVDemuxer (MediaKit)."
+      "note": "MF source reader/sink writer → @ohos.multimedia.media AVMuxer/AVDemuxer (MediaKit).",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "dsound.dll",
@@ -234,7 +255,8 @@
       "harmony_kit": "@kit.AudioKit",
       "harmony_import": "@kit.AudioKit",
       "confidence": "medium",
-      "note": "DirectSound PCM playback/capture → @kit.AudioKit (AudioRenderer/AudioCapturer). Low-latency path via NDK OHAudio."
+      "note": "DirectSound PCM playback/capture → @kit.AudioKit (AudioRenderer/AudioCapturer). Low-latency path via NDK OHAudio.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "winmm.dll",
@@ -242,7 +264,8 @@
       "harmony_kit": "@kit.AudioKit",
       "harmony_import": "@kit.AudioKit",
       "confidence": "medium",
-      "note": "waveOut/waveIn, MIDI, timer → AudioKit + @ohos.multimedia.audio. MIDI not natively supported."
+      "note": "waveOut/waveIn, MIDI, timer → AudioKit + @ohos.multimedia.audio. MIDI not natively supported.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "xaudio2_9.dll",
@@ -250,7 +273,8 @@
       "harmony_kit": "@kit.AudioKit",
       "harmony_import": "@kit.AudioKit",
       "confidence": "medium",
-      "note": "XAudio2 DSP/submix graph → OHAudio (NDK) for low-latency. ArkTS-side: AudioRenderer."
+      "note": "XAudio2 DSP/submix graph → OHAudio (NDK) for low-latency. ArkTS-side: AudioRenderer.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "avrt.dll",
@@ -258,7 +282,8 @@
       "harmony_kit": "@kit.AudioKit",
       "harmony_import": "@kit.AudioKit",
       "confidence": "low",
-      "note": "MMCSS real-time thread priority → HarmonyOS thread priority APIs in NDK (limited access)."
+      "note": "MMCSS real-time thread priority → HarmonyOS thread priority APIs in NDK (limited access).",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/music-player"
     },
     {
       "dll_name": "d2d1.dll",
@@ -266,7 +291,8 @@
       "harmony_kit": "@kit.ArkGraphics2D",
       "harmony_import": "@kit.ArkGraphics2D",
       "confidence": "medium",
-      "note": "Direct2D GPU-accelerated 2D → ArkGraphics2D / Canvas drawing API. @ohos.graphics.drawing for NDK path."
+      "note": "Direct2D GPU-accelerated 2D → ArkGraphics2D / Canvas drawing API. @ohos.graphics.drawing for NDK path.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-micro-poster-renderer"
     },
     {
       "dll_name": "dwrite.dll",
@@ -274,7 +300,8 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "DirectWrite text layout/rendering → ArkUI Text component + @ohos.graphics.text (NDK). OpenType feature support available."
+      "note": "DirectWrite text layout/rendering → ArkUI Text component + @ohos.graphics.text (NDK). OpenType feature support available.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "wintypes.dll",
@@ -410,7 +437,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "low",
-      "note": "SSPI/NTLM/Kerberos not available on HarmonyOS. TLS → @ohos.net.ssl or NDK mbedTLS. Auth flows must be redesigned."
+      "note": "SSPI/NTLM/Kerberos not available on HarmonyOS. TLS → @ohos.net.ssl or NDK mbedTLS. Auth flows must be redesigned.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "sspicli.dll",
@@ -418,7 +446,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "low",
-      "note": "SSPI client-side auth not available. Same recommendation as secur32.dll."
+      "note": "SSPI client-side auth not available. Same recommendation as secur32.dll.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "schannel.dll",
@@ -426,7 +455,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "high",
-      "note": "Schannel TLS → @ohos.net.ssl (NetworkKit) or NDK mbedTLS. TLS 1.2/1.3 both supported."
+      "note": "Schannel TLS → @ohos.net.ssl (NetworkKit) or NDK mbedTLS. TLS 1.2/1.3 both supported.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "dbghelp.dll",
@@ -450,7 +480,8 @@
       "harmony_kit": "@kit.PerformanceAnalysisKit",
       "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "low",
-      "note": "Windows performance counters → @kit.PerformanceAnalysisKit (hiPerf, hiTrace). API model differs significantly."
+      "note": "Windows performance counters → @kit.PerformanceAnalysisKit (hiPerf, hiTrace). API model differs significantly.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
     },
     {
       "dll_name": "wtsapi32.dll",
@@ -466,7 +497,8 @@
       "harmony_kit": "@kit.PerformanceAnalysisKit",
       "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "low",
-      "note": "Windows Event Log → HarmonyOS hilog (@ohos.hilog). Structured logging available; event subscription model differs."
+      "note": "Windows Event Log → HarmonyOS hilog (@ohos.hilog). Structured logging available; event subscription model differs.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
     },
     {
       "dll_name": "openssl",
@@ -474,7 +506,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "high",
-      "note": "OpenSSL → @kit.CryptoArchitectureKit or NDK mbedTLS. OpenSSL can also be cross-compiled for HarmonyOS NDK."
+      "note": "OpenSSL → @kit.CryptoArchitectureKit or NDK mbedTLS. OpenSSL can also be cross-compiled for HarmonyOS NDK.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "libssl",
@@ -482,7 +515,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "high",
-      "note": "TLS/SSL via OpenSSL → @kit.CryptoArchitectureKit or mbedTLS NDK. OpenSSL NDK port available."
+      "note": "TLS/SSL via OpenSSL → @kit.CryptoArchitectureKit or mbedTLS NDK. OpenSSL NDK port available.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "libcrypto",
@@ -490,7 +524,8 @@
       "harmony_kit": "@kit.CryptoArchitectureKit",
       "harmony_import": "@kit.CryptoArchitectureKit",
       "confidence": "high",
-      "note": "Symmetric/asymmetric crypto via OpenSSL → CryptoArchitectureKit. AES, RSA, ECDSA, SHA all available."
+      "note": "Symmetric/asymmetric crypto via OpenSSL → CryptoArchitectureKit. AES, RSA, ECDSA, SHA all available.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/crypto-notes"
     },
     {
       "dll_name": "sqlite3.dll",
@@ -498,7 +533,8 @@
       "harmony_kit": "@kit.ArkData",
       "harmony_import": "@kit.ArkData",
       "confidence": "high",
-      "note": "SQLite → @kit.ArkData relationalStore (wraps SQLite). Direct SQLite NDK access also available."
+      "note": "SQLite → @kit.ArkData relationalStore (wraps SQLite). Direct SQLite NDK access also available.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "zlib1.dll",
@@ -514,7 +550,8 @@
       "harmony_kit": "@kit.ImageKit",
       "harmony_import": "@kit.ImageKit",
       "confidence": "high",
-      "note": "PNG decode/encode → @kit.ImageKit (ImageSource/ImagePacker). NDK libpng also cross-compilable."
+      "note": "PNG decode/encode → @kit.ImageKit (ImageSource/ImagePacker). NDK libpng also cross-compilable.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-image-effect"
     },
     {
       "dll_name": "libjpeg",
@@ -522,7 +559,8 @@
       "harmony_kit": "@kit.ImageKit",
       "harmony_import": "@kit.ImageKit",
       "confidence": "high",
-      "note": "JPEG decode/encode → @kit.ImageKit. NDK libjpeg-turbo also cross-compilable."
+      "note": "JPEG decode/encode → @kit.ImageKit. NDK libjpeg-turbo also cross-compilable.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-image-effect"
     },
     {
       "dll_name": "freetype.dll",
@@ -530,7 +568,8 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "FreeType glyph rasterization → ArkUI text rendering engine (uses Skia internally). Custom font loading via @ohos.font."
+      "note": "FreeType glyph rasterization → ArkUI text rendering engine (uses Skia internally). Custom font loading via @ohos.font.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "harfbuzz.dll",
@@ -538,55 +577,59 @@
       "harmony_kit": "@kit.ArkUI",
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
-      "note": "HarfBuzz OpenType shaping → ArkUI text engine. Can also cross-compile HarfBuzz for NDK."
+      "note": "HarfBuzz OpenType shaping → ArkUI text engine. Can also cross-compile HarfBuzz for NDK.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-build-voice-memo-recorder"
     },
     {
       "dll_name": "Qt5Core.dll",
       "dll_display": "Qt5 Core",
-      "harmony_kit": "No HarmonyOS NEXT port (Qt6 roadmap)",
+      "harmony_kit": "Qt for HarmonyOS (official port)",
       "harmony_import": null,
-      "confidence": "low",
-      "note": "Qt5 Core (QObject, signals/slots, QThread) → no official OHOS port yet. Qt6 OHOS port in progress (community). Manual rewrite or wait for Qt6 OHOS stable release."
+      "confidence": "high",
+      "note": "Qt 5.12.12/5.15.16 has an official HarmonyOS port — migrate without rewrite"
     },
     {
       "dll_name": "Qt5Gui.dll",
       "dll_display": "Qt5 GUI",
-      "harmony_kit": "@kit.ArkUI",
-      "harmony_import": "@kit.ArkUI",
-      "confidence": "low",
-      "note": "Qt5 QWidget/QPainter rendering → ArkUI. No Qt5 OHOS port. Full UI rewrite in ArkTS/ArkUI required."
+      "harmony_kit": "Qt for HarmonyOS (official port)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Qt 5.12.12/5.15.16 has an official HarmonyOS port — migrate without rewrite"
     },
     {
       "dll_name": "Qt5Widgets.dll",
       "dll_display": "Qt5 Widgets",
-      "harmony_kit": "@kit.ArkUI",
-      "harmony_import": "@kit.ArkUI",
-      "confidence": "low",
-      "note": "Qt5 widget set → ArkUI components. No direct port; UI layer requires full rewrite."
+      "harmony_kit": "Qt for HarmonyOS (official port)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Qt 5.12.12/5.15.16 has an official HarmonyOS port — migrate without rewrite"
     },
     {
       "dll_name": "Qt6Core.dll",
       "dll_display": "Qt6 Core",
-      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_kit": "Qt for HarmonyOS (pending Qt 6.12 release)",
       "harmony_import": null,
-      "confidence": "low",
-      "note": "Qt6 OHOS community port exists but not production-ready as of 2025. QObject/QThread/QEventLoop → evaluate Qt6 OHOS port status before committing."
+      "confidence": "medium",
+      "category": "Should Confirm",
+      "note": "Qt 6.x HarmonyOS support not yet released — formal Qt 6.12 release expected ~Q4 2026, migration path not yet available, monitor before planning"
     },
     {
       "dll_name": "Qt6Gui.dll",
       "dll_display": "Qt6 GUI",
-      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_kit": "Qt for HarmonyOS (pending Qt 6.12 release)",
       "harmony_import": null,
-      "confidence": "low",
-      "note": "Qt6 GUI OHOS port — experimental. Rendering backend targets OpenGL ES. Test on OHOS emulator before adopting."
+      "confidence": "medium",
+      "category": "Should Confirm",
+      "note": "Qt 6.x HarmonyOS support not yet released — formal Qt 6.12 release expected ~Q4 2026, migration path not yet available, monitor before planning"
     },
     {
       "dll_name": "Qt6Widgets.dll",
       "dll_display": "Qt6 Widgets",
-      "harmony_kit": "Qt6 OHOS (community port, experimental)",
+      "harmony_kit": "Qt for HarmonyOS (pending Qt 6.12 release)",
       "harmony_import": null,
-      "confidence": "low",
-      "note": "Qt6 Widgets OHOS port — experimental. Same caveat as Qt6Core/Qt6Gui."
+      "confidence": "medium",
+      "category": "Should Confirm",
+      "note": "Qt 6.x HarmonyOS support not yet released — formal Qt 6.12 release expected ~Q4 2026, migration path not yet available, monitor before planning"
     },
     {
       "dll_name": "Qt6Network.dll",
@@ -594,7 +637,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "medium",
-      "note": "QNetworkAccessManager → @ohos.net.http (NetworkKit). Or keep Qt6Network if Qt6 OHOS port is adopted."
+      "note": "QNetworkAccessManager → @ohos.net.http (NetworkKit). Or keep Qt6Network if Qt6 OHOS port is adopted.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "Qt5Network.dll",
@@ -602,7 +646,8 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "medium",
-      "note": "QNetworkAccessManager → @ohos.net.http. No OHOS port for Qt5; rewrite networking layer."
+      "note": "QNetworkAccessManager → @ohos.net.http. No OHOS port for Qt5; rewrite networking layer.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
     },
     {
       "dll_name": "msvcp140d.dll",
@@ -626,7 +671,8 @@
       "harmony_kit": "@kit.PerformanceAnalysisKit",
       "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "low",
-      "note": "WER crash reporting → HarmonyOS HiTrace + hilog crash capture. @kit.PerformanceAnalysisKit."
+      "note": "WER crash reporting → HarmonyOS HiTrace + hilog crash capture. @kit.PerformanceAnalysisKit.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-performance-analysis-kit"
     },
     {
       "dll_name": "version.dll",
@@ -650,7 +696,96 @@
       "harmony_kit": "@kit.NetworkKit",
       "harmony_import": "@kit.NetworkKit",
       "confidence": "low",
-      "note": "Windows network provider router (mapped drives, UNC paths) → no direct equivalent on HarmonyOS."
+      "note": "Windows network provider router (mapped drives, UNC paths) → no direct equivalent on HarmonyOS.",
+      "sample_url": "https://github.com/Explore-In-HMOS-Wearable/how-to-use-network-kit"
+    },
+    {
+      "dll_name": "api-ms-win-crt-convert-l1-1-0.dll",
+      "dll_display": "Universal CRT — Convert API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-environment-l1-1-0.dll",
+      "dll_display": "Universal CRT — Environment API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-filesystem-l1-1-0.dll",
+      "dll_display": "Universal CRT — Filesystem API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-heap-l1-1-0.dll",
+      "dll_display": "Universal CRT — Heap API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-locale-l1-1-0.dll",
+      "dll_display": "Universal CRT — Locale API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-math-l1-1-0.dll",
+      "dll_display": "Universal CRT — Math API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-runtime-l1-1-0.dll",
+      "dll_display": "Universal CRT — Runtime API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-stdio-l1-1-0.dll",
+      "dll_display": "Universal CRT — Stdio API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-string-l1-1-0.dll",
+      "dll_display": "Universal CRT — String API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-time-l1-1-0.dll",
+      "dll_display": "Universal CRT — Time API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "api-ms-win-crt-utility-l1-1-0.dll",
+      "dll_display": "Universal CRT — Utility API Set",
+      "harmony_kit": "HarmonyOS NDK (libc)",
+      "harmony_import": null,
+      "confidence": "high",
+      "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
     }
   ]
 }

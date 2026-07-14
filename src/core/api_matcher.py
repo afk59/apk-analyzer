@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-_INDEX_PATH = Path(__file__).parent.parent / "hmos_api_index.json"
+_INDEX_PATH = Path(__file__).parent.parent / "data" / "reference" / "hmos_api_index.json"
 _VER_RE     = re.compile(r'\d+\+?\s*$')
 
 _index: dict = {}
