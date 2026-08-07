@@ -1,6 +1,7 @@
 
 import sys
 import os
+import shutil
 from pathlib import Path
 
 
@@ -44,6 +45,7 @@ def print_warn(msg: str) -> None:
 
 def tui_select(prompt: str, options: list) -> int:
     selected = 0
+    top      = 0
 
     try:
         import tty, termios
@@ -57,17 +59,40 @@ def tui_select(prompt: str, options: list) -> int:
     except ImportError:
         HAS_MSVCRT = False
 
+    # Scrolling viewport: drawing more lines than the terminal has rows makes it
+    # scroll, which invalidates the cursor-up count and smears the menu. Fixed
+    # once up front -- a per-render value would desync from the lines already
+    # drawn. -4 leaves room for the prompt and the surrounding blank lines.
+    try:
+        _rows = shutil.get_terminal_size().lines
+    except Exception:
+        _rows = 24
+    view = max(3, min(len(options), _rows - 4))
+
+    def _clamp():
+        nonlocal top
+        if selected < top:
+            top = selected
+        elif selected >= top + view:
+            top = selected - view + 1
+        top = max(0, min(top, max(0, len(options) - view)))
+
     def _render():
-        sys.stdout.write(f"  {_c(prompt, C.BOLD, C.WHITE)}\n")
-        for i, opt in enumerate(options):
+        _clamp()
+        counter = f"   [{selected + 1}/{len(options)}]" if len(options) > view else ""
+        # \033[K clears to end of line: without it a short option leaves the tail
+        # of the longer one that was previously drawn on that row.
+        sys.stdout.write(f"  {_c(prompt, C.BOLD, C.WHITE)}{_c(counter, C.GRAY)}\033[K\n")
+        for i in range(top, top + view):
+            opt = options[i]
             if i == selected:
                 marker = _c(" > ", C.BOLD, C.GREEN)
                 line   = _c(opt, C.BOLD, C.WHITE)
             else:
                 marker = "   "
                 line   = _c(opt, C.GRAY)
-            sys.stdout.write(f"  {marker}{line}\n")
-        sys.stdout.write(f"\033[{len(options)+1}A")
+            sys.stdout.write(f"  {marker}{line}\033[K\n")
+        sys.stdout.write(f"\033[{view + 1}A")
         sys.stdout.flush()
 
     if HAS_TTY:
@@ -94,7 +119,7 @@ def tui_select(prompt: str, options: list) -> int:
                 _render()
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
-        sys.stdout.write(f"\033[{len(options)+1}B\n")
+        sys.stdout.write(f"\033[{view + 1}B\n")
         sys.stdout.flush()
 
     elif HAS_MSVCRT:
@@ -114,7 +139,7 @@ def tui_select(prompt: str, options: list) -> int:
             elif ch == b"\x03":
                 raise KeyboardInterrupt
             _render()
-        sys.stdout.write(f"\033[{len(options)+1}B\n")
+        sys.stdout.write(f"\033[{view + 1}B\n")
         sys.stdout.flush()
 
     else:

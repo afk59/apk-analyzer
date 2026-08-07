@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 from collections import defaultdict
 
-from ui.terminal import print_info, print_ok, _c, C
+from ui.terminal import print_info, print_ok, print_warn, _c, C
 
 
 _OHOS_PERM_CATALOGUE = [
@@ -143,6 +143,38 @@ def _is_private_lib(ns: str, package_name: str, ns_mappings: list) -> bool:
     return True
 
 
+def _safe_attr(getter, default=None):
+    """androguard's get_androidversion_name/code index self.androidversion[...]
+    directly, so any APK without android:versionName/versionCode raises
+    KeyError instead of returning None. Every other getter we use is safe."""
+    try:
+        return getter()
+    except Exception:
+        return default
+
+
+def _warn_if_split_bundle(apk_path: str) -> None:
+    """APKM/XAPK are ZIPs of split APKs (base.apk + config.*.apk), not APKs.
+    Renaming one to .apk gets it past the extension check but androguard then
+    finds no manifest/dex and the result is silently meaningless."""
+    try:
+        with zipfile.ZipFile(apk_path) as z:
+            names = z.namelist()
+    except Exception:
+        return
+    if "classes.dex" in names or "AndroidManifest.xml" in names:
+        return
+    inner = [n for n in names if n.lower().endswith(".apk")]
+    if inner:
+        print_warn(
+            "This looks like a split-APK bundle (APKM/XAPK), not a plain APK — "
+            f"it contains {len(inner)} inner .apk file(s)."
+        )
+        print_warn(
+            "Extract it and analyze base.apk instead; results here will be empty or wrong."
+        )
+
+
 def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
     from androguard.misc import AnalyzeAPK
 
@@ -150,6 +182,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
     is_hmos   = target == "hmos"
 
     print_info(f"Loading APK: {_c(Path(apk_path).name, C.CYAN)}")
+    _warn_if_split_bundle(apk_path)
     t0 = time.time()
     a, d_list, dx = AnalyzeAPK(apk_path)
     print_info("Analyzing DEX bytecode...")
@@ -160,8 +193,8 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
         "target":              target,
         "package_name":        a.get_package(),
         "app_name":            a.get_app_name(),
-        "version_name":        a.get_androidversion_name(),
-        "version_code":        a.get_androidversion_code(),
+        "version_name":        _safe_attr(a.get_androidversion_name),
+        "version_code":        _safe_attr(a.get_androidversion_code),
         "min_sdk":             a.get_min_sdk_version(),
         "target_sdk":          a.get_target_sdk_version(),
         "permissions":         [],
