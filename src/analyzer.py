@@ -42,6 +42,28 @@ def _ensure_deps():
 _ensure_deps()
 
 
+def _silence_androguard_logs():
+    """Drop loguru's default sink before any DEX parsing happens.
+
+    androguard logs every map_item it parses at DEBUG through loguru. Left on,
+    a single APK writes ~31 MB and a 42-app batch well over 10 GB. Must run
+    after _ensure_deps() (loguru arrives as an androguard dependency) and
+    before core.apk_engine's lazy `from androguard.misc import AnalyzeAPK`.
+
+    NOTE: this removes *all* loguru sinks, not just androguard's. That is fine
+    today because androguard is the only loguru consumer in the dependency
+    tree; revisit if project code ever adopts loguru for its own logging.
+    """
+    try:
+        from loguru import logger
+    except ImportError:
+        return
+    logger.remove()
+
+
+_silence_androguard_logs()
+
+
 from ui.terminal   import print_info, print_ok, print_warn, _c, C, interactive_session
 from core.mapping  import load_mapping
 from core.apk_engine import analyze_apk
