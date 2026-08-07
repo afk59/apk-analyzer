@@ -187,14 +187,26 @@ _HTML_BASE = r"""<!DOCTYPE html>
   body.sidebar-closed .sidebar { transform:translateX(-100%); }
   body.sidebar-closed .container.with-sidebar { margin-left:0; }
   .sidebar-toggle { position:fixed; bottom:18px; left:18px; z-index:300; width:34px; height:34px;
-    border:none; border-radius:6px; background:rgba(0, 0, 0); color:#fff; font-size:1.15rem;
+    border:none; border-radius:6px; background:rgba(0,0,0,.85); color:#fff; font-size:1.15rem;
     line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
-    transition:background .15s; }
-  .sidebar-toggle:hover { background:rgba(0,0,0,.8); }
-  .header.with-toggle { padding-left:74px; }
+    transition:background .15s,box-shadow .15s;
+    animation:toggle-glow 3.2s ease-in-out infinite; }
+  .sidebar-toggle:hover { background:rgba(0,0,0,.8); animation-play-state:paused;
+    box-shadow:0 0 11px 3px rgba(200,0,42,.42); }
+  .sidebar-toggle:focus-visible { outline:2px solid rgba(200,0,42,.9); outline-offset:2px; }
+  @keyframes toggle-glow {
+    0%,100% { box-shadow:0 0 4px 0 rgba(200,0,42,.16); }
+    50%     { box-shadow:0 0 12px 3px rgba(200,0,42,.36); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar-toggle { animation:none; box-shadow:0 0 6px 1px rgba(200,0,42,.24); }
+  }
+  .header.with-toggle { padding-left:74px; margin-left:200px; transition:margin-left .2s ease; }
+  body.sidebar-closed .header.with-toggle { margin-left:0; }
   @media(max-width:768px){
     .sidebar { transform:translateX(-100%); box-shadow:2px 0 14px rgba(0,0,0,.2); }
     .container.with-sidebar { margin-left:0; }
+    .header.with-toggle { margin-left:0; }
     body.sidebar-open .sidebar { transform:translateX(0); }
   }
   @media(max-width:600px){ .header{padding:20px;} .container{padding:14px;} }
@@ -206,7 +218,7 @@ _HTML_BASE = r"""<!DOCTYPE html>
   }
 </style>
 </head>
-<body>
+<body class="sidebar-closed">
 %%SIDEBAR_TOGGLE_HTML%%
 <div class="header %%HEADER_EXTRA_CLASS%%">
   <h1>%%REPORT_HEADING%%</h1>
@@ -283,7 +295,14 @@ function toggleNsRow(ki,ni){
 }
 function toggleSidebar(){
   const isDesktop = window.matchMedia('(min-width:769px)').matches;
-  document.body.classList.toggle(isDesktop ? 'sidebar-closed' : 'sidebar-open');
+  const b = document.body;
+  if(isDesktop){
+    b.classList.remove('sidebar-open');
+    b.classList.toggle('sidebar-closed');
+  } else {
+    b.classList.remove('sidebar-closed');
+    b.classList.toggle('sidebar-open');
+  }
 }
 function toggleGroupRow(gi){
   const r=document.getElementById('group-row-'+gi);

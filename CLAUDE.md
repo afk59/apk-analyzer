@@ -1,4 +1,4 @@
-## Sprints 1–9: COMPLETED (verified against code, 2026-08-07)
+## Sprints 1–10: COMPLETED (verified against code, 2026-08-07)
 
 > **Doc hygiene:** `CLAUDE.md` was untracked until 2026-08-07 — `.gitignore` line 3 read
 > `claude.md`, which matched `CLAUDE.md` on Windows' case-insensitive FS. That line has
@@ -284,6 +284,72 @@ Also added: `print_summary_exe_folder()`.
 > Naming wart: `interactive_session(script_dir)` is called as `interactive_session(input_dir)`
 > (`analyzer.py:299`), so the parameter name is misleading — `pc_dir = script_dir/"pc"`
 > actually resolves to `input/pc/`.
+
+---
+
+## Sprint 10 — Shared Report Chrome (sidebar / header / toggle)
+
+Frontend-only. Every change lives in `_HTML_BASE` (`renderer.py`), so it applies uniformly to
+the **apk**, **exe**, and **exe_folder** reports. **IPA is structurally unaffected** —
+`render_html_ipa` sets `SIDEBAR_HTML`, `SIDEBAR_TOGGLE_HTML`, `CONTAINER_EXTRA_CLASS` and
+`HEADER_EXTRA_CLASS` all to `""`, so it has no sidebar, no toggle button, and no
+`.with-toggle` class for the new rules to bind to.
+
+### Sidebar now starts CLOSED
+
+- `<body>` → `<body class="sidebar-closed">`. The initial state is set in markup, not by JS on
+  load, so there is no flash-of-open-sidebar before script execution.
+- `toggleSidebar()` rewritten to keep `sidebar-closed` (desktop) and `sidebar-open` (≤768px
+  overlay) **mutually exclusive** — it now removes the counterpart class before toggling.
+  Previously a viewport resize across the 768/769px boundary could leave both classes on
+  `<body>` simultaneously, leaving the toggle a no-op until resized back.
+
+### Header shift fix
+
+Previously `.header.with-toggle` had only `padding-left:74px` and never moved; the header sat
+at `margin-left:0` at full width while `.sidebar` (`position:fixed`, `z-index:100`) painted
+straight over it. The sidebar overlapped the red top bar instead of pushing it.
+
+```css
+.header.with-toggle { padding-left:74px; margin-left:200px; transition:margin-left .2s ease; }
+body.sidebar-closed .header.with-toggle { margin-left:0; }
+@media(max-width:768px){ .header.with-toggle { margin-left:0; } }
+```
+
+Offset (`200px`) and transition (`margin-left .2s ease`) deliberately mirror
+`.container.with-sidebar` exactly, so header and body move in tandem.
+
+**Specificity note (do not "simplify" these selectors):** `body.sidebar-closed
+.header.with-toggle` is `(0,3,0)` and beats the `(0,2,0)` base rule when closed. Inside the
+≤768px block the override is also `(0,2,0)` but sits *later in source order*, so it wins
+whenever the sidebar is in overlay mode (`sidebar-open`, no `sidebar-closed` on body). Both
+paths resolve to `margin-left:0` below 768px — the header stays full-width and fully usable
+while the sidebar overlays it, never clipped or pushed off-screen.
+
+### Toggle button neon glow
+
+- `@keyframes toggle-glow` — 3.2s `ease-in-out infinite` box-shadow pulse in accent red
+  `rgba(200,0,42,…)` (= `--accent` `#c8002a`), cycling opacity `.16 → .36`. Deliberately slow
+  and low-opacity: locatable in peripheral vision, not attention-grabbing.
+- `:hover` pauses the animation (`animation-play-state:paused`) and settles on a brighter
+  static glow.
+- Added `:focus-visible` outline for keyboard users.
+- **`@media (prefers-reduced-motion: reduce)`** sets `animation:none` and substitutes a
+  constant low-opacity shadow — the button stays findable with zero motion.
+
+> **Drive-by fix:** `.sidebar-toggle` had `background:rgba(0, 0, 0)` — invalid, `rgba()` needs
+> four arguments, so browsers dropped the declaration and the button rendered with no
+> background at all. Corrected to `rgba(0,0,0,.85)`. Without this the glow would have been
+> haloing an invisible button.
+
+### Known pre-existing issues in this area (NOT fixed — read before touching the breakpoints)
+
+- **Conflicting breakpoints:** `@media(max-width:768px)` establishes the overlay behaviour via
+  `body.sidebar-open`, but a separate `@media (max-width:767px)` block sets
+  `.sidebar { display:none }`, which kills it. The overlay path is only live in a one-pixel
+  window at exactly 768px. Consolidating these two blocks is the real fix.
+- **Dead rule:** the ≤767px block styles `.main-content`, a class that appears nowhere in the
+  template.
 
 ---
 
