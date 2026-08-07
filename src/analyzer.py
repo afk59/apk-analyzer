@@ -83,6 +83,9 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     unmapped_dll_agg     = {}
     unmapped_fw_agg      = {}
     apk_unmapped_by_file = {}
+    mapped_ns_apps       = {}
+    mapped_ns_kit        = {}
+    unmapped_ns_apps     = {}
     for file_path in all_files:
         sfx = file_path.suffix.lower()
         if sfx == ".ipa":
@@ -116,7 +119,13 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     "html_path":        str(output_html),
                 })
                 apk_unmapped_by_file[file_path.stem] = result.get("unmapped_namespaces", [])
+                for km in result.get("kit_matches", []):
+                    for src in km.get("android_sources", []):
+                        ns = src["android_namespace"]
+                        mapped_ns_apps.setdefault(ns, set()).add(file_path.name)
+                        mapped_ns_kit.setdefault(ns, km["kit_name"])
                 for u in result.get("unmapped_namespaces", []):
+                    unmapped_ns_apps.setdefault(u["namespace"], set()).add(file_path.name)
                     agg = unmapped_ns_agg.setdefault(u["namespace"], {
                         "namespace": u["namespace"], "class_count": 0, "method_count": 0,
                         "sample_methods": set(), "apps": [],
@@ -194,7 +203,12 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
         )
 
         batch_xlsx = result_dir / "batch_summary.xlsx"
-        export_excel_batch(rows, batch_xlsx, unmapped_dll_list, unmapped_fw_list)
+        export_excel_batch(
+            rows, batch_xlsx, unmapped_dll_list, unmapped_fw_list,
+            mapped_ns_apps=mapped_ns_apps if apk_files else None,
+            mapped_ns_kit=mapped_ns_kit,
+            unmapped_ns_apps=unmapped_ns_apps if apk_files else None,
+        )
 
         batch_unmapped_xlsx = result_dir / "batch_unmapped.xlsx"
         export_excel_batch_unmapped(apk_unmapped_by_file, batch_unmapped_xlsx)

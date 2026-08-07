@@ -6,6 +6,11 @@ from datetime import datetime
 
 _OBFUS_SIMPLE = re.compile(r'^[A-Za-z]{1,2}[0-9]{0,2}$')
 _OBFUS_SHORT  = re.compile(r'^[A-Z]\.[A-Za-z0-9]{2,5}$')
+
+# Minimum number of distinct APKs a namespace must appear in to be considered
+# "common" and listed in the batch_summary.xlsx Common Mapped / Common Unmapped
+# sheets. Set to 1 to list every namespace in the batch.
+_COMMON_MIN_APPS = 2
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -2375,6 +2380,9 @@ def export_excel_batch(
     output_path: Path,
     unmapped_dlls: list | None = None,
     unmapped_frameworks: list | None = None,
+    mapped_ns_apps: dict | None = None,
+    mapped_ns_kit: dict | None = None,
+    unmapped_ns_apps: dict | None = None,
 ) -> None:
     hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C = _excel_styles()
     DKBLUE = "1F3864"
@@ -2384,13 +2392,13 @@ def export_excel_batch(
     ws.title = "Batch Summary"
     ws.sheet_view.showGridLines = False
 
-    ws.merge_cells("A1:D1")
+    ws.merge_cells("A1:E1")
     ws["A1"] = "Migration Analyzer — Batch Summary"
     ws["A1"].font      = Font(bold=True, size=14, color=RED, name="Arial")
     ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
     ws.row_dimensions[1].height = 30
 
-    headers = ["File", "App Name", "Kit Count", "Permissions"]
+    headers = ["File", "App Name", "Kit Count", "Unmapped", "Permissions"]
     for ci, h in enumerate(headers, 1):
         hdr(ws.cell(row=2, column=ci, value=h), bg=DKBLUE)
     ws.row_dimensions[2].height = 22
@@ -2407,17 +2415,76 @@ def export_excel_batch(
         cell.fill = PatternFill("solid", start_color=bg)
         cell.border = bdr
 
-        for ci, key in enumerate(["app_name", "kit_count", "permission_count"], start=2):
+        for ci, key in enumerate(["app_name", "kit_count", "unmapped_count", "permission_count"], start=2):
             c = ws.cell(row=ri, column=ci, value=row.get(key, ""))
             dat(c, align=("center" if ci >= 3 else "left"))
             c.fill = PatternFill("solid", start_color=bg)
 
         ws.row_dimensions[ri].height = 18
 
-    for ci, w in enumerate([40, 32, 12, 14], 1):
+    for ci, w in enumerate([40, 32, 12, 13, 14], 1):
         ws.column_dimensions[get_column_letter(ci)].width = w
     ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:{get_column_letter(4)}2"
+    ws.auto_filter.ref = f"A2:{get_column_letter(5)}2"
+
+    def _common_rows(freq: dict) -> list:
+        return sorted(
+            ((ns, apps) for ns, apps in freq.items() if len(apps) >= _COMMON_MIN_APPS),
+            key=lambda kv: (-len(kv[1]), kv[0]),
+        )
+
+    def _empty_note(sheet):
+        c = sheet.cell(row=2, column=1,
+                       value=f"No namespace appeared in {_COMMON_MIN_APPS} or more APKs.")
+        c.font = Font(italic=True, name="Arial", size=9, color="4B5270")
+
+    if mapped_ns_apps is not None:
+        ws_cm = wb.create_sheet("Common Mapped")
+        ws_cm.sheet_view.showGridLines = False
+        hdrs_cm = ["Android Namespace", "Mapped Kit", "App Count", "Apps"]
+        for ci, h in enumerate(hdrs_cm, 1):
+            hdr(ws_cm.cell(row=1, column=ci, value=h), bg=DKBLUE)
+        ws_cm.row_dimensions[1].height = 22
+
+        common_mapped = _common_rows(mapped_ns_apps)
+        for ri, (ns, apps) in enumerate(common_mapped, start=2):
+            bg = WHITE if ri % 2 == 0 else GRAY
+            vals = [ns, (mapped_ns_kit or {}).get(ns, ""), len(apps), ", ".join(sorted(apps))]
+            for ci, v in enumerate(vals, 1):
+                c = ws_cm.cell(row=ri, column=ci, value=v)
+                dat(c, align=("center" if ci == 3 else "left"), wrap=(ci == 4))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws_cm.row_dimensions[ri].height = 16
+        if not common_mapped:
+            _empty_note(ws_cm)
+        for ci, w in enumerate([46, 30, 11, 60], 1):
+            ws_cm.column_dimensions[get_column_letter(ci)].width = w
+        ws_cm.freeze_panes = "A2"
+        ws_cm.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_cm))}1"
+
+    if unmapped_ns_apps is not None:
+        ws_cu = wb.create_sheet("Common Unmapped")
+        ws_cu.sheet_view.showGridLines = False
+        hdrs_cu = ["Android Namespace", "App Count", "Apps"]
+        for ci, h in enumerate(hdrs_cu, 1):
+            hdr(ws_cu.cell(row=1, column=ci, value=h), bg=DKBLUE)
+        ws_cu.row_dimensions[1].height = 22
+
+        common_unmapped = _common_rows(unmapped_ns_apps)
+        for ri, (ns, apps) in enumerate(common_unmapped, start=2):
+            bg = WHITE if ri % 2 == 0 else GRAY
+            vals = [ns, len(apps), ", ".join(sorted(apps))]
+            for ci, v in enumerate(vals, 1):
+                c = ws_cu.cell(row=ri, column=ci, value=v)
+                dat(c, align=("center" if ci == 2 else "left"), wrap=(ci == 3))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws_cu.row_dimensions[ri].height = 16
+        if not common_unmapped:
+            _empty_note(ws_cu)
+        for ci, w in enumerate([50, 11, 60], 1):
+            ws_cu.column_dimensions[get_column_letter(ci)].width = w
+        ws_cu.freeze_panes = "A2"
+        ws_cu.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_cu))}1"
 
     if unmapped_dlls:
         ws2 = wb.create_sheet("Unmapped DLLs")
