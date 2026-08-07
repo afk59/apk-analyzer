@@ -287,7 +287,9 @@ Also added: `print_summary_exe_folder()`.
 
 ---
 
-## Sprint 10 — Shared Report Chrome (sidebar / header / toggle)
+## Sprint 10 — Report Chrome + Batch Aggregate Sheets
+
+### Shared report chrome (sidebar / header / toggle)
 
 Frontend-only. Every change lives in `_HTML_BASE` (`renderer.py`), so it applies uniformly to
 the **apk**, **exe**, and **exe_folder** reports. **IPA is structurally unaffected** —
@@ -342,6 +344,50 @@ while the sidebar overlays it, never clipped or pushed off-screen.
 > background at all. Corrected to `rgba(0,0,0,.85)`. Without this the glow would have been
 > haloing an invisible button.
 
+### Batch aggregate sheets — "Common Mapped" / "Common Unmapped"
+
+`batch_summary.xlsx` gained two cross-app frequency sheets, inserted **after "Batch Summary"
+and before** the conditional "Unmapped DLLs" / "Unmapped Frameworks" sheets. **APK results
+only** — EXE and IPA contribute nothing to them.
+
+| Sheet | Columns |
+|---|---|
+| **Common Mapped** | Android Namespace · Mapped Kit · App Count · Apps |
+| **Common Unmapped** | Android Namespace · App Count · Apps |
+
+**Threshold:** `_COMMON_MIN_APPS = 2` at the top of `renderer.py` — a namespace must appear in
+at least this many distinct APKs to be listed. Set to `1` to list everything. Filtering and
+sorting both happen in `export_excel_batch`, so the constant is the single source of truth.
+Sort is app-count descending, then namespace ascending for stable ordering.
+
+**Collection (`run_batch`, `analyzer.py`):** three accumulators —
+`mapped_ns_apps: {namespace: set(app names)}`, `mapped_ns_kit: {namespace: kit_name}` (first
+seen), and `unmapped_ns_apps: {namespace: set(app names)}` — populated inside the APK branch
+and passed to `export_excel_batch` as keyword args. Values are **sets**, so App Count is the
+number of distinct APKs, never total occurrences.
+
+**Aggregation key is the namespace, matching how the engine buckets** — class-level counts are
+not tracked anywhere. Two consequences worth knowing:
+
+- Mapped rows key on `kit_matches[].android_sources[].android_namespace`, which is the
+  **mapping pattern** (`best_match["android_namespace"]`), not the raw detected namespace.
+  Several detected namespaces collapse onto one canonical row — that pattern *is* the mapped
+  library's identity, which is what makes it the right key.
+- The AndroidX fallback branch emits a literal `"androidx."` pseudo-pattern, so expect a single
+  high-count `androidx.` row rather than per-artifact rows.
+
+Pattern→kit is 1:1 within a run (one mapping file, one target), so the single "Mapped Kit"
+column is unambiguous. It is labelled "Mapped Kit" rather than "HarmonyOS Kit" because
+`export_excel_batch` receives no `target` and the values are HMS kit names under `--target hms`.
+
+**Edge cases:** both sheets are omitted entirely when the batch contains no APKs. When APKs
+were processed but nothing clears the threshold (e.g. a single-APK batch), the sheets are still
+created with an italic note naming the threshold — a silently missing sheet reads as a bug.
+
+**Also wired:** `rows["unmapped_count"]` was collected by `run_batch` but never written. The
+"Batch Summary" sheet now has an **Unmapped** column between Kit Count and Permissions
+(header row, merge range `A1:E1`, widths, and auto-filter range all widened by one column).
+
 ### Known pre-existing issues in this area (NOT fixed — read before touching the breakpoints)
 
 - **Conflicting breakpoints:** `@media(max-width:768px)` establishes the overlay behaviour via
@@ -361,7 +407,6 @@ while the sidebar overlays it, never clipped or pushed off-screen.
 - **`.apkm` files are not batched** — `run_batch` globs `*.apk`, `*.exe`, `*.dll`, `*.ipa`. There is at least one `.apkm` in `src/input/` that is silently skipped. Split-APK bundles are not handled at all.
 - **`hmos_api.xlsx` is untracked while its generated index is tracked** — `.gitignore` has `*.xlsx`, so `src/data/reference/hmos_api.xlsx` is not in git, but `hmos_api_index.json` (3.9 MB) is. Re-running `python src/core/api_index.py` on a fresh clone fails; the source-of-truth spreadsheet must be obtained out-of-band.
 - **`src/data/permissions/*.txt` and `src/data/reference/package_names.txt` are unreferenced** — grep across all `.py` returns zero hits. They are inert reference material. If they were meant to drive `grant_level` assignment or the private-lib heuristic, that wiring was never built.
-- **`rows["unmapped_count"]` is collected but never written** — `run_batch` populates it for every mode (`analyzer.py:114,137,153`), but `export_excel_batch` writes only `app_name`, `kit_count`, `permission_count`. Dead field.
 - **APK stat card 1 counts namespaces, not kits** — the label reads "Number of Libraries Mapped" and the value is `len(flat_ns_rows)`. It is NOT `len(kit_matches)`, which is what the TUI summary and agent JSON report. The two numbers will differ, usually substantially.
 - **`api-ms-win-*` / `ext-ms-win-*` beyond the 11 CRT stubs vanish silently** — they match no mapping entry and are then filtered out of `unmapped_dlls`, so they appear in neither the kit table nor the unmapped list.
 
