@@ -121,6 +121,31 @@ Stat cards (5): Kit Matches · Imported DLLs · Imported Functions · Exported S
 
 **Dependency bootstrap (`_ensure_deps` in analyzer.py):** `androguard`, `openpyxl`, `pefile`, `macholib` — all four checked and auto-installed on first run. The installer strips `HTTP_PROXY`/`HTTPS_PROXY`/`http_proxy`/`https_proxy` from the subprocess env and forces `NO_PROXY=*` (`analyzer.py:29-33`) — this is the XGATE workaround described in README.
 
+**Log suppression (`_silence_androguard_logs` in analyzer.py):** called immediately after
+`_ensure_deps()` and **before** the `core.apk_engine` import. androguard logs every DEX
+`map_item` it parses at DEBUG through loguru; left on, one APK writes ~31 MB and a 42-app batch
+exceeds 10 GB (a batch run was killed at 3/42 having already produced 1 GB). The function drops
+loguru's default sink via `logger.remove()`, wrapped in `try/except ImportError` so a missing
+loguru is a silent no-op.
+
+Ordering is load-bearing:
+- **after `_ensure_deps()`** — loguru arrives as an androguard dependency, so on a cold first
+  run it does not exist until the pip install has completed;
+- **before any `AnalyzeAPK`** — `apk_engine.py:147` imports androguard lazily *inside*
+  `analyze_apk`, so placing the call at module scope in `analyzer.py` reliably precedes it.
+
+Two caveats worth knowing before changing this:
+- `logger.remove()` removes **all** loguru sinks, not just androguard's. That is fine today
+  because androguard is the only loguru consumer in the dependency tree — revisit if project
+  code ever adopts loguru for its own logging.
+- androguard re-adds a sink at import time in `decompiler/decompile.py` (module level), but it
+  is scoped `filter="dad", level="INFO"` and does not reintroduce the `androguard.core.dex`
+  DEBUG flood. The other `logger.add()` call site (`util.py:39`) lives inside a function and
+  only fires if called.
+
+Measured effect: single APK **31,332,761 → 1,747 bytes**; 2-APK batch **4,067 bytes** (was
+~62 MB). Reports, Excel, and agent JSON are byte-for-byte unaffected — only log noise is gone.
+
 ---
 
 ### Sprint 7 — API Matching, Batch Mode, Agent JSON Output
