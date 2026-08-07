@@ -388,6 +388,49 @@ created with an italic note naming the threshold — a silently missing sheet re
 "Batch Summary" sheet now has an **Unmapped** column between Kit Count and Permissions
 (header row, merge range `A1:E1`, widths, and auto-filter range all widened by one column).
 
+### Mapping expansion from the 42-app batch
+
+Driven by the Common Unmapped output above. Candidates were ranked by how many of the 42 APKs
+each namespace appeared in, then grounded against `hmos_api_index.json` before being proposed —
+distinctive method names were looked up in the index to confirm which kit actually owns the API
+(e.g. `getAttributeCount` → `xml` from `@kit.ArkTS`, `getCalendar`/`getTimeZone` → `i18n` from
+`@kit.LocalizationKit`, `createAccount`/`getAllAccounts` → `appAccount` from
+`@kit.BasicServicesKit`). Nothing was mapped on vibes.
+
+| File | Version | `namespace_mappings` | Added |
+|---|---|---|---|
+| `mapping.json` | 1.3.0 → **1.4.0** | 168 → **188** | **+20** |
+| `hms_mapping.json` | 1.2.0 → **1.3.0** | 135 → **136** | **+1** |
+
+`last_updated` bumped to `2026-08` on both. Append-only — no existing entry was modified.
+`permission_mappings` untouched (38 / 27).
+
+**Why HMS got one row and HMOS got twenty.** Under `--target hms` the engine adds `android.`
+and `androidx.` to `skip_prefixes` (`apk_engine.py:255-256`), so no `android.*` namespace can
+ever reach the HMS unmapped list. More fundamentally, HMS apps are still Android apps — Android
+platform APIs and platform-neutral Java libraries (okio, bolts, xmlpull, conscrypt, Fresco,
+React Native) run unchanged and need no migration. Mapping them to an HMS kit would falsely
+imply migration work. Only `com.android.installreferrer` (a Google Play service with a real
+Huawei counterpart) qualified.
+
+**Deliberately left unmapped** — a wrong mapping is worse than an honest gap:
+`org.conscrypt` (35/42, JSSE provider internals — TLS is platform-managed),
+`android.security.NetworkSecurityPolicy` (28/42, expressed as app config on HarmonyOS, not an
+API), `com.facebook.common` (26/42, heterogeneous utility grab-bag), `android.system` (19/42,
+POSIX errno wrappers), `android.service.media` (17/42, AVSession is the likely target but the
+exact kit token could not be confirmed against the index), Fresco cache/datasource/
+binaryresource plumbing, `com.facebook.jni` / `soloader` / `hermes` (build and runtime
+infrastructure), and `com.facebook.infer` / `com.google.errorprone` (compile-time annotations,
+zero runtime). Three further candidates were proposed and cut during review:
+`com.google.firebase` (root catch-all over SDK plumbing), `okio`, and `bolts`.
+
+**Pending follow-up:** `@kit.LocalizationKit` and `@kit.ArkTS` are **not** in `KIT_DOC_URLS`
+(`core/mapping.py`), so those rows render without an "Official Docs" link. Both are attested
+verbatim in `hmos_api_index.json` import statements, so the kit tokens are correct — only the
+doc-URL table is incomplete. Adding them is a separate change; `KIT_DOC_URLS` was deliberately
+not touched here. Precedent for kits outside that table already exists (`@kit.AnalyticsKit`,
+`@kit.PaymentKit`, `HarmonyOS NDK (libc++)`).
+
 ### Known pre-existing issues in this area (NOT fixed — read before touching the breakpoints)
 
 - **Conflicting breakpoints:** `@media(max-width:768px)` establishes the overlay behaviour via

@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "last_updated": "2026-07",
+  "version": "1.3.0",
+  "last_updated": "2026-08",
   "target": "hms",
   "namespace_mappings": [
     {
@@ -947,6 +947,13 @@
       "hms_kit": "Network Kit",
       "confidence": "low",
       "note": "Flutter framework — HMS has no direct Flutter equivalent; native Android HMS SDK is the target."
+    },
+    {
+      "android_namespace": "com.android.installreferrer",
+      "android_display": "Google Play Install Referrer",
+      "hms_kit": "Analytics Kit",
+      "confidence": "medium",
+      "note": "Google Play Install Referrer → Analytics Kit provides install source attribution on HMS."
     }
   ],
   "permission_mappings": [

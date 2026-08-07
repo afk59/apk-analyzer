@@ -1,6 +1,6 @@
 {
-  "version": "1.3.0",
-  "last_updated": "2026-07",
+  "version": "1.4.0",
+  "last_updated": "2026-08",
   "namespace_mappings": [
     {
       "android_namespace": "com.google.android.gms.ads",
@@ -1417,6 +1417,166 @@
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
       "note": "Flutter framework classes → ArkUI is the HarmonyOS NEXT UI framework equivalent for Flutter-based UIs."
+    },
+    {
+      "android_namespace": "android.animation",
+      "android_display": "Android Property Animation",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Android property and value animators → @kit.ArkUI explicit, property, and keyframe animation."
+    },
+    {
+      "android_namespace": "android.icu",
+      "android_display": "Android ICU (Internationalization)",
+      "harmony_kit": "@kit.LocalizationKit",
+      "harmony_import": "@kit.LocalizationKit",
+      "confidence": "high",
+      "note": "Android ICU locale, calendar, and formatting classes → @kit.LocalizationKit i18n APIs."
+    },
+    {
+      "android_namespace": "org.xmlpull",
+      "android_display": "XmlPull (XML Pull Parser)",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "high",
+      "note": "XmlPullParser and XmlSerializer → @kit.ArkTS xml module provides equivalent pull parsing and serialization."
+    },
+    {
+      "android_namespace": "android.accounts",
+      "android_display": "Android AccountManager",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Android AccountManager → @kit.BasicServicesKit appAccount for app account creation and lookup."
+    },
+    {
+      "android_namespace": "android.transition",
+      "android_display": "Android Transition Framework",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Android transition framework → @kit.ArkUI transition, pageTransition, and sharedTransition."
+    },
+    {
+      "android_namespace": "android.window",
+      "android_display": "Android Window / Predictive Back",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Predictive back and splash screen APIs → @kit.ArkUI navigation and back press handling."
+    },
+    {
+      "android_namespace": "org.chromium.support_lib_boundary",
+      "android_display": "AndroidX WebKit Boundary Interfaces",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "medium",
+      "note": "AndroidX WebKit compatibility internals → @kit.ArkWeb is the HarmonyOS NEXT web engine equivalent."
+    },
+    {
+      "android_namespace": "android.provider.DocumentsContract",
+      "android_display": "Storage Access Framework (DocumentsContract)",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "Storage Access Framework document URIs → @kit.CoreFileKit file picker and file URI handling."
+    },
+    {
+      "android_namespace": "com.facebook.imagepipeline",
+      "android_display": "Fresco Image Pipeline",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Fresco image decode and transform pipeline → @kit.ImageKit is recommended for image decoding and processing."
+    },
+    {
+      "android_namespace": "android.service.notification",
+      "android_display": "Android Notification Listener Service",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "StatusBarNotification and notification listener services → @kit.NotificationKit subscription APIs."
+    },
+    {
+      "android_namespace": "android.adservices",
+      "android_display": "Android AdServices (Privacy Sandbox)",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Privacy Sandbox advertising ID → @kit.AdsKit provides the OAID equivalent for ad attribution."
+    },
+    {
+      "android_namespace": "com.facebook.fresco",
+      "android_display": "Fresco (Animation Backend)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Fresco animation backend and drawable layer → @kit.ImageKit is recommended for animated image rendering."
+    },
+    {
+      "android_namespace": "com.facebook.imageutils",
+      "android_display": "Fresco Image Utils",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Fresco JFIF, WebP, and TIFF decode helpers → @kit.ImageKit image decoding."
+    },
+    {
+      "android_namespace": "com.facebook.drawee",
+      "android_display": "Fresco Drawee",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Fresco Drawee image views and controllers → @kit.ImageKit combined with the ArkUI Image component."
+    },
+    {
+      "android_namespace": "com.facebook.react",
+      "android_display": "React Native",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native runtime → @kit.ArkUI is the HarmonyOS NEXT UI framework equivalent for React Native based UIs."
+    },
+    {
+      "android_namespace": "com.android.installreferrer",
+      "android_display": "Google Play Install Referrer",
+      "harmony_kit": "@kit.AppGalleryKit",
+      "harmony_import": "@kit.AppGalleryKit",
+      "confidence": "medium",
+      "note": "Google Play Install Referrer → @kit.AppGalleryKit provides AppGallery install referrer attribution."
+    },
+    {
+      "android_namespace": "com.facebook.fbreact",
+      "android_display": "React Native (fbreact Specs)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native TurboModule spec classes → @kit.ArkUI; evaluate each native module individually."
+    },
+    {
+      "android_namespace": "com.facebook.yoga",
+      "android_display": "Yoga Layout Engine",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Yoga Flexbox layout engine → @kit.ArkUI Flex, Row, and Column layout containers."
+    },
+    {
+      "android_namespace": "com.facebook.imageformat",
+      "android_display": "Fresco Image Format",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Fresco image format detection → @kit.ImageKit image APIs."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.asyncstorage",
+      "android_display": "React Native AsyncStorage",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "high",
+      "note": "React Native AsyncStorage key-value store → @kit.ArkData preferences."
     }
   ],
   "permission_mappings": [
