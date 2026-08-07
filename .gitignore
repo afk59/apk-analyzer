@@ -1,6 +1,5 @@
 .idea/
 .claude/
-claude.md
 __pycache__/
 *.apk
 *.ipa
