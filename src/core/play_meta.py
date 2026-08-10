@@ -8,8 +8,8 @@ optional dependency at all.
 
 Two placeholder strings reach the sheet:
   NO_INTERNET   — the connectivity probe failed; the whole phase is skipped.
-  NOT_AVAILABLE — internet is up but this one app could not be resolved
-                  (removed from Play, region-locked, or an unexpected shape).
+  NOT_AVAILABLE — internet is up but this one app could not be resolved in any
+                  of the storefronts in _REGIONS.
 Neither is ever cached, so both retry on the next online run.
 """
 
@@ -27,6 +27,17 @@ NOT_AVAILABLE = "N/A"
 _PROBE_TIMEOUT_SEC = 5
 _CACHE_TTL_DAYS    = 30
 _CACHE_SCHEMA      = "1.0"
+
+# Storefronts tried per app, in order, stopping at the first hit.
+#
+# This is about data accuracy, NOT coverage: measured on the 43-app corpus, "us"
+# alone and this ladder both resolve 41/43 — the two misses are absent from Play
+# everywhere. What changes is the numbers. For apps listed in both stores, score
+# differed hk-vs-us for 10 of 11 sampled, and ratings/version/lastUpdatedOn for 3
+# each. "hk" first returns what HK users actually see, which is the figure that
+# matters for a HK/Macau migration assessment.
+_REGIONS = ("hk", "mo", "us")
+_LANG    = "en"
 
 # Sheet column order minus "Package Name", which never comes from Play.
 _META_FIELDS = [
@@ -132,6 +143,11 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
     Returns an ordered {package_name: {field: value}} dict covering every input
     app — no key is ever missing, so the sheet always has one row per APK.
 
+    Each uncached app is tried against _REGIONS in order, stopping at the first
+    storefront that has it; the winning region is cached so a later run never
+    re-probes. A miss in all of them is NOT a connectivity failure and never
+    flips the offline switch.
+
     Never raises. Never blocks longer than the socket timeout per read.
     """
     ordered, seen = [], set()
@@ -174,43 +190,66 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
             results[pkg] = _placeholder_row(NO_INTERNET)
         return results
 
-    fetched  = 0
-    offline  = False
+    fetched     = 0
+    offline     = False
+    online_seen = False          # has ANY call reached Play and come back?
+    by_region   = {}
     prev_timeout = socket.getdefaulttimeout()
     try:
         socket.setdefaulttimeout(_PROBE_TIMEOUT_SEC)
-        for idx, (pkg, apk_name) in enumerate(pending):
+        for pkg, apk_name in pending:
             if offline:
                 results[pkg] = _placeholder_row(NO_INTERNET)
                 continue
-            try:
-                results[pkg] = _extract(_play_app(pkg), apk_name)
-                cache[pkg] = {
-                    "fetched_at": datetime.now().isoformat(timespec="seconds"),
-                    "data":       results[pkg],
-                }
-                fetched += 1
-            except GooglePlayScraperException:
-                # Internet is up; this one app is gone or region-locked.
-                # Common and expected for HK/Macau titles — not an error.
-                results[pkg] = _placeholder_row(NOT_AVAILABLE, apk_name)
-            except Exception as exc:
-                # Connection-level failure: DNS, timeout, TLS, proxy. On the
-                # probe this decides the whole phase; later it means the link
-                # dropped mid-run. Either way stop hammering dead sockets.
+
+            detail, hit_region, lost = None, None, None
+            for region in _REGIONS:
+                try:
+                    detail = _play_app(pkg, lang=_LANG, country=region)
+                    online_seen, hit_region = True, region
+                    break
+                except GooglePlayScraperException:
+                    # The store answered "not here". That answer is itself proof
+                    # of connectivity, so region fallback can only ever start
+                    # AFTER the first call has settled the internet question —
+                    # an offline run never loops regions.
+                    online_seen = True
+                    continue
+                except Exception as exc:
+                    # Connection-level: DNS, timeout, TLS, proxy.
+                    lost = exc
+                    break
+
+            if lost is not None:
                 offline = True
                 results[pkg] = _placeholder_row(NO_INTERNET)
-                if idx == 0:
+                if not online_seen:
                     print_warn("No internet — skipping metadata, batch continues "
                                "with offline analysis")
                 else:
                     print_warn(f"Connection lost after {fetched} app(s) "
-                               f"({type(exc).__name__}) — remaining apps skipped")
+                               f"({type(lost).__name__}) — remaining apps skipped")
+                continue
+
+            if detail is None:
+                # Absent from every storefront in _REGIONS. Not an error.
+                results[pkg] = _placeholder_row(NOT_AVAILABLE, apk_name)
+                continue
+
+            results[pkg] = _extract(detail, apk_name)
+            by_region[hit_region] = by_region.get(hit_region, 0) + 1
+            cache[pkg] = {
+                "fetched_at": datetime.now().isoformat(timespec="seconds"),
+                "region":     hit_region,
+                "data":       results[pkg],
+            }
+            fetched += 1
     finally:
         socket.setdefaulttimeout(prev_timeout)
 
     if fetched:
         _save_cache(cache_path, cache)
-        print_ok(f"App metadata: {fetched} fetched, {cached_n} from cache")
+        spread = ", ".join(f"{r}:{n}" for r, n in sorted(by_region.items()))
+        print_ok(f"App metadata: {fetched} fetched ({spread}), {cached_n} from cache")
 
     return results
