@@ -306,6 +306,13 @@ Added to both mapping files — `io.flutter`, `io.flutter.plugins`, and per-plug
 `interactive_session` returns a 3-tuple; for option 5 it is `(folder_path, "exe_folder", "hmos")`.
 Also added: `print_summary_exe_folder()`.
 
+> **Load-bearing `min`/`max` order in `tui_select`:** the viewport is
+> `view = min(len(options), max(3, _rows - 4))` — floor the *terminal height* at 3 for tiny
+> windows FIRST, then cap by the option count. Written the other way round
+> (`max(3, min(len(options), _rows - 4))`) it yields `view = 3` for any menu with fewer than
+> 3 options, and `_render` walks past the end of `options` with an `IndexError`. That crashed
+> the 2-item migration-target picker on every APK run. Do not "simplify" the nesting.
+
 > Naming wart: `interactive_session(script_dir)` is called as `interactive_session(input_dir)`
 > (`analyzer.py:299`), so the parameter name is misleading — `pc_dir = script_dir/"pc"`
 > actually resolves to `input/pc/`.

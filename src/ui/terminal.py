@@ -67,7 +67,10 @@ def tui_select(prompt: str, options: list) -> int:
         _rows = shutil.get_terminal_size().lines
     except Exception:
         _rows = 24
-    view = max(3, min(len(options), _rows - 4))
+    # Order matters: floor the *terminal height* at 3 for tiny windows, THEN cap
+    # by the option count. Flooring last (max(3, min(len, rows-4))) yields view=3
+    # for a 2-option menu and _render walks off the end of `options`.
+    view = min(len(options), max(3, _rows - 4))
 
     def _clamp():
         nonlocal top
