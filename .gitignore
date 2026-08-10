@@ -18,3 +18,5 @@ env/
 Thumbs.db
 src/result/
 src/input/*.apk
+*.metadata
+src/data/reference/play_metadata_cache.json

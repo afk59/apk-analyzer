@@ -42,6 +42,38 @@ def _ensure_deps():
 _ensure_deps()
 
 
+def _ensure_play_scraper():
+    """Best-effort install of google-play-scraper. NEVER exits.
+
+    Deliberately NOT part of _ensure_deps(): that list is load-bearing and
+    sys.exit(1)s when an install fails. google-play-scraper backs one additive,
+    online-only Excel sheet, so a failed install — which offline is the normal
+    outcome, since pypi is unreachable — must leave the batch fully working.
+
+    Called lazily from the metadata phase, only when there is something to
+    fetch, so offline and single-file runs never pay for it.
+    """
+    try:
+        import google_play_scraper  # noqa: F401
+        return
+    except ImportError:
+        pass
+    print("[*] Installing optional: google-play-scraper ...")
+    import subprocess, os
+    cmd = [sys.executable, "-m", "pip", "install", "google-play-scraper",
+           "--quiet", "--timeout", "10", "--retries", "1"]
+    env = os.environ.copy()
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+        env.pop(var, None)
+    env["NO_PROXY"] = "*"
+    env["no_proxy"] = "*"
+    try:
+        subprocess.check_call(cmd, env=env, timeout=120,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        print("[*] Optional dependency unavailable — Play Store metadata will be skipped.")
+
+
 def _silence_androguard_logs():
     """Drop loguru's default sink before any DEX parsing happens.
 
@@ -73,6 +105,7 @@ from core.renderer import (render_html_apk, render_html_exe, render_html_exe_fol
                            export_excel_apk, export_excel_exe, export_excel_ipa,
                            export_excel_batch, export_excel_batch_unmapped,
                            write_agent_json, build_agent_json)
+from core.play_meta import fetch_metadata, cache_path_for
 from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_exe_folder, print_summary_ipa
 
 
@@ -108,6 +141,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     mapped_ns_apps       = {}
     mapped_ns_kit        = {}
     unmapped_ns_apps     = {}
+    apk_apps             = []
     for file_path in all_files:
         sfx = file_path.suffix.lower()
         if sfx == ".ipa":
@@ -141,6 +175,8 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     "html_path":        str(output_html),
                 })
                 apk_unmapped_by_file[file_path.stem] = result.get("unmapped_namespaces", [])
+                if result.get("package_name"):
+                    apk_apps.append((result["package_name"], result.get("app_name") or ""))
                 for km in result.get("kit_matches", []):
                     for src in km.get("android_sources", []):
                         ns = src["android_namespace"]
@@ -208,6 +244,12 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 "html_path":        None,
             })
 
+    play_metadata = None
+    if apk_apps:
+        print()
+        play_metadata = fetch_metadata(apk_apps, cache_path_for(script_dir),
+                                       ensure_dep=_ensure_play_scraper)
+
     if rows:
         for agg in unmapped_ns_agg.values():
             agg["sample_methods"] = sorted(agg["sample_methods"])[:8]
@@ -230,6 +272,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             mapped_ns_apps=mapped_ns_apps if apk_files else None,
             mapped_ns_kit=mapped_ns_kit,
             unmapped_ns_apps=unmapped_ns_apps if apk_files else None,
+            play_metadata=play_metadata,
         )
 
         batch_unmapped_xlsx = result_dir / "batch_unmapped.xlsx"

@@ -2383,6 +2383,7 @@ def export_excel_batch(
     mapped_ns_apps: dict | None = None,
     mapped_ns_kit: dict | None = None,
     unmapped_ns_apps: dict | None = None,
+    play_metadata: dict | None = None,
 ) -> None:
     hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C = _excel_styles()
     DKBLUE = "1F3864"
@@ -2426,6 +2427,41 @@ def export_excel_batch(
         ws.column_dimensions[get_column_letter(ci)].width = w
     ws.freeze_panes = "A3"
     ws.auto_filter.ref = f"A2:{get_column_letter(5)}2"
+
+    # Play Store metadata — inserted at index 0 so it lands FIRST in tab order,
+    # ahead of Batch Summary. APK-only; omitted entirely when there is nothing
+    # to show. Cells may carry the "No internet connection" / "N/A" placeholders
+    # produced by core.play_meta. There is no Size column by design: Play no
+    # longer exposes an app size field, so it would be permanently empty.
+    if play_metadata:
+        ws_ai = wb.create_sheet("App Info", 0)
+        ws_ai.sheet_view.showGridLines = False
+        hdrs_ai = ["Package Name", "App Name", "Category", "Installs", "Rating",
+                   "Rating Count", "Developer", "Last Updated", "Version"]
+        for ci, h in enumerate(hdrs_ai, 1):
+            hdr(ws_ai.cell(row=1, column=ci, value=h), bg=DKBLUE)
+        ws_ai.row_dimensions[1].height = 22
+
+        for ri, (pkg, meta) in enumerate(play_metadata.items(), start=2):
+            bg   = WHITE if ri % 2 == 0 else GRAY
+            meta = meta or {}
+            vals = [
+                pkg,
+                meta.get("app_name", ""),     meta.get("category", ""),
+                meta.get("installs", ""),     meta.get("rating", ""),
+                meta.get("rating_count", ""), meta.get("developer", ""),
+                meta.get("last_updated", ""), meta.get("version", ""),
+            ]
+            for ci, v in enumerate(vals, 1):
+                c = ws_ai.cell(row=ri, column=ci, value=v)
+                dat(c, align=("center" if ci in (4, 5, 6) else "left"))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws_ai.row_dimensions[ri].height = 16
+
+        for ci, w in enumerate([34, 30, 20, 18, 10, 14, 30, 16, 20], 1):
+            ws_ai.column_dimensions[get_column_letter(ci)].width = w
+        ws_ai.freeze_panes = "A2"
+        ws_ai.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_ai))}1"
 
     def _common_rows(freq: dict) -> list:
         return sorted(

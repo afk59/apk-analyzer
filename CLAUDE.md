@@ -474,6 +474,116 @@ not touched here. Precedent for kits outside that table already exists (`@kit.An
 
 ---
 
+## Sprint 11 — 2026-08-10 — Play Store App-Metadata Sheet (first online capability)
+
+`batch_summary.xlsx` gained an **"App Info"** sheet fetched from Google Play. This is the
+**only** part of the tool that touches the network. Everything about its design exists to
+guarantee that fact stays invisible to an offline run.
+
+### The non-negotiable: offline must not degrade
+
+The batch's HTML reports, agent JSON, `batch_unmapped.xlsx`, and the other three sheets of
+`batch_summary.xlsx` are produced **byte-identically** whether the fetch succeeds, finds no
+internet, or never manages to import its dependency. Metadata is purely additive — it is
+collected *after* the per-file analysis loop has fully finished (`analyzer.py`, between the
+loop and `if rows:`), so every report and JSON is already written to disk before a single
+socket opens.
+
+Two placeholder strings can reach the sheet, and they mean different things:
+
+| String | Meaning | Cached? |
+|---|---|---|
+| `No internet connection` | The connectivity probe failed; the whole phase was skipped. | **No** — retries next run |
+| `N/A` | Internet is up, but this one app could not be resolved (delisted, region-locked). | **No** — retries next run |
+
+Neither is ever written to the cache, so a bad network day never poisons future runs.
+
+### `src/core/play_meta.py` (new, isolated)
+
+All network code lives here and nowhere else — no engine imports it. `fetch_metadata(apps,
+cache_path, ensure_dep=None)` takes `(package_name, apk_app_name)` pairs and returns an ordered
+`{package_name: {field: value}}` dict **covering every input app**, so the sheet always has one
+row per APK. It never raises.
+
+**Probe-once, then commit to a mode.** The first uncached app decides the phase:
+
+- `GooglePlayScraperException` (`NotFoundError` / `ExtraHTTPError`) → internet is *up*, this one
+  app is unresolvable → that row is `N/A`, **keep going**. Expected for HK/Macau titles.
+- Any other exception (DNS, timeout, TLS, proxy) → **no internet** → one warning line, every
+  remaining row is `No internet connection`, and **no further requests are attempted**. With 42
+  APKs this is the difference between one 5s timeout and 42 of them.
+
+A connection-level failure *after* the probe (link dropped mid-run, e.g. XGATE reconnecting)
+flips the same switch for the remainder rather than grinding through dead sockets.
+
+**Timeout.** `google_play_scraper.app()` accepts **no timeout parameter** — it calls
+`urllib.request.urlopen` bare, inheriting the global socket default of `None` (block forever).
+The 5s bound is therefore imposed with `socket.setdefaulttimeout(_PROBE_TIMEOUT_SEC)` around
+the phase and **restored in a `finally`**, so an exception cannot leave the global socket
+timeout mutated for the rest of the process. Do not "simplify" this into the `try` body.
+
+### Optional dependency — never in the hard-exit list
+
+`google-play-scraper` (PyPI, unofficial) is bootstrapped by **`_ensure_play_scraper()`**, which
+is deliberately **separate from `_ensure_deps()`**. `_ensure_deps()` calls `sys.exit(1)` when an
+install fails — correct for androguard/openpyxl/pefile/macholib, fatal for an optional online
+extra whose install failure is the *normal* offline outcome. `_ensure_play_scraper()` swallows
+every failure, prints one line, and returns.
+
+It is invoked **lazily**, through the `ensure_dep` hook passed into `fetch_metadata`, and only
+when something actually needs fetching — a fully-cached run (or a run with no APKs) never
+attempts a pip install. Install uses `--timeout 10 --retries 1` plus a 120s subprocess timeout
+so an offline attempt fails fast instead of hanging on pip's own retry backoff.
+
+### Cache — `src/data/reference/play_metadata_cache.json`
+
+Chosen over `result/.metadata_cache.json` on purpose: it **survives clearing `result/`**, which
+is the entire point (re-running a batch on XGATE should reuse data, not show "No internet
+connection"). Shape: `{schema_version, generated_at, apps: {pkg: {fetched_at, data}}}`.
+Entries older than **30 days** (`_CACHE_TTL_DAYS`) are treated as stale and refetched when
+online. A corrupt or unreadable cache degrades to `{}`, never an exception.
+Gitignored explicitly, alongside a `*.metadata` line.
+
+### The sheet
+
+Inserted with `wb.create_sheet("App Info", 0)` — index 0, so it is **first in tab order** and
+the workbook opens on it. Final order: **App Info** → Batch Summary → Common Mapped → Common
+Unmapped → [Unmapped DLLs] → [Unmapped Frameworks].
+
+Passed as the keyword arg `play_metadata=None` on `export_excel_batch`, matching the existing
+`mapped_ns_apps` / `unmapped_ns_apps` pattern — **existing positional callers are unaffected**
+and the sheet is omitted entirely when the value is falsy (EXE/IPA-only batches have no Play
+package, so they never get one).
+
+Nine columns: `Package Name · App Name · Category · Installs · Rating · Rating Count ·
+Developer · Last Updated · Version`, from `appId / title / genre / installs / score / ratings /
+developer / lastUpdatedOn / version`. Styling matches the other sheets exactly (frozen header,
+auto-filter, no gridlines, DKBLUE header, alternating fill).
+
+> **A Size column was deliberately omitted — do not add it back.** Google removed app size from
+> the Play detail page; `ElementSpecs.Detail` has 40 keys and `size` is not among them, and the
+> library exposes no equivalent. The column would be permanently `N/A` for every app.
+
+`Last Updated` prefers `lastUpdatedOn` (pre-formatted, `'Aug 4, 2026'`) and falls back to
+formatting the `updated` Unix timestamp. Note `score`/`ratings`/`updated` are all genuinely
+`None` upstream for low-traffic apps — an `N/A` there is Play's answer, not a parsing bug.
+
+### Verified
+
+| Scenario | Result |
+|---|---|
+| Online, 2-APK batch | 1 app populated, 1 `N/A` (not on Play), cache written with only the success |
+| Offline (DNS forced to fail), no cache | One `[!]` line, all 8 metadata cells `No internet connection`, **no cache written**, batch completed, other 3 sheets intact |
+| Offline, fully cached | `1 app(s) from cache — no network needed` — no probe attempted at all |
+| Offline, partially cached | Cached row fully populated, uncached row `No internet connection` |
+
+Also confirmed: App Info first in tab order, `Batch Summary` columns
+(File/App Name/Kit Count/Unmapped/Permissions) unchanged, `socket.getdefaulttimeout()` back to
+`None` after a failed phase, and a legacy positional `export_excel_batch(rows, path, [], [])`
+call still produces exactly `['Batch Summary']`.
+
+---
+
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.
@@ -484,6 +594,9 @@ not touched here. Precedent for kits outside that table already exists (`@kit.An
 - **`src/data/permissions/*.txt` and `src/data/reference/package_names.txt` are unreferenced** — grep across all `.py` returns zero hits. They are inert reference material. If they were meant to drive `grant_level` assignment or the private-lib heuristic, that wiring was never built.
 - **APK stat card 1 counts namespaces, not kits** — the label reads "Number of Libraries Mapped" and the value is `len(flat_ns_rows)`. It is NOT `len(kit_matches)`, which is what the TUI summary and agent JSON report. The two numbers will differ, usually substantially.
 - **`api-ms-win-*` / `ext-ms-win-*` beyond the 11 CRT stubs vanish silently** — they match no mapping entry and are then filtered out of `unmapped_dlls`, so they appear in neither the kit table nor the unmapped list.
+- **`google-play-scraper` is unofficial and scrapes HTML** — it parses embedded JSON out of the Play detail page via regex (`Regex.SCRIPT` / `KEY` / `VALUE` in `constants/element.py`). Google can change that page's structure at any time with no notice, and when they do the library returns `None` for some or all fields (surfacing as `N/A`) or stops working entirely until upstream patches it. The failure is contained — every path degrades to `N/A` and the rest of the batch is untouched — but do not treat the App Info sheet as a reliable data source, and check for a library update before investigating a sudden wave of `N/A`.
+- **Region-locked HK/Macau apps commonly return `N/A`** — a large share of this project's corpus is Hong Kong / Macau titles that are delisted, unlisted, or restricted to a storefront the scraper does not query (it defaults to `lang="en", country="us"`). `NotFoundError` for these is **expected, not an error**. Verified example: `com.mtr.mobile` returns `N/A` while `hk.ust.itsc.tt.iLearn` resolves fine. Passing per-app `lang`/`country` to `app()` would likely recover some of them; that wiring does not exist.
+- **`updated` / `score` / `ratings` are genuinely `None` for low-traffic apps** — Play itself omits them, so `Last Updated`, `Rating`, and `Rating Count` show `N/A` even for a successfully fetched app. Not a parsing bug; there is nothing to fix.
 
 ---
 
@@ -499,6 +612,9 @@ not touched here. Precedent for kits outside that table already exists (`@kit.An
 - `plistlib` handles both XML and binary plist formats automatically
 - Test with real `.ipa` from TestFlight or developer build for full analysis; App Store builds will show static-linking banner
 - EXE Folder mode expects `input/pc/<app-name>/` containing the `.exe` plus all its `.dll` files
+- Network code belongs in `src/core/play_meta.py` and nowhere else — no engine or renderer may open a socket. Anything added there must degrade to a placeholder string, never raise, and never block past the socket timeout
+- Never add `google-play-scraper` (or any optional dep) to `_ensure_deps()` — that list `sys.exit(1)`s on install failure. Use the `_ensure_play_scraper()` soft pattern
+- Delete `src/data/reference/play_metadata_cache.json` to force a full refetch; it is gitignored and safe to remove at any time
 
 ---
 
