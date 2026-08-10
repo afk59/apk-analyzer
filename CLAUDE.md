@@ -535,6 +535,35 @@ when something actually needs fetching — a fully-cached run (or a run with no 
 attempts a pip install. Install uses `--timeout 10 --retries 1` plus a 120s subprocess timeout
 so an offline attempt fails fast instead of hanging on pip's own retry backoff.
 
+### Region fallback — `hk` → `mo` → `us`
+
+Each uncached app is tried against `_REGIONS = ("hk", "mo", "us")` in order with `lang="en"`,
+stopping at the first storefront that has it. `us` is **last** on purpose: it is the library's
+default, and this corpus is Hong Kong / Macau titles.
+
+**The fallback cannot widen the offline probe cost.** A `NotFoundError` is the store *answering*
+— it is itself proof of connectivity — so the region loop can only ever advance past its first
+iteration once the internet question is already settled. An offline run therefore makes exactly
+**one** call total, no matter how many APKs are in the batch (measured: 42 apps → 1 call, only
+`hk` attempted). A miss in all three regions is **not** a connectivity failure and never flips
+the offline switch; it lands as `N/A` for that app and the phase continues.
+
+The winning region is cached as a sibling of `fetched_at` (`{"fetched_at", "region", "data"}`),
+so a cached hit never re-probes. Entries written before this field existed are still valid — a
+missing `region` is tolerated.
+
+> **Measured on the 43-app corpus — the fallback does NOT improve coverage.** Both `us`-only and
+> `hk`→`mo`→`us` resolve **41/43**. The same two apps fail either way (`com.mtr.mobile`,
+> `com.huayuan.namkwong`) and they are simply not on Google Play in any region — not
+> region-locked. An earlier version of this document claimed region-locking was the main cause
+> of `N/A`; that was wrong and has been corrected in Known gaps.
+>
+> What the fallback *does* change is **which numbers you get** for apps that resolve in both.
+> Across a sample of 11: `score` differed for **10**, and `ratings` / `version` /
+> `lastUpdatedOn` each differed for **3**. The HK storefront returns the rating and shipped
+> version actually seen by HK users, which is the relevant figure for a HK/Macau migration
+> assessment. That accuracy — not coverage — is the reason to keep it.
+
 ### Cache — `src/data/reference/play_metadata_cache.json`
 
 Chosen over `result/.metadata_cache.json` on purpose: it **survives clearing `result/`**, which
@@ -576,6 +605,11 @@ formatting the `updated` Unix timestamp. Note `score`/`ratings`/`updated` are al
 | Offline (DNS forced to fail), no cache | One `[!]` line, all 8 metadata cells `No internet connection`, **no cache written**, batch completed, other 3 sheets intact |
 | Offline, fully cached | `1 app(s) from cache — no network needed` — no probe attempted at all |
 | Offline, partially cached | Cached row fully populated, uncached row `No internet connection` |
+| Full 43-package corpus, online | 41 resolved, all via `hk`; 2 `N/A` (not on Play anywhere) |
+| Offline, 42 pending apps | **1** network call total, only `hk` attempted — the ladder never runs |
+| All 3 regions miss | 3 calls/app, `N/A`, offline switch **not** flipped, nothing cached |
+| `hk` hits immediately | 1 call/app — no wasted `mo`/`us` probes; region cached |
+| Link drops after 2 successes | 2 rows kept, one `[!]` line, remaining rows `No internet connection` |
 
 Also confirmed: App Info first in tab order, `Batch Summary` columns
 (File/App Name/Kit Count/Unmapped/Permissions) unchanged, `socket.getdefaulttimeout()` back to
@@ -595,7 +629,7 @@ call still produces exactly `['Batch Summary']`.
 - **APK stat card 1 counts namespaces, not kits** — the label reads "Number of Libraries Mapped" and the value is `len(flat_ns_rows)`. It is NOT `len(kit_matches)`, which is what the TUI summary and agent JSON report. The two numbers will differ, usually substantially.
 - **`api-ms-win-*` / `ext-ms-win-*` beyond the 11 CRT stubs vanish silently** — they match no mapping entry and are then filtered out of `unmapped_dlls`, so they appear in neither the kit table nor the unmapped list.
 - **`google-play-scraper` is unofficial and scrapes HTML** — it parses embedded JSON out of the Play detail page via regex (`Regex.SCRIPT` / `KEY` / `VALUE` in `constants/element.py`). Google can change that page's structure at any time with no notice, and when they do the library returns `None` for some or all fields (surfacing as `N/A`) or stops working entirely until upstream patches it. The failure is contained — every path degrades to `N/A` and the rest of the batch is untouched — but do not treat the App Info sheet as a reliable data source, and check for a library update before investigating a sudden wave of `N/A`.
-- **Region-locked HK/Macau apps commonly return `N/A`** — a large share of this project's corpus is Hong Kong / Macau titles that are delisted, unlisted, or restricted to a storefront the scraper does not query (it defaults to `lang="en", country="us"`). `NotFoundError` for these is **expected, not an error**. Verified example: `com.mtr.mobile` returns `N/A` while `hk.ust.itsc.tt.iLearn` resolves fine. Passing per-app `lang`/`country` to `app()` would likely recover some of them; that wiring does not exist.
+- **Apps absent from Google Play return `N/A`, and region fallback does not help** — measured across the 43-app corpus, `us`-only and the `hk`→`mo`→`us` ladder both resolve 41/43. The two failures (`com.mtr.mobile`, `com.huayuan.namkwong`) are not listed on Play in any of the three storefronts, so no region setting recovers them; enterprise/internal builds and delisted apps simply have no Play page. `NotFoundError` for these is **expected, not an error**. (A previous revision of this file asserted that region-locking was the common cause of `N/A` and that region support "would likely recover some of them" — both claims were wrong, and the measurement above supersedes them. The ladder was kept for data accuracy, not coverage; see Sprint 11.)
 - **`updated` / `score` / `ratings` are genuinely `None` for low-traffic apps** — Play itself omits them, so `Last Updated`, `Rating`, and `Rating Count` show `N/A` even for a successfully fetched app. Not a parsing bug; there is nothing to fix.
 
 ---
