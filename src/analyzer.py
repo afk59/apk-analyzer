@@ -104,7 +104,7 @@ from core.ipa_engine import analyze_ipa
 from core.renderer import (render_html_apk, render_html_exe, render_html_exe_folder, render_html_ipa,
                            export_excel_apk, export_excel_exe, export_excel_ipa,
                            export_excel_batch, export_excel_batch_unmapped,
-                           write_agent_json, build_agent_json)
+                           write_agent_json, build_agent_json, OHPM_SCHEMA_NOTE)
 from core.play_meta import fetch_metadata, cache_path_for
 from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_exe_folder, print_summary_ipa
 
@@ -144,6 +144,8 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     mapped_ns_apps       = {}
     mapped_ns_kit        = {}
     unmapped_ns_apps     = {}
+    ohpm_ns_apps         = {}
+    ohpm_ns_meta         = {}
     apk_apps             = []
     for file_path in all_files:
         sfx = file_path.suffix.lower()
@@ -188,6 +190,18 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                         mapped_ns_kit.setdefault(ns, km["kit_name"])
                 for u in result.get("unmapped_namespaces", []):
                     unmapped_ns_apps.setdefault(u["namespace"], set()).add(file_path.name)
+                # Second tier, aggregated cross-app on (namespace -> package)
+                # so App Count is distinct APKs, matching the Common sheets.
+                for om in result.get("ohpm_matches", []):
+                    key = (om["namespace"], om["ohpm_package"])
+                    ohpm_ns_apps.setdefault(key, set()).add(file_path.name)
+                    prev = ohpm_ns_meta.setdefault(key, {
+                        "install_cmd": om.get("install_cmd"),
+                        "category":    om.get("category"),
+                        "confidence":  om.get("confidence"),
+                        "method_count": 0,
+                    })
+                    prev["method_count"] = max(prev["method_count"], om.get("method_count") or 0)
                     agg = unmapped_ns_agg.setdefault(u["namespace"], {
                         "namespace": u["namespace"], "class_count": 0, "method_count": 0,
                         "sample_methods": set(), "apps": [],
@@ -276,6 +290,8 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             mapped_ns_apps=mapped_ns_apps if apk_files else None,
             mapped_ns_kit=mapped_ns_kit,
             unmapped_ns_apps=unmapped_ns_apps if apk_files else None,
+            ohpm_ns_apps=ohpm_ns_apps if apk_files else None,
+            ohpm_ns_meta=ohpm_ns_meta,
             play_metadata=play_metadata,
         )
 
@@ -294,6 +310,8 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             "schema_version": "1.0",
             "generated_at":   _dt.now().isoformat(timespec="seconds"),
             "file_count":     len(agent_files),
+            # Once, here — not repeated in every per-app file. See OHPM_SCHEMA_NOTE.
+            "schema_note":    OHPM_SCHEMA_NOTE,
             "files":          agent_files,
         }
         summary_path = agent_dir / "agent_summary.json"

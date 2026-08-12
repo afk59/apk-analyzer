@@ -1320,6 +1320,97 @@ real and attested (27 `@kit.PaymentKit` imports in `hmos_api_index.json`).
 > rot **as a block**, and because of the SPA behaviour above nothing will 404 to warn you; the
 > links will silently land on an empty shell. Worth a dedicated pass.
 
+## Phase 3C — batch Excel + agent JSON (2026-08-13) — PHASE 3 COMPLETE
+
+Output layer only. `apk_engine.py` and both mapping files are untouched; this consumes the
+`result["ohpm_matches"]` that 3A already produces.
+
+### `batch_summary.xlsx` → "OHPM Matches" sheet
+
+Order: App Info → Batch Summary → Common Mapped → Common Unmapped → **OHPM Matches** →
+[Unmapped DLLs] → [Unmapped Frameworks].
+
+Columns: `Android Namespace · OHPM Package · Install · Category · Confidence · App Count · Apps`.
+Styling is identical to the Common sheets (DKBLUE header, frozen `A2`, auto-filter, no gridlines,
+alternating fill). Wired through **keyword** args `ohpm_ns_apps=None, ohpm_ns_meta=None` on
+`export_excel_batch`, so existing positional callers are unaffected — same pattern as
+`play_metadata=None`. Omitted entirely when empty, so EXE/IPA-only and HMS batches never get one.
+
+Aggregation keys on the **`(namespace, package)` pair** into a set of APK filenames, so App Count
+is distinct apps, never occurrences — the same set-based counting the Common sheets use. Sort is
+app-count DESC, then method-count DESC, then the `(namespace, package)` tuple — the final
+alphabetical tie-break keeps the sheet byte-reproducible run-to-run, consistent with the
+determinism work in the reproducibility fix below.
+
+> **No `_COMMON_MIN_APPS` threshold here, deliberately.** The Common sheets drop <2-app rows
+> because they would otherwise run to thousands; the entire OHPM tier is ~139 namespaces, and a
+> single-app hit is still a real migration finding. The sheet is named "OHPM Matches", not
+> "Common OHPM", precisely because it is not filtered that way.
+
+### Agent JSON
+
+Two additions in the **apk** branch of `build_agent_json`, alongside `api_matches` /
+`permission_gaps`:
+
+- **`ohpm_matches`** — passed through **verbatim** from the engine, exactly like `api_matches`.
+  This is why each row keeps its `tier: "ohpm"` tag with nothing re-added here. (There is no
+  `_slim_*` helper in this codebase; `kit_list` is the only structure rebuilt field-by-field.)
+**`schema_note` is emitted ONCE, at the top of `agent_summary.json` — never per app.** The
+constant lives in `renderer.OHPM_SCHEMA_NOTE` and is attached by `run_batch`, not by
+`build_agent_json`. Every `ohpm_matches` row already carries `tier: "ohpm"`, which is
+self-describing; repeating a static sentence across 41 per-app files is pure redundancy. Its text:
+*"ohpm_matches are second-tier third-party OHPM packages, NOT native HarmonyOS kits — treat them
+as external dependencies with their own license and maintenance implications, and prefer a native
+kit from kit_list where one exists."*
+
+`kit_list` entries gained **`tier: "native"`**. `kit_list` is rebuilt field-by-field, so the
+engine's `km["tier"]` was being dropped; without it a consumer can spot OHPM rows but cannot
+positively confirm the kit rows are native.
+
+> **`confidence_scores` stays NATIVE-only and no `ohpm_count` metric was added.** `high_pct` is a
+> native-coverage metric; folding OHPM in would silently change its meaning. The `ohpm_matches`
+> array is already countable, and a parallel metric risks muddying the same discipline that kept
+> OHPM out of the `total_3p_ns` denominator in 3A. Verified: `len(kit_list) == confidence_scores
+> .total` (32 == 32) on a real report.
+
+`agent_summary.json` needed no work — it embeds `**build_agent_json(result)` per file, so both
+fields propagate automatically (confirmed on a 4-app batch).
+
+### Verified on a real 4-app batch
+
+`com.hkairlines.b2c.app`, `com.ctm`, `com.mtr.mobile`, `com.hopetrip.gzhkbus`:
+
+- OHPM Matches sheet: **60 rows across 7 packages**, App Count 3/2/1, correct sheet order.
+- Agent JSON: `ohpm_matches` rows all tagged `tier:"ohpm"`; all `kit_list` entries tagged
+  `tier:"native"`; no `ohpm_*` metric leaked into `confidence_scores`.
+- `schema_note`: present once at `agent_summary.json` top level; **0** of the 4 per-app files and
+  **0** of the embedded `files[]` entries carry it.
+- `agent_summary.json`: both fields present on every file entry.
+
+---
+
+## Phase 3 — COMPLETE (2026-08-13)
+
+Two-tier native+OHPM matching is live end to end:
+
+| Layer | State |
+|---|---|
+| Engine (`apk_engine.py`) | native first, OHPM only on a native miss, `tier` on all three result lists |
+| HTML report | "3rd Party (OHPM)" section, grouped by package, visually separated |
+| Batch Excel | "OHPM Matches" sheet |
+| Agent JSON | `ohpm_matches` + `schema_note` + `tier` on `kit_list` |
+| `KIT_DOC_URLS` | **58/58** — every kit token used by `mapping.json` resolves |
+
+`ohpm_mapping.json` is **frozen at v1.1.0 / 15 rows**. `mapping.json` is at **v1.8.0 / 263
+namespaces**. The native coverage percentage is unchanged throughout — OHPM is a third bucket,
+never part of the native denominator.
+
+**This closes the entire batch-pool effort** that began with the OHPM registry sweep: 15 OHPM
+rows + 57 native rows written, 6 genuine gaps recorded, 0 shadowing in any slice, and coverage of
+the 41-app batch lifted from 12.1% to 20.7% of all detected third-party references.
+
+---
+
 ## Report reproducibility fix — 2026-08-13
 
 **Until this fix, analysing the same APK twice produced different HTML and Excel.** Not subtly:
