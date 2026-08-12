@@ -1151,6 +1151,102 @@ Running total across both native slices: **+41 rows**, 206 → 247, 0 shadowed t
 `android.credentials` still **unmapped** — re-hunted this round, the index still has no
 `passkey`/`webauthn`/`fido` key, only password autofill via `autoFillManager` (`@kit.AbilityKit`).
 
+## Native mapping round — slice 2b (2026-08-12) — round CLOSED
+
+`mapping.json` **v1.7.0 → v1.8.0, 247 → 263 `namespace_mappings` (+16)**. Append-only,
+`last_updated` `2026-08`, `permission_mappings` untouched (38). 10 high / 6 medium. All eight kit
+tokens and every backing method re-verified verbatim; none failed.
+
+The low-frequency / ArkUI-component tail: masked view, checkbox, date picker, toolbar,
+pull-to-refresh, splash, app-restart ×2 (`@kit.ArkUI` / `@kit.AbilityKit`), geolocation
+(`@kit.LocationKit`), calendar (`@kit.CalendarKit`), SVG (`@kit.ImageKit`), video player +
+transcoding (`@kit.MediaKit`), Time4J (`@kit.LocalizationKit`), wakelock
+(`@kit.BasicServicesKit`), package info (`@kit.AbilityKit`).
+
+**Six mediums, all for the same structural reason** — the capability exists natively but not as a
+drop-in: `maskedview`, `toolbarandroid` and `org.devio.rn` (splash) carry an explicit "no drop-in
+component exists" note; `processphoenix` / `reactnativerestart` because HarmonyOS has no true
+process-restart primitive (`terminateSelf` + `startAbility` approximates it with different
+lifecycle semantics); `com.caverock.androidsvg` because AndroidSVG spans two roles — SVG as an
+image source (`@kit.ImageKit`) and programmatic path rendering
+(`drawing.buildFromSVGString`, `@kit.ArkGraphics2D`).
+
+### Two rows cut on function mismatch
+
+- **`org.altbeacon` → `@kit.ConnectivityKit` — CUT.** `ble.startBLEScan` is raw BLE *transport*;
+  AltBeacon is an iBeacon/Eddystone **protocol** layer (beacon ID parsing, ranging, region
+  monitoring) with no native counterpart. This is the distinction from SLF4J, which *was* mapped:
+  there `hilog` does logging's core work and only the facade/binding layer is missing, whereas
+  here the native API does not do the core beacon work at all — only the transport underneath. A
+  "swap to ConnectivityKit" read would be wrong.
+- **`com.google.android.odml` → `@kit.MindSporeLiteKit` — CUT.** ODML is Google's image-container
+  *data type* used with ML Kit; MindSporeLite is an *inference runtime*. Different layers, not a
+  function match.
+
+### Shadowing / absorption — predicted, then confirmed
+
+| Metric | Predicted | Actual |
+|---|---|---|
+| Distinct namespaces newly absorbed | 334 | **334** ✓ |
+| Per-app row instances absorbed | 416 | **416** ✓ |
+| `Common Unmapped` (≥2 apps) rows absorbed | 44 | **44** ✓ |
+| **Rows shadowed by a pre-existing entry** | 0 | **0** ✓ |
+
+`net.time4j` alone accounts for 247 of the 334 distinct namespaces — Time4J is a very large
+library whose sub-packages mostly appear in only one app each, which is why distinct (334)
+exceeds `Common Unmapped` absorption (44, the ≥2-app subset).
+
+---
+
+## Batch-pool effort — closing tally (2026-08-12)
+
+The Phase 2A→2D OHPM work and the three-slice native round are both complete.
+`NATIVE_CANDIDATES.md` is fully drained.
+
+| | |
+|---|---|
+| **OHPM rows** (`ohpm_mapping.json` v1.1.0) | **15** rows / 11 packages |
+| **Native rows** (`mapping.json` v1.5.0 → **v1.8.0**) | **+57** — 206 → **263** namespaces |
+| — slice 1 / 2a / 2b | 25 / 16 / 16 |
+| **Genuine gaps left unmapped** | **6** |
+| Rows shadowed, all slices | **0** |
+
+**Coverage against the 41-app batch**, measured by replaying the real match loop:
+
+| | Before (v1.5.0) | After (v1.8.0) |
+|---|---|---|
+| `Common Unmapped` rows matched (of 2,180) | 255 | **560** |
+| still unmapped | 1,925 | **1,620** |
+| per-app row instances absorbed (of 15,011) | 1,823 (12.1%) | **3,114 (20.7%)** |
+
+The native round newly covered **305** of the 1,925-row pool (**15.8%**) and **1,291** additional
+per-app row instances across **611** distinct namespaces. Absorption as a share of all detected
+third-party references went from 12.1% to 20.7% — a **71% relative increase**.
+
+**The six genuine gaps**, each left unmapped deliberately because a wrong row is worse than a gap:
+
+| Gap | N | Why |
+|---|---|---|
+| `net.openid.appauth` / `com.rnappauth` | 4 | Native Account Kit is Huawei-ID-only; generic OAuth2/OIDC against arbitrary providers has no equivalent, and the registry has only provider-specific SDKs. Hand-roll over `@kit.NetworkKit` + `@kit.ArkWeb`. |
+| `android.credentials` / `android.service.credentials` | 4 | No `passkey`/`webauthn`/`fido` in the index; only password autofill (`autoFillManager`). Half of Credential Manager is not parity. |
+| `com.scottyab.rootbeer` | 4 | Zero OHPM hits, no native attestation API. |
+| `org.reactnative.facedetector` | 3 | Best OHPM candidate `hfacedetect` is popularity 74 / 289 downloads; `@kit.VisionKit` offers only `interactiveLiveness` / `visionImageAnalyzer`, not face landmarks. |
+| `org.altbeacon` | 3 | BLE transport exists (`@kit.ConnectivityKit` `ble`) but the beacon protocol layer must be hand-rolled. |
+| `com.google.android.odml` | 3 | Image-container data type vs inference runtime — different layers. |
+
+Plus the standing structural exclusions from Phase 2C that were never candidates: vendor SaaS
+SDKs with no HarmonyOS presence (Stripe, Braze, Xiaomi push), whole cross-platform runtimes
+(DCloud uni-app, Cordova), RN/Flutter build infrastructure (SoLoader, Hermes, JNI), compile-time
+annotations, and Firebase DI/telemetry plumbing.
+
+**Method note worth carrying into any future round:** the single highest-value technique was
+grepping `hmos_api_index.json`'s **`import_statement` values**, not just its keys. The index keys
+on normalized simple method names, so a kit whose methods are indexed under other names is
+invisible to a key lookup — `@kit.ScanKit` returned NOT FOUND for `scanBarcode`/`generateBarcode`
+and was nearly written off as having no native path, and both Sprint-10/12 cuts that this round
+reversed (`android.service.media`, `com.learnium.RNDeviceInfo`) failed for exactly this reason.
+Grep imports before concluding a capability has no native kit.
+
 ---
 
 ## Known gaps / warts (as of 2026-08-07)
