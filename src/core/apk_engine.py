@@ -175,11 +175,76 @@ def _warn_if_split_bundle(apk_path: str) -> None:
         )
 
 
-def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
+def _match_ohpm(ns: str, ohpm_entries: list):
+    """Longest-prefix match against the OHPM second tier.
+
+    Deliberately identical in shape to the native matcher in `analyze_apk`:
+    `ohpm_entries` arrives sorted longest-`android_namespace`-first, and the
+    first prefix hit wins. Returns the row dict or None.
+    """
+    for entry in ohpm_entries:
+        prefix = entry["android_namespace"]
+        if ns.startswith(prefix) or prefix == ns:
+            return entry
+    return None
+
+
+def _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes) -> None:
+    """Route a namespace that found no native kit into OHPM, else unmapped.
+
+    This is the ONLY place either bucket is filled, and it is only ever reached
+    from a branch where the native tier has already missed — which is what makes
+    "native behaviour is unchanged" true by construction rather than by testing.
+
+    The noise gate (skip_prefixes + method_count >= 2) is applied FIRST, so the
+    second tier can never surface a namespace the native tier deliberately
+    suppresses. A namespace failing the gate is dropped entirely, exactly as
+    before.
+    """
+    if (any(ns.startswith(p) for p in skip_prefixes)
+            or ns_info["method_count"] < 2):
+        return
+
+    row = {
+        "namespace":      ns,
+        "method_count":   ns_info["method_count"],
+        "class_count":    ns_info["class_count"],
+        "sample_methods": sorted(ns_info["methods"])[:5],
+    }
+
+    hit = _match_ohpm(ns, ohpm_entries)
+    if hit is None:
+        row["tier"] = "unmapped"
+        result["unmapped_namespaces"].append(row)
+        return
+
+    row.update({
+        "tier":            "ohpm",
+        "matched_prefix":  hit["android_namespace"],
+        "android_display": hit.get("android_display"),
+        "ohpm_package":    hit["ohpm_package"],
+        "install_cmd":     hit.get("install_cmd") or f"ohpm install {hit['ohpm_package']}",
+        "category":        hit.get("category"),
+        "description":     hit.get("description"),
+        "confidence":      hit.get("confidence"),
+        "source_repo":     hit.get("source_repo"),
+        "popularity":      hit.get("popularity"),
+        "note":            hit.get("note"),
+    })
+    result["ohpm_matches"].append(row)
+
+
+def analyze_apk(apk_path: str, mapping: dict, target: str,
+                ohpm_mapping: dict | None = None) -> dict:
     from androguard.misc import AnalyzeAPK
 
     kit_field = "hms_kit" if target == "hms" else "harmony_kit"
     is_hmos   = target == "hmos"
+
+    # OHPM packages are ArkTS/HarmonyOS NEXT artifacts. An HMS app is still an
+    # Android app and cannot consume them, so the second tier is HMOS-only.
+    from core.mapping import build_ohpm_entries
+    ohpm_entries = build_ohpm_entries(ohpm_mapping) if is_hmos else []
 
     print_info(f"Loading APK: {_c(Path(apk_path).name, C.CYAN)}")
     _warn_if_split_bundle(apk_path)
@@ -206,6 +271,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
         "manifest_xml":        "",
         "detected_namespaces": {},
         "kit_matches":         [],
+        "ohpm_matches":        [],
         "permission_matches":  [],
         "unmapped_namespaces":    [],
         "unresolvable_namespaces": [],
@@ -319,16 +385,10 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
             kit = best_match[kit_field]
 
             if not kit:
-
-
-                if (not any(ns.startswith(p) for p in skip_prefixes)
-                        and ns_info["method_count"] >= 2):
-                    result["unmapped_namespaces"].append({
-                        "namespace":      ns,
-                        "method_count":   ns_info["method_count"],
-                        "class_count":    ns_info["class_count"],
-                        "sample_methods": sorted(ns_info["methods"])[:5],
-                    })
+                # An explicit `harmony_kit: null` row means "no native kit". The
+                # namespace was unmapped before the second tier existed, so it is
+                # fair game for OHPM.
+                _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes)
                 continue
 
             pattern = best_match["android_namespace"]
@@ -388,16 +448,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
             matched_ns.add(ns)
 
         else:
-            if (
-                not any(ns.startswith(p) for p in skip_prefixes)
-                and ns_info["method_count"] >= 2
-            ):
-                result["unmapped_namespaces"].append({
-                    "namespace":      ns,
-                    "method_count":   ns_info["method_count"],
-                    "class_count":    ns_info["class_count"],
-                    "sample_methods": sorted(ns_info["methods"])[:5],
-                })
+            _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes)
 
     for kit_data in matched_kits.values():
         kit_data["android_sources"] = [
@@ -413,7 +464,13 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
 
     result["kit_matches"] = sorted(matched_kits.values(), key=lambda x: x["kit_name"])
     result["total_detected_ns"] = len(matched_ns)
-    result["total_3p_ns"] = len(matched_ns) + len(result["unmapped_namespaces"])
+    # OHPM matches are counted here even though they are not native matches.
+    # Before the second tier existed they sat in unmapped_namespaces, so leaving
+    # them out would SHRINK this denominator and silently inflate the native
+    # coverage percentage. total_3p_ns must stay exactly what it was.
+    result["total_3p_ns"] = (len(matched_ns)
+                             + len(result["unmapped_namespaces"])
+                             + len(result["ohpm_matches"]))
 
     for perm in result["permissions"]:
         if perm in perm_lookup:
@@ -430,6 +487,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
     result["missed_match_count"] = len(unmatched_perms)
 
     result["unmapped_namespaces"].sort(key=lambda x: x["method_count"], reverse=True)
+    result["ohpm_matches"].sort(key=lambda x: x["method_count"], reverse=True)
     result["private_libs"].sort(key=lambda x: x["method_count"], reverse=True)
     result["obfuscated_count"]  = obfuscated_count
 
@@ -454,6 +512,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str) -> dict:
     for km in result["kit_matches"]:
         km["status"]       = _status_map.get(km["confidence"], "Should Confirm")
         km["status_color"] = _color_map.get(km["confidence"], "blue")
+        km["tier"]         = "native"
 
 
     if result["api_matches"]:

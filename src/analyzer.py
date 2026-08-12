@@ -97,7 +97,7 @@ _silence_androguard_logs()
 
 
 from ui.terminal   import print_info, print_ok, print_warn, _c, C, interactive_session
-from core.mapping  import load_mapping
+from core.mapping  import load_mapping, load_ohpm_mapping
 from core.apk_engine import analyze_apk
 from core.exe_engine import analyze_exe, analyze_exe_folder
 from core.ipa_engine import analyze_ipa
@@ -128,6 +128,9 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     apk_mapping = load_mapping(apk_mapping_path) if apk_files else None
     exe_mapping = load_mapping(exe_mapping_path) if exe_files else None
     ipa_mapping = load_mapping(ipa_mapping_path) if ipa_files else None
+    # OHPM second tier: HMOS-only, optional, never fatal (see load_ohpm_mapping).
+    ohpm_mapping = (load_ohpm_mapping(mappings_dir / "ohpm_mapping.json")
+                    if apk_files and target != "hms" else None)
 
     agent_dir  = result_dir / "agent_outputs"
     agent_dir.mkdir(exist_ok=True)
@@ -162,7 +165,8 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
 
         try:
             if mode == "apk":
-                result = analyze_apk(str(file_path), apk_mapping, file_target)
+                result = analyze_apk(str(file_path), apk_mapping, file_target,
+                                     ohpm_mapping=ohpm_mapping)
                 html   = render_html_apk(result, apk_mapping)
                 output_html.write_text(html, encoding="utf-8")
                 print_summary_apk(result)
@@ -431,7 +435,9 @@ CLI (EXE):
     mapping = load_mapping(mapping_path)
 
     if mode == "apk":
-        result = analyze_apk(str(file_path), mapping, target)
+        ohpm_mapping = (load_ohpm_mapping(script_dir / "data" / "mappings" / "ohpm_mapping.json")
+                        if target != "hms" else None)
+        result = analyze_apk(str(file_path), mapping, target, ohpm_mapping=ohpm_mapping)
         html   = render_html_apk(result, mapping)
         if args.excel:
             export_excel_apk(result, output_html.with_suffix(".xlsx"))
