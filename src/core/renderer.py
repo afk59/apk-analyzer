@@ -174,6 +174,18 @@ _HTML_BASE = r"""<!DOCTYPE html>
   .kit-chevron,.ns-chevron { display:inline-block; transition:transform .2s; font-size:.72rem; color:var(--text3); }
   .kit-chevron { float:right; }
   .kit-row-name { font-family:monospace; font-size:.9rem; font-weight:600; color:#1d4ed8; }
+  /* OHPM second tier — deliberately NOT accent-red, so it never reads as a native kit table. */
+  .ohpm-note { background:#fffbeb; border:1px solid #fde68a; border-left:4px solid var(--med);
+    border-radius:6px; padding:10px 14px; margin-bottom:13px; font-size:.82rem; color:var(--text2); }
+  .ohpm-note strong { color:var(--med); }
+  .ohpm-note code { background:rgba(0,0,0,.06); padding:1px 5px; border-radius:3px; font-size:.78rem; }
+  .kit-table.ohpm-table thead th { background:var(--text2); }
+  .kit-table.ohpm-table td { padding:8px 12px; border-bottom:1px solid var(--border);
+    font-family:monospace; font-size:.8rem; vertical-align:middle; }
+  .kit-table.ohpm-table tbody tr:nth-child(even) { background:var(--surface2); }
+  .kit-table.ohpm-table code { background:rgba(0,0,0,.05); padding:1px 6px; border-radius:3px; }
+  .kit-table.ohpm-table a { color:var(--accent); text-decoration:none; }
+  .kit-table.ohpm-table a:hover { text-decoration:underline; }
   .badge.status-green { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
   .badge.status-amber { background:#fef3c7; color:#d97706; border:1px solid #fde68a; }
   .badge.status-blue  { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
@@ -938,6 +950,73 @@ def _render_kit_table_exe(kit_matches: list) -> str:
     )
 
 
+def _render_ohpm_table(ohpm_matches: list) -> str:
+    """Second-tier OHPM suggestions.
+
+    Deliberately styled apart from the native kit table: an amber lead-in note
+    and a neutral header (not the accent-red kit header), so it cannot be
+    mistaken for a native @kit.* match. Native kits stay the recommendation;
+    these are third-party packages that only apply where no kit exists.
+    """
+    if not ohpm_matches:
+        return ""
+
+    # Group by package, mirroring how the native kit table groups by kit — an app
+    # pulling one library shows one row, not 20 near-identical sub-namespace rows.
+    groups: dict = {}
+    for m in ohpm_matches:
+        groups.setdefault(m["ohpm_package"], []).append(m)
+    ordered = sorted(groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+
+    # Offset the group ids so they cannot collide with the native table's, which
+    # shares the same toggleGroupRow() handler and `group-row-<n>` id space.
+    _GID_BASE = 9000
+    rows = []
+    for i, (pkg, members) in enumerate(ordered):
+        gi   = _GID_BASE + i
+        head = members[0]
+        repo = head.get("source_repo")
+        repo_cell = (f'<a href="{_esc(repo)}" target="_blank" rel="noopener">{_esc(repo)}</a>'
+                     if repo else '<span style="color:var(--text3)">&mdash;</span>')
+        conf = (head.get("confidence") or "low").lower()
+        cat  = head.get("category")
+        n    = len(members)
+        rows.append(
+            f'<tr class="group-row" id="group-row-{gi}" onclick="toggleGroupRow({gi})">'
+            f'<td><span class="group-chevron">&#9654;</span> {n} namespace{"s" if n != 1 else ""}</td>'
+            f'<td><strong>{_esc(pkg)}</strong></td>'
+            f'<td><code>{_esc(head.get("install_cmd") or "")}</code></td>'
+            f'<td style="font-family:inherit">{_esc(cat) if cat else "&mdash;"}</td>'
+            f'<td><span class="badge {conf}">{_esc(conf)}</span></td>'
+            f'<td style="font-size:.76rem;word-break:break-all">{repo_cell}</td>'
+            f'</tr>'
+        )
+        for m in sorted(members, key=lambda x: x["namespace"]):
+            rows.append(
+                f'<tr class="ns-row group-child-{gi} hidden">'
+                f'<td colspan="2">{_esc(m["namespace"])}</td>'
+                f'<td colspan="4" style="color:var(--text3);font-size:.76rem">'
+                f'{m["method_count"]} methods &nbsp;&middot;&nbsp; {m["class_count"]} classes</td>'
+                f'</tr>'
+            )
+
+    return (
+        '<div class="ohpm-note">'
+        '<strong>Second tier &mdash; third-party packages, not HarmonyOS kits.</strong> '
+        'These namespaces have no native <code>@kit.*</code> equivalent, so an OHPM '
+        'community/vendor package is suggested instead. Prefer a native kit wherever one '
+        'exists; verify licence and maintenance before adopting any package below.'
+        '</div>'
+        '<div class="kit-table-wrapper"><table class="kit-table ohpm-table">'
+        '<thead><tr>'
+        '<th>Android Namespace</th><th>OHPM Package</th><th>Install</th>'
+        '<th>Category</th><th>Confidence</th><th>Source Repo</th>'
+        '</tr></thead><tbody>'
+        + "".join(rows) +
+        '</tbody></table></div>'
+    )
+
+
 def _collapsible_section(section_id: str, title: str, content: str) -> str:
     return (
         f'<div class="section" id="{section_id}">'
@@ -1176,11 +1255,25 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
             f'</div>'
         )
 
+    # Second tier. Sits directly under the native kit table, and is omitted
+    # entirely when empty so a clean app shows no hollow section.
+    ohpm_matches = result.get("ohpm_matches") or []
+    ohpm_section = (
+        _collapsible_section(
+            "ohpm-matches-section",
+            f"3rd Party (OHPM) &mdash; {len(ohpm_matches)} namespace"
+            f"{'s' if len(ohpm_matches) != 1 else ''}",
+            _render_ohpm_table(ohpm_matches),
+        )
+        if ohpm_matches else ""
+    )
+
     body_sections = (
         _collapsible_section(
             "kit-matches-section", kit_section_title,
             _render_kit_table_apk(flat_ns_rows, ns_lookup, is_hmos=is_hmos)
         )
+        + ohpm_section
         + _collapsible_section("permission-mapping-section", "Permission Mapping", perm_table_html)
         + unmatched_perms + perm_gaps_html + native_libs + unmapped
         + private_libs_section
@@ -1194,6 +1287,7 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
 
     sidebar_links = [
         (kit_section_title, "kit-matches-section"),
+    ] + ([("3rd Party (OHPM)", "ohpm-matches-section")] if ohpm_matches else []) + [
         ("Permission Mapping", "permission-mapping-section"),
         ("Unmatched Permissions", "unmatched-perms-section"),
         ("Permission Gaps", "permission-gaps-section"),
@@ -1228,6 +1322,7 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "obfuscated_count":        result.get("obfuscated_count", 0),
         "total_detected_ns":       result.get("total_detected_ns", 0),
         "total_3p_ns":             result.get("total_3p_ns", 0),
+        "ohpm_matches":            result.get("ohpm_matches", []),
     }
 
     subs = {

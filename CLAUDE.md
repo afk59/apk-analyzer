@@ -1249,6 +1249,77 @@ Grep imports before concluding a capability has no native kit.
 
 ---
 
+## Phase 3B — OHPM report section + KIT_DOC_URLS (2026-08-13)
+
+### "3rd Party (OHPM)" section (`render_html_apk`)
+
+Sits directly under the native kit table, **omitted entirely when `ohpm_matches` is empty** so a
+clean app shows no hollow section (verified: `com.mpsaps.cmoffice`, 0 matches → no section, no
+sidebar link). Sidebar entry is added conditionally on the same test.
+
+**Grouped by package, not flat**, mirroring how the native table groups by kit — on
+`com.hkairlines.b2c.app` that turns **47 namespace rows into 5 package rows**, because
+`com.airbnb.lottie.*` alone is 20 sub-namespaces and `pl.droidsonroids.gif.*` is 22. Parent row
+carries the package metadata (install command, category, confidence, repo); children list the
+namespaces with method/class counts and start collapsed.
+
+> **Group ids are offset by `_GID_BASE = 9000`.** The OHPM table reuses the native table's
+> `toggleGroupRow()` handler, which keys on the global `group-row-<n>` id space. The native APK
+> table already emits ids **0–22** on a real report, so an un-offset OHPM table would have
+> collided and toggled the wrong rows. Do not remove the offset.
+
+Visual separation from native is deliberate and load-bearing — these are third-party packages,
+not Huawei kits:
+
+- amber callout above the table (*"Second tier — third-party packages, not HarmonyOS kits… Prefer
+  a native kit wherever one exists; verify licence and maintenance"*),
+- neutral slate header (`--text2`) instead of the accent-red `--accent` used by every native kit
+  table,
+- confidence reuses the existing `.badge.high/.medium` classes so it still reads as native chrome.
+
+Null `source_repo` (vendor packages — `@tencent/wechat_open_sdk`, `@cashier_alipay/cashiersdk`
+publish none) and null `category` both render as a grey em-dash, not an empty cell or a broken
+link. `report_data` gained `ohpm_matches` so the in-browser XLSX export can see it.
+
+### KIT_DOC_URLS: 50 → 58 entries, two wrong links fixed
+
+**Every kit token used by `mapping.json` now resolves to a doc URL — 58 of 58, zero missing.**
+
+Two pre-existing entries pointed at the wrong kit entirely and are corrected:
+
+| Token | Was | Now |
+|---|---|---|
+| `@kit.CryptoArchitectureKit` | `core-speech-kit-guide-V5` | `harmonyos-guides/crypto-architecture-kit` |
+| `@kit.VisionKit` | `user-authentication-kit-V5` | `harmonyos-guides-V5/vision-cardrecognition-V5` |
+
+The CryptoArchitectureKit one mattered: three native rows written in the slice-1/2a rounds use
+that token, so they were all linking to the speech kit.
+
+Eight added: `@kit.AVSessionKit`, `@kit.ArkTS`, `@kit.MediaLibraryKit`, `@kit.ShareKit`,
+`@kit.LocalizationKit`, `@kit.PDFKit`, `@kit.AnalyticsKit`, `@kit.PaymentKit`.
+
+> **HTTP status cannot verify a Huawei doc URL.** `developer.huawei.com` is an SPA that returns
+> an identical **1824-byte shell with HTTP 200 for any slug**, including a deliberately
+> nonsensical control (`this-kit-does-not-exist-V5`). Body size is identical too. Every URL here
+> was therefore verified through the search index — each one is a page search actually returned —
+> not by fetching it. Do not "verify" these with curl; it proves nothing.
+
+Three are best-available rather than ideal landing pages, and say so in code comments:
+`@kit.PDFKit` (an "Opening a Document" task page — no confirmable kit landing), `@kit.AnalyticsKit`
+(the HMS product page — no HarmonyOS-guides page exists for it), `@kit.VisionKit` (its Card
+Recognition guide; note `core-vision-kit-guide` belongs to the *different* `@kit.CoreVisionKit`).
+
+`@kit.PaymentKit` is **Chinese-only by necessity**: it is a China-market kit — its
+`ecnyPaymentService` module is digital-yuan payment — and has no `/en/` guide. The kit itself is
+real and attested (27 `@kit.PaymentKit` imports in `hmos_api_index.json`).
+
+> **Doc-URL scheme split — future audit needed, deliberately NOT done here.** The current docs use
+> an **unversioned** `harmonyos-guides/<slug>` scheme; the 50 pre-existing entries all use the
+> legacy `harmonyos-guides-V5/<slug>-V5` form. New entries use the unversioned form because that
+> is what the live index returns. The legacy URLs were not audited — if `-V5` is ever retired they
+> rot **as a block**, and because of the SPA behaviour above nothing will 404 to warn you; the
+> links will silently land on an empty shell. Worth a dedicated pass.
+
 ## Report reproducibility fix — 2026-08-13
 
 **Until this fix, analysing the same APK twice produced different HTML and Excel.** Not subtly:

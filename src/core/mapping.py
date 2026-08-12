@@ -27,7 +27,8 @@ KIT_DOC_URLS: dict[str, str] = {
     "@kit.CoreFileKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-file-kit-V5",
     "@kit.CoreSpeechKit":         "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-speech-kit-guide-V5",
     "@kit.CoreVisionKit":         "https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-vision-objectdetection",
-    "@kit.CryptoArchitectureKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-speech-kit-guide-V5",
+    # FIXED 2026-08-13: pointed at core-speech-kit-guide-V5 (copy-paste error).
+    "@kit.CryptoArchitectureKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/crypto-architecture-kit",
     "@kit.DeviceCertificateKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/device-certificate-kit-V5",
     "@kit.DriverDevelopmentKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/driver-development-kit-V5",
     "@kit.DrmKit":                "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/drm-kit-V5",
@@ -54,7 +55,33 @@ KIT_DOC_URLS: dict[str, str] = {
     "@kit.TelephonyKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/telephony-kit-V5",
     "@kit.UniversalKeystoreKit":   "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/huks-kit-V5",
     "@kit.UserAuthenticationKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/user-authentication-kit-V5",
-    "@kit.VisionKit":              "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/user-authentication-kit-V5"
+    # FIXED 2026-08-13: pointed at user-authentication-kit-V5 (copy-paste error).
+    # Vision Kit has no single "About This Kit" landing page in the English docs;
+    # this is its Card Recognition guide, the closest confirmed Vision-Kit page.
+    # (core-vision-kit-guide belongs to @kit.CoreVisionKit, a different kit.)
+    "@kit.VisionKit":              "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/vision-cardrecognition-V5",
+
+    # Added 2026-08-13 — the seven tokens used by mapping.json rows that had no
+    # entry, so those rows rendered with no "Official Docs" anchor. Every URL was
+    # confirmed present in the live docs index; note that developer.huawei.com is
+    # an SPA that returns an identical 1824-byte shell (HTTP 200) for ANY slug,
+    # including nonsense, so status codes prove nothing and these were verified
+    # through the search index instead.
+    "@kit.AVSessionKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/avsession-overview",
+    "@kit.ArkTS":                  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-utils-overview",
+    "@kit.MediaLibraryKit":        "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/medialibrary-kit",
+    "@kit.ShareKit":               "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/system-share-overview",
+    "@kit.LocalizationKit":        "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/localization-kit",
+    # Best available: PDF Kit has no confirmed landing page, this is its
+    # "Opening a Document" guide.
+    "@kit.PDFKit":                 "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/pdf-open-document",
+    # Best available: no HarmonyOS guides page for @kit.AnalyticsKit could be
+    # confirmed; this is the HMS Analytics Kit product page (same product).
+    "@kit.AnalyticsKit":           "https://developer.huawei.com/consumer/en/hms/huawei-analyticskit/",
+    # CHINESE-ONLY, and correctly so: Payment Kit is a China-market kit (its
+    # ecnyPaymentService module is digital-yuan payment) and has no /en/ guide.
+    # Real and attested — 27 @kit.PaymentKit imports in hmos_api_index.json.
+    "@kit.PaymentKit":             "https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/payment-preparations",
 }
 
 HMS_DOC_URLS: dict[str, str] = {
