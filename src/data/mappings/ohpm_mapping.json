@@ -1,0 +1,139 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-08",
+  "tier": "ohpm",
+  "ohpm_mappings": [
+    {
+      "android_namespace": "com.google.firebase.FirebaseApp",
+      "android_display": "Firebase App (core init)",
+      "ohpm_package": "@hw-agconnect/hmcore",
+      "install_cmd": "ohpm install @hw-agconnect/hmcore",
+      "category": "Tool Library > Huawei Mobile Services Library",
+      "description": "AppGalleryConnectSDK hmcore for OpenHarmony.",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 3817,
+      "note": "Firebase app initialization -> AGConnect core. hmcore reads agconnect-services.json, the direct analogue of google-services.json, and bootstraps the AGC serverless/growth SDKs."
+    },
+    {
+      "android_namespace": "com.google.firebase.FirebaseOptions",
+      "android_display": "Firebase Options (config)",
+      "ohpm_package": "@hw-agconnect/hmcore",
+      "install_cmd": "ohpm install @hw-agconnect/hmcore",
+      "category": "Tool Library > Huawei Mobile Services Library",
+      "description": "AppGalleryConnectSDK hmcore for OpenHarmony.",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 3817,
+      "note": "FirebaseOptions carries the google-services.json values; the AGConnect equivalent is read from agconnect-services.json by @hw-agconnect/hmcore."
+    },
+    {
+      "android_namespace": "io.invertase.firebase.app",
+      "android_display": "React Native Firebase (app module)",
+      "ohpm_package": "@hw-agconnect/hmcore",
+      "install_cmd": "ohpm install @hw-agconnect/hmcore",
+      "category": "Tool Library > Huawei Mobile Services Library",
+      "description": "AppGalleryConnectSDK hmcore for OpenHarmony.",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 3817,
+      "note": "RN Firebase app module -> AGConnect core initialization. Sibling RNFirebase modules route elsewhere: .messaging -> @kit.PushKit, .analytics -> @kit.AnalyticsKit (native kits, not OHPM)."
+    },
+    {
+      "android_namespace": "com.huawei.agconnect",
+      "android_display": "Huawei AGConnect (Android)",
+      "ohpm_package": "@hw-agconnect/hmcore",
+      "install_cmd": "ohpm install @hw-agconnect/hmcore",
+      "category": "Tool Library > Huawei Mobile Services Library",
+      "description": "AppGalleryConnectSDK hmcore for OpenHarmony.",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 3817,
+      "note": "Same product, HarmonyOS edition. An app already using AGConnect on Android moves to the @hw-agconnect ohpm packages; hmcore is the core/init component."
+    },
+    {
+      "android_namespace": "io.invertase.firebase.crashlytics",
+      "android_display": "Firebase Crashlytics",
+      "ohpm_package": "@hw-agconnect/ohos-apms",
+      "install_cmd": "ohpm install @hw-agconnect/ohos-apms",
+      "category": "Tool Library > Huawei Mobile Services Library",
+      "description": "APMS Harmony SDK. collect crash, anr and performance info",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 2536,
+      "note": "Crash/ANR/performance reporting -> AGC APMS. README confirms automatic collection of crash and ANR stacks with quality reports generated on AppGallery Connect."
+    },
+    {
+      "android_namespace": "com.tencent.mm.opensdk",
+      "android_display": "WeChat Open SDK",
+      "ohpm_package": "@tencent/wechat_open_sdk",
+      "install_cmd": "ohpm install @tencent/wechat_open_sdk",
+      "category": null,
+      "description": "Tencent WeChat OpenSDK",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 13301,
+      "note": "Official Tencent WeChat OpenSDK for HarmonyOS - supports WeChat share, favourites and payment, matching the Android opensdk surface."
+    },
+    {
+      "android_namespace": "com.alipay.sdk.app",
+      "android_display": "Alipay Payment SDK",
+      "ohpm_package": "@cashier_alipay/cashiersdk",
+      "install_cmd": "ohpm install @cashier_alipay/cashiersdk",
+      "category": null,
+      "description": "alipay standard cashier sdk for ohos",
+      "confidence": "high",
+      "source_repo": null,
+      "popularity": 13325,
+      "note": "Official Alipay cashier SDK - H5 payment, native app payment, H5-to-native handover and standalone signing. NOTE: minSdkVersion 13. The bundled com.alipay.apmobilesecuritysdk / tscenter device-fingerprint internals have no separate package and are left unmapped."
+    },
+    {
+      "android_namespace": "com.airbnb.lottie",
+      "android_display": "Lottie (Airbnb)",
+      "ohpm_package": "@ohos/lottie",
+      "install_cmd": "ohpm install @ohos/lottie",
+      "category": "UI > Animation > Animation Library",
+      "description": "lottie是一个适用于OpenHarmony的动画库，它可以使用Bodymovin解析以json格式导出的Adobe After Effects动画，并在移动设备上进行本地渲染",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/CPF-ApplicationTPC/lottieArkTS.git",
+      "popularity": 33619,
+      "note": "Direct port - parses Adobe After Effects animations exported as JSON via Bodymovin and renders them on device. NOTE: the upstream README now recommends @ohos/lottie-turbo (popularity 9473) for new projects - declarative API, parallel loading, in-memory caching and sub-thread rendering for a ~30% performance gain. @ohos/lottie is kept here as the 1:1 migration target."
+    },
+    {
+      "android_namespace": "com.github.chrisbanes.photoview",
+      "android_display": "PhotoView",
+      "ohpm_package": "@ohos/photoview",
+      "install_cmd": "ohpm install @ohos/photoview",
+      "category": "UI > Media Component > Image Display",
+      "description": "Implementation of ImageView for ohos that supports zooming, by various touch gestures.",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/openharmony-sig/ohos_photoview",
+      "popularity": 364,
+      "note": "Name-for-name port maintained under openharmony-sig: zoom, pan and rotate on an image view. Ranked below @rv/image-preview (popularity 1300) on popularity but chosen on function - that package is a Swiper-based lightbox gallery, not a zoomable ImageView."
+    },
+    {
+      "android_namespace": "com.davemorrissey.labs.subscaleview",
+      "android_display": "SubsamplingScaleImageView",
+      "ohpm_package": "@ohos/subsampling-scale-image-view",
+      "install_cmd": "ohpm install @ohos/subsampling-scale-image-view",
+      "category": "UI > Media Component > Image Display",
+      "description": "Highly configurable, easily extendable deep zoom view for displaying huge images without loss of detail. Perfect for photo galleries, maps, building plans etc",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/openharmony-sig/ohos_subsampling_scale_image_view",
+      "popularity": 156,
+      "note": "Name-for-name port maintained under openharmony-sig: tiled deep-zoom rendering of very large images without loss of detail."
+    },
+    {
+      "android_namespace": "com.tencent.mmkv",
+      "android_display": "MMKV",
+      "ohpm_package": "@tencent/mmkv",
+      "install_cmd": "ohpm install @tencent/mmkv",
+      "category": "Storage and Database > Storage > Key-Value Storage",
+      "description": "The official OpenHarmony package of MMKV. An efficient, small mobile key-value storage framework developed by WeChat.",
+      "confidence": "medium",
+      "source_repo": "https://github.com/Tencent/mmkv",
+      "popularity": 14293,
+      "note": "Official Tencent MMKV port (upstream repo github.com/Tencent/MMKV). NOTE: native @kit.ArkData preferences also covers key-value storage and android.content.SharedPreferences -> @kit.ArkData is existing precedent; MMKV is the mmap-based option for performance-critical cases, so this is the migrator's choice rather than a forced dependency."
+    }
+  ]
+}
