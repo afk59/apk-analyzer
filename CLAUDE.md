@@ -740,6 +740,123 @@ cosmetic, not a broken link — but it now affects four of the new rows (`org.w3
 `org.xml.sax`, `android.provider.MediaStore`). `KIT_DOC_URLS` was left untouched in this commit;
 fixing all three tokens together is a separate change.
 
+### OHPM second-tier mapping — Phase 2B: registry fetcher (2026-08-12)
+
+Groundwork for an **OHPM second tier**: native `@kit.*` / HMS kits stay the priority, and OHPM
+is only a second-pass filter over what native leaves unmapped. Sprint 12 already named the
+intended catches — Firebase core and `com.airbnb.lottie` are the rows that want an ohpm package
+rather than a kit. This phase builds only the data source; **no mapping file exists yet** and
+nothing in the analysis pipeline reads any of it.
+
+**`src/core/ohpm_fetch.py` (new, isolated, stdlib-only).** Same containment rule as
+`play_meta.py`: no engine, renderer or mapping code opens a socket. Unlike `play_meta.py` it
+needs **no third-party dependency** — the API is plain JSON over `urllib` — so there is no
+`_ensure_*` hook and nothing that can fail to pip-install. It is a manually-run builder in the
+mould of `api_index.py`, not part of any analysis run:
+
+```
+python src/core/ohpm_fetch.py            # resume/refresh the sweep
+python src/core/ohpm_fetch.py --force    # discard and re-sweep from page 1
+python src/core/ohpm_fetch.py --check @ohos/lottie
+```
+
+Because it runs standalone it deliberately does **not** import `ui.terminal` (that would need
+`src/` on `sys.path`); it prints plain ASCII-prefixed lines like `api_index.py`. The em-dashes
+used everywhere else in this project mojibake on the Windows console, so printed strings here
+use ASCII hyphens — docstrings and comments still use em-dashes.
+
+#### Endpoints
+
+Found by reading the SPA bundle `/assets/index-*.js`, which inlines the base-URL table
+(`mP="/ohpmweb/registry"`, `la="/ohpm/console/api"`, `Loe="/ohpm"`). The site is a JS-only Vite
+SPA — there is no HTML to scrape.
+
+| Purpose | Route |
+|---|---|
+| Search / enumerate | `GET /ohpmweb/registry/oh-package/openapi/v1/search` |
+| Detail (one package) | `GET /ohpmweb/registry/oh-package/openapi/v1/detail/{urlencoded}[/{ver}]` |
+| Category tree | `GET /ohpm/tech-map` — note `/ohpm/`, **not** `/ohpmweb/` |
+
+Search takes five **required** params: `condition`, `pageNum`, `pageSize`, `sortedType`,
+`isHomePage`. `sortedType` must be the literal **`relevancy`** — `relevance` returns
+`HTTP 400 {"message":"参数异常"}`. An empty `condition` enumerates the whole registry.
+`pageSize` caps at **100**; 200 is rejected with HTTP 400. The sibling `business/v1` prefix is
+auth-gated (`401 {"code":204030,"message":"The request source is abnormal"}`) — `openapi/v1` is
+the public one.
+
+#### Four API behaviours that are load-bearing
+
+- **A missing package returns HTTP 200, not 404.** `body` degrades from an object to the literal
+  string `"success"`. Existence is `isinstance(body, dict)` and nothing else — neither the HTTP
+  status nor the `code` field distinguishes a real package from a typo. This is not academic:
+  `@hw-agconnect/core`, the package Sprint 12 named as the Firebase target, **does not exist**
+  and returns exactly this sentinel. The real ids are `@hw-agconnect/hmcore` (HarmonyOS NEXT
+  generation) and `@hw-agconnect/core-ohos` (legacy OpenHarmony v1.1.x); the org has 69
+  packages across those two generations. Existence-check before writing any mapping row.
+- **A Huawei WAF fronts the site.** `GET /` sets `HWWAFSESID` + `HWWAFSESTIME`; those cookies
+  plus a `Referer` header must ride on every request or repeats get challenged. Hence the
+  CookieJar seeded on first use in `_Session`. Measured: **zero challenges** across the sweep.
+- **Responses are gzip and urllib does not decompress**, so `Content-Encoding` is honoured by
+  hand. A 2xx body that will not parse as JSON is treated as a WAF interstitial and stops the
+  sweep (error kind `"parse"`), rather than being mistaken for a per-package miss.
+- **There is no import statement anywhere in the API.** An OHPM package is consumed via
+  `ohpm install <name>`, which `install_cmd()` builds. OHPM mapping rows must therefore carry a
+  package id + install command, **not** a `harmony_import` — this is the structural difference
+  from `@kit.*` rows, whose imports come from `hmos_api_index.json`.
+
+#### Sweep strategy — search rows, not details
+
+The sweep harvests **search rows only**: 3499 packages in 35 requests. It deliberately does not
+call detail per package, because the fields split cleanly and search carries the ones that
+matter for capability matching:
+
+- **search-only:** `description` — the single most useful field for matching, and *absent from
+  the detail response entirely*
+- **detail-only:** `repository`, `downloads`, `fileSize`, `readme*Url`, `changelog*Url`,
+  `compatibleSdkVersion`, `dependencies`/`dependent`, `versions`, `pointDetail`
+
+So detail is reserved for the Phase-2D shortlist (where `repository` drives README
+verification) instead of 3499 extra calls. `_PKG_FIELDS` is the search→cache field map.
+
+`/ohpm/tech-map` is fetched once and flattened to `{packageName: "L1 > L2 > L3"}` — 19 top-level
+categories nested to L4, 1062 packages, each in exactly one category (verified 1:1, no
+duplicates). Only ~30% of the registry is categorised, so an uncategorised package is normal,
+not an error. Two tech-map names are absent from the search sweep (1060/1062 overlap).
+
+#### Cache — `src/data/reference/ohpm_registry_cache.json`
+
+Sits beside `play_metadata_cache.json` and is **gitignored** the same way (1.8 MB).
+Shape: `{schema_version, fetched_at, sweep:{complete,pages_done,total_pages,total,page_size},
+packages:{name:{…}}, tech_map:{name:"cat > path"}}`. `load_registry()` is the offline accessor
+for downstream phases.
+
+**Resumable.** The cache is written after *every* page and `sweep.pages_done` records the
+highest contiguous page, so a kill mid-sweep resumes at the next page rather than restarting.
+Writes go to a `.tmp` sibling and are then `replace()`d, so a kill *during* a write cannot
+truncate an already-good cache. Packages are keyed by name, which makes re-fetching a partially
+written page idempotent — and also absorbs the pagination drift from publishes landing during
+the sweep (empty-condition ordering is newest-first). A cache written at a different
+`_PAGE_SIZE` cannot be resumed (its `pages_done` counts differently sized pages) and is
+discarded rather than continued.
+
+Politeness: `_PAGE_DELAY_SEC = 0.4` between pages, `_PAGE_RETRIES = 2` per page with a short
+backoff before the sweep parks itself for resume. Full sweep ≈ 77s wall-clock.
+
+#### Verified
+
+| Scenario | Result |
+|---|---|
+| Fresh full sweep | **3499** packages, 1062 categorised, 35 pages, **37 requests** (1 seed + 1 tech-map + 35), zero WAF challenges |
+| Kill mid-sweep, re-run | Resumed at the next page and completed; proved twice (killed at page 1, and a SIGPIPE kill at page 4 → resumed at 5 in 31 requests) |
+| Re-run when complete | `[=] Sweep already complete` — no pages re-fetched |
+| `validate_package_exists("@ohos/lottie")` | `True`, served from cache with **0** network requests |
+| `validate_package_exists` garbage / `""` | `False` (garbage costs 1 request; empty string short-circuits) |
+| `@hw-agconnect/core` vs `/hmcore` | `NOT FOUND` vs `EXISTS` — the `isinstance` gotcha caught a real error |
+| Offline (unresolvable host) | One `[!]` line, `packages=0`, `complete=False`, **no exception**; `validate_package_exists` → `None` (indeterminate, not `False`), `fetch_tech_map` → `{}` |
+
+Field coverage across the 3499: `name`/`popularity`/`points`/`likes`/`latest_version` 100%,
+`description` 3496 (99.9%), `license` 3495, `org` 69%, `keywords` 63%.
+
 ---
 
 ## Known gaps / warts (as of 2026-08-07)
