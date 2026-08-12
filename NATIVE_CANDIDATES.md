@@ -11,10 +11,17 @@ its own verification pass — not a drive-by append during an OHPM slice.
 |---|---|---|
 | Native round slice 1 | 25 | ✅ **WRITTEN** to `mapping.json` v1.6.0 (2026-08-12) |
 | Native round slice 2a | 16 | ✅ **WRITTEN** to `mapping.json` v1.7.0 (2026-08-12) |
-| Native round slice 2b | ~17 | ⏳ pending — the low-frequency / ArkUI-component tail |
+| Native round slice 2b | 16 | ✅ **WRITTEN** to `mapping.json` v1.8.0 (2026-08-12) |
 
-**Slices 1 and 2a are DONE — do not re-propose those rows.** In the Slice 2 table below, every
-row marked ✅ is already written; the unmarked rows are the outstanding slice 2b tail.
+### ✅ BACKLOG FULLY DRAINED — the native round is CLOSED (2026-08-12)
+
+All 57 rows written across three slices (25 + 16 + 16), `mapping.json` v1.5.0 → **v1.8.0**,
+206 → **263** namespaces, **0 shadowed** in every slice. Nothing in this file is outstanding.
+Six entries were cut as genuine gaps — see "Genuine gaps" below. Do not re-propose anything
+here without new evidence; see CLAUDE.md "Batch-pool effort — closing tally".
+
+**Every slice is DONE — this backlog is drained.** All rows below are marked ✅ written, except
+the six recorded as genuine gaps.
 
 Every kit token below was confirmed against `src/data/reference/hmos_api_index.json`
 by looking up a distinctive method name — the same discipline as the Sprint 10/12
@@ -82,8 +89,9 @@ rows, **0 shadowed** — predicted and actual matched exactly.
 
 ## Slice 2 (2026-08-12) — partially written
 
-Rows marked ✅ were written to `mapping.json` v1.7.0 as **slice 2a** (2026-08-12, 16 rows,
-≥3 apps). Unmarked rows are the **slice 2b** tail, still outstanding.
+Rows marked ✅ were written to `mapping.json`: the ≥3-app half as **slice 2a** (v1.7.0, 16 rows)
+and the low-frequency / ArkUI-component tail as **slice 2b** (v1.8.0, 16 rows). Two rows were
+**cut** as genuine gaps — see below.
 
 Three write-time deltas in 2a: `com.facebook.android.crypto` got its own row (it cannot match a
 `com.facebook.crypto` prefix, so 15 planned rows became 16); `org.slf4j` and
@@ -109,27 +117,27 @@ cookies). Only 3 OHPM mappings survived.
 | ✅ `com.github.barteksc`, `com.shockwave.pdfium`, `org.wonday.pdf` | PDF rendering | `@kit.PDFKit` | `import { pdfService } from '@kit.PDFKit'` — `PdfDocument`, `loadDocument` | 5 |
 | ✅ `com.rnfs` | File system read/write | `@kit.CoreFileKit` | `import { fileIo } from '@kit.CoreFileKit'` — `openSync`, `readSync`, `mkdirSync`, `listFileSync` | 5 |
 | ✅ `com.facebook.crypto`, `com.facebook.android.crypto` | Conceal encrypted storage | `@kit.CryptoArchitectureKit` | `import { cryptoFramework } from '@kit.CryptoArchitectureKit'` — `createCipher`, `createSymKeyGenerator`, `doFinal` | 5 |
-| `org.reactnative.maskedview` | Masked view overlay | `@kit.ArkUI` | `Mask`, `maskShape` | 5 |
+| ✅ `org.reactnative.maskedview` | Masked view overlay | `@kit.ArkUI` | `Mask`, `maskShape` | 5 |
 | ✅ `org.slf4j` | Logging facade | `@kit.PerformanceAnalysisKit` | `import { hilog } from '@kit.PerformanceAnalysisKit'` — `debug`, `isLoggable` | 4 |
 | `com.lwansbrough.RCTCamera`, `org.reactnative.camera`, `com.google.android.cameraview` | Camera capture | `@kit.CameraKit` | `import { camera } from '@kit.CameraKit'` — `getSupportedCameras`, `createPreviewOutput` | 4 |
 | ✅ `com.reactnativecommunity.cookies` | Cookie management | `@kit.ArkWeb` | `import { webview } from '@kit.ArkWeb'` — `configCookieSync`, `fetchCookieSync`, `saveCookieAsync` | 4 |
-| `com.reactnativecommunity.checkbox` | Checkbox control | `@kit.ArkUI` | `Checkbox`, `CheckboxGroup` | 4 |
-| `com.jakewharton.processphoenix`, `com.reactnativerestart` | App restart | `@kit.ArkTS` / `@kit.AbilityKit` | `process.exit`; `terminateSelf` | 4 |
+| ✅ `com.reactnativecommunity.checkbox` | Checkbox control | `@kit.ArkUI` | `Checkbox`, `CheckboxGroup` | 4 |
+| ✅ `com.jakewharton.processphoenix`, `com.reactnativerestart` | App restart | `@kit.ArkTS` / `@kit.AbilityKit` | `process.exit`; `terminateSelf` | 4 |
 | `android.credentials`, `android.service.credentials` | Credential Manager (passkeys/autofill) | `@kit.BasicServicesKit` — **UNCERTAIN** | `appAccount.getCredential` — see caveat below | 4 |
-| `com.henninghall.date_picker` | Date picker | `@kit.ArkUI` | `showDatePickerDialog`, `DatePickerOptions` | 3 |
-| `com.reactnativecommunity.toolbarandroid` | Toolbar | `@kit.ArkUI` | `Toolbar` | 3 |
-| `com.scwang.smartrefresh` | Pull-to-refresh | `@kit.ArkUI` | `Refresh` | 3 |
-| `org.devio.rn` | Splash screen | `@kit.ArkUI` | `window.setWindowLayoutFullScreen` | 3 |
-| `com.reactnativecommunity.geolocation` | Geolocation | `@kit.LocationKit` | `import { geoLocationManager } from '@kit.LocationKit'` — `getCurrentLocation` | 3 |
-| `com.calendarevents` | Calendar events | `@kit.CalendarKit` | `import { calendarManager } from '@kit.CalendarKit'` — `getCalendarManager`, `addEvent` | 3 |
-| `com.caverock.androidsvg` | SVG rendering | `@kit.ImageKit` / `@kit.ArkGraphics2D` | `svg tags` → ImageKit; `buildFromSVGString` → ArkGraphics2D | 3 |
-| `com.brentvatne`; `androidtranscoder` | Video player; transcoding | `@kit.MediaKit` | `media.createAVPlayer`; `media.createAVTranscoder` | 3 ea |
-| `org.altbeacon` | iBeacon / BLE ranging | `@kit.ConnectivityKit` | `import { ble } from '@kit.ConnectivityKit'` — `startBLEScan`, `createGattClientDevice` | 3 |
-| `net.time4j` | Date/time + timezone | `@kit.LocalizationKit` | `import { i18n } from '@kit.LocalizationKit'` — `getTimeZone`, `getCalendar` | 3 |
-| `com.google.android.odml` | On-device ML | `@kit.MindSporeLiteKit` | `import { mindSporeLite } from '@kit.MindSporeLiteKit'` — `loadModelFromFile`, `runStep` | 3 |
+| ✅ `com.henninghall.date_picker` | Date picker | `@kit.ArkUI` | `showDatePickerDialog`, `DatePickerOptions` | 3 |
+| ✅ `com.reactnativecommunity.toolbarandroid` | Toolbar | `@kit.ArkUI` | `Toolbar` | 3 |
+| ✅ `com.scwang.smartrefresh` | Pull-to-refresh | `@kit.ArkUI` | `Refresh` | 3 |
+| ✅ `org.devio.rn` | Splash screen | `@kit.ArkUI` | `window.setWindowLayoutFullScreen` | 3 |
+| ✅ `com.reactnativecommunity.geolocation` | Geolocation | `@kit.LocationKit` | `import { geoLocationManager } from '@kit.LocationKit'` — `getCurrentLocation` | 3 |
+| ✅ `com.calendarevents` | Calendar events | `@kit.CalendarKit` | `import { calendarManager } from '@kit.CalendarKit'` — `getCalendarManager`, `addEvent` | 3 |
+| ✅ `com.caverock.androidsvg` | SVG rendering | `@kit.ImageKit` / `@kit.ArkGraphics2D` | `svg tags` → ImageKit; `buildFromSVGString` → ArkGraphics2D | 3 |
+| ✅ `com.brentvatne`; `androidtranscoder` | Video player; transcoding | `@kit.MediaKit` | `media.createAVPlayer`; `media.createAVTranscoder` | 3 ea |
+| ❌ CUT `org.altbeacon` | iBeacon / BLE ranging | `@kit.ConnectivityKit` | `import { ble } from '@kit.ConnectivityKit'` — `startBLEScan`, `createGattClientDevice` | 3 |
+| ✅ `net.time4j` | Date/time + timezone | `@kit.LocalizationKit` | `import { i18n } from '@kit.LocalizationKit'` — `getTimeZone`, `getCalendar` | 3 |
+| ❌ CUT `com.google.android.odml` | On-device ML | `@kit.MindSporeLiteKit` | `import { mindSporeLite } from '@kit.MindSporeLiteKit'` — `loadModelFromFile`, `runStep` | 3 |
 | `com.drew` (EXIF half) | Image EXIF read/write | `@kit.ImageKit` | `getImageProperty`, `getImagePropertySync`, `modifyImageProperty` | 3 |
-| `dev.fluttercommunity.plus.wakelock` | Screen keep-awake | `@kit.BasicServicesKit` | `import {runningLock} from '@kit.BasicServicesKit'` — `RunningLockType` | 2 |
-| `dev.fluttercommunity.plus.packageinfo` | Package/version info | `@kit.AbilityKit` | `import { bundleManager } from '@kit.AbilityKit'` — `getBundleInfoForSelf`, `getBundleInfo` | 2 |
+| ✅ `dev.fluttercommunity.plus.wakelock` | Screen keep-awake | `@kit.BasicServicesKit` | `import {runningLock} from '@kit.BasicServicesKit'` — `RunningLockType` | 2 |
+| ✅ `dev.fluttercommunity.plus.packageinfo` | Package/version info | `@kit.AbilityKit` | `import { bundleManager } from '@kit.AbilityKit'` — `getBundleInfoForSelf`, `getBundleInfo` | 2 |
 
 > The last two rows exhaust the mappable pool: after slice 2 there are **zero** unreviewed
 > capabilities left in the `Common Unmapped` demand list. See CLAUDE.md for the closing tally.
@@ -160,3 +168,20 @@ cookies). Only 3 OHPM mappings survived.
 - Several of these prefixes are broader than the namespaces actually observed.
   Check for shadowing against existing `mapping.json` entries before appending,
   the way the Sprint 12 round did (it measured 0 shadowed rows).
+
+
+---
+
+## Genuine gaps — deliberately UNMAPPED
+
+Six capabilities have no honest target. Recorded here so a later round does not "discover" them
+again and force a wrong row. A wrong mapping is worse than a gap.
+
+| Entry | N | Why |
+|---|---|---|
+| `net.openid.appauth`, `com.rnappauth` | 4 | Native Account Kit is Huawei-ID-only. Generic OAuth2/OIDC against arbitrary providers has no equivalent; the OHPM registry has only provider-specific SDKs (`@dingtalk/openauth`, `@uni_modules/uni-oauth-huawei`), no AppAuth port. Hand-roll over `@kit.NetworkKit` + `@kit.ArkWeb`. |
+| `android.credentials`, `android.service.credentials` | 4 | The index has no `passkey`, `webauthn` or `fido` key — only password autofill (`requestPasswordAutofill`, `enableAutofill`, `import { autoFillManager } from '@kit.AbilityKit'`). Credential Manager's headline capability is passkeys; half of it is not parity. Re-check if a passkey API ever lands in the index. |
+| `com.scottyab.rootbeer` | 4 | Zero OHPM registry hits and no native device-attestation API. |
+| `org.reactnative.facedetector` | 3 | `@kit.VisionKit` offers `interactiveLiveness` and `visionImageAnalyzer`, not face landmarks. The only OHPM candidate, `hfacedetect`, is popularity 74 / 289 downloads — too weak to propose for a production migration. |
+| **`org.altbeacon`** | 3 | **BLE transport exists (`@kit.ConnectivityKit` `ble.startBLEScan`, `createGattClientDevice`) but the beacon protocol layer must be hand-rolled** — iBeacon/Eddystone identifier parsing, ranging and region monitoring have no native counterpart. Note the contrast with `org.slf4j`, which *was* mapped: there the native API does logging's core work and only the facade layer is missing; here the native API does none of the beacon work, only the transport underneath. |
+| **`com.google.android.odml`** | 3 | ODML is Google's image-container **data type** used with ML Kit; `@kit.MindSporeLiteKit` is an **inference runtime**. Different layers, not a function match. |

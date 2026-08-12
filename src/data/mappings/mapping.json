@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
+  "version": "1.8.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -2049,6 +2049,134 @@
       "harmony_import": "@kit.PDFKit",
       "confidence": "high",
       "note": "PDF viewer component → @kit.PDFKit. Attested: import { pdfService } from '@kit.PDFKit' (PdfDocument, loadDocument)."
+    },
+    {
+      "android_namespace": "org.reactnative.maskedview",
+      "android_display": "React Native Masked View",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Mask overlay → @kit.ArkUI. Attested: Mask, maskShape. No drop-in component exists: the HarmonyOS equivalent is a composition, not a one-for-one widget swap."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.checkbox",
+      "android_display": "React Native Checkbox",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Checkbox control → @kit.ArkUI. Attested: Checkbox, CheckboxGroup — a direct component equivalent."
+    },
+    {
+      "android_namespace": "com.henninghall.date_picker",
+      "android_display": "React Native Date Picker",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Date/time picker → @kit.ArkUI. Attested: showDatePickerDialog, DatePickerOptions (and showTimePickerDialog for the time variant)."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.toolbarandroid",
+      "android_display": "React Native ToolbarAndroid",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Toolbar / app bar → @kit.ArkUI. Attested: Toolbar. No drop-in component exists: the HarmonyOS equivalent is a composition, not a one-for-one widget swap. ArkUI expresses this through the Navigation component's title bar and toolbar slots rather than a standalone Toolbar widget."
+    },
+    {
+      "android_namespace": "com.scwang.smartrefresh",
+      "android_display": "SmartRefreshLayout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Pull-to-refresh → @kit.ArkUI. Attested: Refresh, a direct container equivalent. SmartRefresh's custom header/footer animations map onto Refresh's builder slots."
+    },
+    {
+      "android_namespace": "org.devio.rn",
+      "android_display": "React Native Splash Screen",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Splash screen → @kit.ArkUI window. Attested: setWindowLayoutFullScreen (import { window } from '@kit.ArkUI'). No drop-in component exists: the HarmonyOS equivalent is a composition, not a one-for-one widget swap. HarmonyOS has no splash-screen API as such; the launch experience is an ability-level start page plus window configuration."
+    },
+    {
+      "android_namespace": "com.jakewharton.processphoenix",
+      "android_display": "ProcessPhoenix",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "medium",
+      "note": "Process relaunch → @kit.AbilityKit. Attested: terminateSelf (and process.exit from @kit.ArkTS). Medium because HarmonyOS exposes no true process-restart primitive — terminateSelf plus startAbility approximates it, with different lifecycle semantics."
+    },
+    {
+      "android_namespace": "com.reactnativerestart",
+      "android_display": "React Native Restart",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "medium",
+      "note": "App restart → @kit.AbilityKit terminateSelf plus startAbility; same caveat as com.jakewharton.processphoenix — there is no true process-restart primitive."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.geolocation",
+      "android_display": "React Native Geolocation",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "Location fixes and change callbacks → @kit.LocationKit. Attested: getCurrentLocation (import { geoLocationManager } from '@kit.LocationKit')."
+    },
+    {
+      "android_namespace": "com.calendarevents",
+      "android_display": "React Native Calendar Events",
+      "harmony_kit": "@kit.CalendarKit",
+      "harmony_import": "@kit.CalendarKit",
+      "confidence": "high",
+      "note": "Calendar event CRUD → @kit.CalendarKit. Attested: import { calendarManager } from '@kit.CalendarKit' (getCalendarManager, addEvent)."
+    },
+    {
+      "android_namespace": "com.caverock.androidsvg",
+      "android_display": "AndroidSVG",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "SVG rendering → @kit.ImageKit, which accepts SVG as an image source (index key 'svg tags' resolves to import { image } from '@kit.ImageKit'). For programmatic path-level rendering the closer API is drawing.buildFromSVGString (import { drawing } from '@kit.ArkGraphics2D'); medium because AndroidSVG spans both roles."
+    },
+    {
+      "android_namespace": "com.brentvatne",
+      "android_display": "React Native Video",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "Video playback → @kit.MediaKit. Attested: createAVPlayer (import { media } from '@kit.MediaKit'). The bundled ExoPlayer surface (com.brentvatne.exoplayer) is replaced by AVPlayer plus an ArkUI XComponent/Video surface."
+    },
+    {
+      "android_namespace": "androidtranscoder",
+      "android_display": "Android Transcoder",
+      "harmony_kit": "@kit.MediaKit",
+      "harmony_import": "@kit.MediaKit",
+      "confidence": "high",
+      "note": "Video transcoding / compression → @kit.MediaKit. Attested: createAVTranscoder (import { media } from '@kit.MediaKit')."
+    },
+    {
+      "android_namespace": "net.time4j",
+      "android_display": "Time4J",
+      "harmony_kit": "@kit.LocalizationKit",
+      "harmony_import": "@kit.LocalizationKit",
+      "confidence": "high",
+      "note": "Date/time, calendar systems and timezone data → @kit.LocalizationKit. Attested: import { i18n } from '@kit.LocalizationKit' (getTimeZone, getCalendar). Time4J is large — its calendar-system breadth exceeds i18n, so exotic calendars may need rework."
+    },
+    {
+      "android_namespace": "dev.fluttercommunity.plus.wakelock",
+      "android_display": "Flutter wakelock_plus",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Screen keep-awake → @kit.BasicServicesKit. Attested: import { runningLock } from '@kit.BasicServicesKit' (RunningLockType)."
+    },
+    {
+      "android_namespace": "dev.fluttercommunity.plus.packageinfo",
+      "android_display": "Flutter package_info_plus",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "Package name / version / build number → @kit.AbilityKit. Attested: import { bundleManager } from '@kit.AbilityKit' (getBundleInfoForSelf, getBundleInfo)."
     }
   ],
   "permission_mappings": [
