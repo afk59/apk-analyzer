@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -1921,6 +1921,134 @@
       "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "high",
       "note": "Analytics events → @kit.PerformanceAnalysisKit, matching the existing com.google.firebase.analytics row. Attested: import { hiAppEvent } from '@kit.PerformanceAnalysisKit' (addWatcher) and import { hilog } from '@kit.PerformanceAnalysisKit'. Chosen over @kit.AnalyticsKit, which the index does not attest at all."
+    },
+    {
+      "android_namespace": "com.alibaba.fastjson",
+      "android_display": "Alibaba Fastjson",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "high",
+      "note": "JSON parse/serialize → ArkTS. Attested: import { ArkTSUtils } from '@kit.ArkTS' (parse, stringify); the JS builtin JSON also covers most fastjson usage. Fastjson's JSONPath and TypeReference generics have no direct counterpart and need rework."
+    },
+    {
+      "android_namespace": "com.oblador.vectoricons",
+      "android_display": "React Native Vector Icons",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Icon-font rendering → @kit.ArkUI. Attested: registerFont, SymbolGlyph, fontFamily. Medium because there is no drop-in icon-font component: the HarmonyOS equivalent is a composition (registerFont plus Text with fontFamily, or SymbolGlyph), not a single API."
+    },
+    {
+      "android_namespace": "com.oblador.keychain",
+      "android_display": "React Native Keychain",
+      "harmony_kit": "@kit.UniversalKeystoreKit",
+      "harmony_import": "@kit.UniversalKeystoreKit",
+      "confidence": "high",
+      "note": "Secure credential storage → @kit.UniversalKeystoreKit. Attested: import { huks } from '@kit.UniversalKeystoreKit' (generateKeyItem, importKeyItem, exportKeyItem)."
+    },
+    {
+      "android_namespace": "com.rnfs",
+      "android_display": "React Native FS",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "File read/write/download → @kit.CoreFileKit. Attested: import { fileIo } from '@kit.CoreFileKit' (openSync, readSync, mkdirSync, listFileSync). RNFS upload/download helpers map to @kit.BasicServicesKit request instead."
+    },
+    {
+      "android_namespace": "com.facebook.crypto",
+      "android_display": "Facebook Conceal",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "Conceal encrypted storage → @kit.CryptoArchitectureKit. Attested: import { cryptoFramework } from '@kit.CryptoArchitectureKit' (createCipher, createSymKeyGenerator, doFinal)."
+    },
+    {
+      "android_namespace": "com.facebook.android.crypto",
+      "android_display": "Facebook Conceal (Android keychain)",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "high",
+      "note": "Conceal Android keychain half → @kit.CryptoArchitectureKit; same target as com.facebook.crypto. Key material itself belongs in @kit.UniversalKeystoreKit huks."
+    },
+    {
+      "android_namespace": "com.github.barteksc",
+      "android_display": "AndroidPdfViewer",
+      "harmony_kit": "@kit.PDFKit",
+      "harmony_import": "@kit.PDFKit",
+      "confidence": "high",
+      "note": "PDF viewing → @kit.PDFKit. Attested: import { pdfService } from '@kit.PDFKit' (PdfDocument, loadDocument)."
+    },
+    {
+      "android_namespace": "org.slf4j",
+      "android_display": "SLF4J",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "Logging → hilog. Attested: import { hilog } from '@kit.PerformanceAnalysisKit' (debug, isLoggable). NOTE: rough fit, not equivalence — hilog is a platform log SINK, while SLF4J is a pluggable-backend FACADE whose whole purpose is that the app binds logback/log4j at deploy time. HarmonyOS has no facade/binding layer. org.slf4j.MDC and org.slf4j.helpers.* are exactly the parts that do not port; appenders and per-logger levels need real rework, not a symbol swap."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.cookies",
+      "android_display": "React Native Cookies",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "high",
+      "note": "Cookie get/set/clear → @kit.ArkWeb. Attested: import { webview } from '@kit.ArkWeb' (configCookieSync, fetchCookieSync, saveCookieAsync). Cookies are managed by the web stack on HarmonyOS, not by @kit.NetworkKit."
+    },
+    {
+      "android_namespace": "com.journeyapps.barcodescanner",
+      "android_display": "ZXing Android Embedded",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "Barcode/QR scanning → @kit.ScanKit. Attested: import { detectBarcode } from '@kit.ScanKit' (also generateBarcode, scanCore)."
+    },
+    {
+      "android_namespace": "com.dcloud.zxing2",
+      "android_display": "ZXing (DCloud vendored fork)",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "Barcode/QR decoding → @kit.ScanKit. Attested: import { detectBarcode } from '@kit.ScanKit' (also generateBarcode, scanCore). NOTE: this is a vendored ZXing copy bundled INSIDE the DCloud uni-app runtime. @kit.ScanKit is correct for the barcode-scanning capability itself, but the surrounding uni-app runtime is not separately mappable (Phase 2C classified io.dcloud/uts/com.dcloud as SKIP - a whole cross-platform runtime, not a library). Do not read this row as 'swap one library'."
+    },
+    {
+      "android_namespace": "org.reactnative.barcodedetector",
+      "android_display": "React Native Barcode Detector",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "Barcode detection → @kit.ScanKit. Attested: import { detectBarcode } from '@kit.ScanKit' (also generateBarcode, scanCore)."
+    },
+    {
+      "android_namespace": "com.rnbiometrics",
+      "android_display": "React Native Biometrics",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "high",
+      "note": "Biometric authentication → @kit.UserAuthenticationKit. Attested: import { userAuth } from '@kit.UserAuthenticationKit' (getUserAuthInstance, UserAuthType, AuthParam)."
+    },
+    {
+      "android_namespace": "com.rnfingerprint",
+      "android_display": "React Native Fingerprint Auth",
+      "harmony_kit": "@kit.UserAuthenticationKit",
+      "harmony_import": "@kit.UserAuthenticationKit",
+      "confidence": "high",
+      "note": "Fingerprint authentication → @kit.UserAuthenticationKit. Attested: import { userAuth } from '@kit.UserAuthenticationKit' (getUserAuthInstance, UserAuthType, AuthParam). The FingerprintCipher/FingerprintDialog split maps onto userAuth plus @kit.UniversalKeystoreKit huks for key binding."
+    },
+    {
+      "android_namespace": "com.shockwave.pdfium",
+      "android_display": "PdfiumAndroid",
+      "harmony_kit": "@kit.PDFKit",
+      "harmony_import": "@kit.PDFKit",
+      "confidence": "high",
+      "note": "PDF rendering core → @kit.PDFKit. Attested: import { pdfService } from '@kit.PDFKit' (PdfDocument, loadDocument)."
+    },
+    {
+      "android_namespace": "org.wonday.pdf",
+      "android_display": "React Native PDF",
+      "harmony_kit": "@kit.PDFKit",
+      "harmony_import": "@kit.PDFKit",
+      "confidence": "high",
+      "note": "PDF viewer component → @kit.PDFKit. Attested: import { pdfService } from '@kit.PDFKit' (PdfDocument, loadDocument)."
     }
   ],
   "permission_mappings": [

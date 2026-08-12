@@ -10,11 +10,11 @@ its own verification pass — not a drive-by append during an OHPM slice.
 | Slice | Rows | State |
 |---|---|---|
 | Native round slice 1 | 25 | ✅ **WRITTEN** to `mapping.json` v1.6.0 (2026-08-12) |
-| Native round slice 2 | ~13 capabilities | ⏳ pending — everything under "Slice 2" below |
+| Native round slice 2a | 16 | ✅ **WRITTEN** to `mapping.json` v1.7.0 (2026-08-12) |
+| Native round slice 2b | ~17 | ⏳ pending — the low-frequency / ArkUI-component tail |
 
-**Slice 1 of the backlog is DONE — do not re-propose those rows.** They are struck through
-below and listed in the "Written" section immediately following. Everything in the *Slice 2*
-table is still outstanding.
+**Slices 1 and 2a are DONE — do not re-propose those rows.** In the Slice 2 table below, every
+row marked ✅ is already written; the unmarked rows are the outstanding slice 2b tail.
 
 Every kit token below was confirmed against `src/data/reference/hmos_api_index.json`
 by looking up a distinctive method name — the same discipline as the Sprint 10/12
@@ -80,7 +80,20 @@ rows, **0 shadowed** — predicted and actual matched exactly.
   `osFullName`, `udid`) are unindexed, which is normal — the index keys on method
   names, not properties.
 
-## Slice 2 (2026-08-12)
+## Slice 2 (2026-08-12) — partially written
+
+Rows marked ✅ were written to `mapping.json` v1.7.0 as **slice 2a** (2026-08-12, 16 rows,
+≥3 apps). Unmarked rows are the **slice 2b** tail, still outstanding.
+
+Three write-time deltas in 2a: `com.facebook.android.crypto` got its own row (it cannot match a
+`com.facebook.crypto` prefix, so 15 planned rows became 16); `org.slf4j` and
+`com.oblador.vectoricons` landed at **medium**, not high; and `com.dcloud.zxing2` carries an
+explicit caveat that it is a vendored ZXing inside the DCloud uni-app runtime (Phase 2C SKIP),
+so the row is not misread as "swap one library".
+
+Absorption measured: 136 distinct namespaces / 425 per-app row instances / 131 `Common Unmapped`
+rows, **0 shadowed** — predicted and actual matched exactly.
+
 
 Native-first routed **24 of 29** reviewed capabilities away from OHPM in this slice — including
 six that were expected to be third-party ports (barcode, JSON, logging, PDF, icon fonts,
@@ -88,18 +101,18 @@ cookies). Only 3 OHPM mappings survived.
 
 | Android namespace(s) | Capability | Native kit | Attested by | N |
 |---|---|---|---|---|
-| `com.journeyapps.barcodescanner`, `com.dcloud.zxing2`, `org.reactnative.barcodedetector` | Barcode / QR scan | `@kit.ScanKit` | `import { detectBarcode } from '@kit.ScanKit'`; also `generateBarcode`, `scanCore` | 6 |
-| `com.alibaba.fastjson` | JSON serialization | `@kit.ArkTS` | `ArkTSUtils` parse/stringify; plus the JS builtin `JSON` | 6 |
-| `com.rnbiometrics`, `com.rnfingerprint` | Biometric / fingerprint auth | `@kit.UserAuthenticationKit` | `import { userAuth } from '@kit.UserAuthenticationKit'` — `getUserAuthInstance`, `UserAuthType`, `AuthParam` | 6 |
-| `com.oblador.vectoricons` | Icon font rendering | `@kit.ArkUI` | `registerFont`, `SymbolGlyph`, `fontFamily` | 6 |
-| `com.oblador.keychain` | Secure keystore / keychain | `@kit.UniversalKeystoreKit` | `import { huks } from '@kit.UniversalKeystoreKit'` — `generateKeyItem`, `importKeyItem`, `exportKeyItem` | 5 |
-| `com.github.barteksc`, `com.shockwave.pdfium`, `org.wonday.pdf` | PDF rendering | `@kit.PDFKit` | `import { pdfService } from '@kit.PDFKit'` — `PdfDocument`, `loadDocument` | 5 |
-| `com.rnfs` | File system read/write | `@kit.CoreFileKit` | `import { fileIo } from '@kit.CoreFileKit'` — `openSync`, `readSync`, `mkdirSync`, `listFileSync` | 5 |
-| `com.facebook.crypto`, `com.facebook.android.crypto` | Conceal encrypted storage | `@kit.CryptoArchitectureKit` | `import { cryptoFramework } from '@kit.CryptoArchitectureKit'` — `createCipher`, `createSymKeyGenerator`, `doFinal` | 5 |
+| ✅ `com.journeyapps.barcodescanner`, `com.dcloud.zxing2`, `org.reactnative.barcodedetector` | Barcode / QR scan | `@kit.ScanKit` | `import { detectBarcode } from '@kit.ScanKit'`; also `generateBarcode`, `scanCore` | 6 |
+| ✅ `com.alibaba.fastjson` | JSON serialization | `@kit.ArkTS` | `ArkTSUtils` parse/stringify; plus the JS builtin `JSON` | 6 |
+| ✅ `com.rnbiometrics`, `com.rnfingerprint` | Biometric / fingerprint auth | `@kit.UserAuthenticationKit` | `import { userAuth } from '@kit.UserAuthenticationKit'` — `getUserAuthInstance`, `UserAuthType`, `AuthParam` | 6 |
+| ✅ `com.oblador.vectoricons` | Icon font rendering | `@kit.ArkUI` | `registerFont`, `SymbolGlyph`, `fontFamily` | 6 |
+| ✅ `com.oblador.keychain` | Secure keystore / keychain | `@kit.UniversalKeystoreKit` | `import { huks } from '@kit.UniversalKeystoreKit'` — `generateKeyItem`, `importKeyItem`, `exportKeyItem` | 5 |
+| ✅ `com.github.barteksc`, `com.shockwave.pdfium`, `org.wonday.pdf` | PDF rendering | `@kit.PDFKit` | `import { pdfService } from '@kit.PDFKit'` — `PdfDocument`, `loadDocument` | 5 |
+| ✅ `com.rnfs` | File system read/write | `@kit.CoreFileKit` | `import { fileIo } from '@kit.CoreFileKit'` — `openSync`, `readSync`, `mkdirSync`, `listFileSync` | 5 |
+| ✅ `com.facebook.crypto`, `com.facebook.android.crypto` | Conceal encrypted storage | `@kit.CryptoArchitectureKit` | `import { cryptoFramework } from '@kit.CryptoArchitectureKit'` — `createCipher`, `createSymKeyGenerator`, `doFinal` | 5 |
 | `org.reactnative.maskedview` | Masked view overlay | `@kit.ArkUI` | `Mask`, `maskShape` | 5 |
-| `org.slf4j` | Logging facade | `@kit.PerformanceAnalysisKit` | `import { hilog } from '@kit.PerformanceAnalysisKit'` — `debug`, `isLoggable` | 4 |
+| ✅ `org.slf4j` | Logging facade | `@kit.PerformanceAnalysisKit` | `import { hilog } from '@kit.PerformanceAnalysisKit'` — `debug`, `isLoggable` | 4 |
 | `com.lwansbrough.RCTCamera`, `org.reactnative.camera`, `com.google.android.cameraview` | Camera capture | `@kit.CameraKit` | `import { camera } from '@kit.CameraKit'` — `getSupportedCameras`, `createPreviewOutput` | 4 |
-| `com.reactnativecommunity.cookies` | Cookie management | `@kit.ArkWeb` | `import { webview } from '@kit.ArkWeb'` — `configCookieSync`, `fetchCookieSync`, `saveCookieAsync` | 4 |
+| ✅ `com.reactnativecommunity.cookies` | Cookie management | `@kit.ArkWeb` | `import { webview } from '@kit.ArkWeb'` — `configCookieSync`, `fetchCookieSync`, `saveCookieAsync` | 4 |
 | `com.reactnativecommunity.checkbox` | Checkbox control | `@kit.ArkUI` | `Checkbox`, `CheckboxGroup` | 4 |
 | `com.jakewharton.processphoenix`, `com.reactnativerestart` | App restart | `@kit.ArkTS` / `@kit.AbilityKit` | `process.exit`; `terminateSelf` | 4 |
 | `android.credentials`, `android.service.credentials` | Credential Manager (passkeys/autofill) | `@kit.BasicServicesKit` — **UNCERTAIN** | `appAccount.getCredential` — see caveat below | 4 |

@@ -1099,6 +1099,58 @@ Four of them (`AVSessionKit`, `ArkTS`, `MediaLibraryKit`, `ShareKit`) are live a
 broken link — but it now supersedes the narrower Sprint 10/12 notes, which listed only
 `@kit.ArkTS`, `@kit.LocalizationKit` and `@kit.MediaLibraryKit`. Fix all seven together.
 
+## Native mapping round — slice 2a (2026-08-12)
+
+`mapping.json` **v1.6.0 → v1.7.0, 231 → 247 `namespace_mappings` (+16)**. Append-only,
+`last_updated` stays `2026-08`, `permission_mappings` untouched (38). 14 high / 2 medium.
+
+Covers the ≥3-app half of the OHPM slice-2 native fallout: barcode ×3 (`@kit.ScanKit`), fastjson
+(`@kit.ArkTS`), biometric ×2 (`@kit.UserAuthenticationKit`), vector icons (`@kit.ArkUI`), keychain
+(`@kit.UniversalKeystoreKit`), PDF ×3 (`@kit.PDFKit`), RNFS (`@kit.CoreFileKit`), Conceal ×2
+(`@kit.CryptoArchitectureKit`), SLF4J (`@kit.PerformanceAnalysisKit`), cookies (`@kit.ArkWeb`).
+All ten kit tokens re-verified verbatim against the index this round; none failed.
+
+`com.facebook.android.crypto` needed its own row — it is in the Conceal capability but cannot
+match a `com.facebook.crypto` prefix, so 15 planned rows became 16.
+
+### The two mediums, and why they are not `high`
+
+- **`org.slf4j` → `@kit.PerformanceAnalysisKit`** — `hilog` is a platform log **sink**; SLF4J is a
+  pluggable-backend **facade** whose entire purpose is that the app binds logback/log4j at deploy
+  time. HarmonyOS has no facade/binding layer. The note names the non-porting parts explicitly:
+  `org.slf4j.MDC` and `org.slf4j.helpers.*` (24 namespaces observed, and those are among them).
+  Appenders and per-logger levels need real rework, not a symbol swap.
+- **`com.oblador.vectoricons` → `@kit.ArkUI`** — there is no drop-in icon-font component. The
+  HarmonyOS equivalent is a *composition*: `registerFont` plus `Text` with `fontFamily`, or
+  `SymbolGlyph`.
+
+### `com.dcloud.zxing2` — mapped, with an anti-misread caveat
+
+Kept (second-heaviest absorber: 75 row instances, 25 namespaces) because `@kit.ScanKit` genuinely
+is correct for what that namespace does. But it is a **vendored ZXing copy bundled inside the
+DCloud uni-app runtime**, which Phase 2C classified SKIP — a whole cross-platform runtime, not a
+library. The row's note says so, so nobody reads it as "swap one library" when the real migration
+problem is that the uni-app runtime does not port. Accurate namespace coverage without the
+misleading implication.
+
+### Shadowing / absorption — predicted, then confirmed
+
+Baseline is v1.6.0, so this measures only the 16 new prefixes.
+
+| Metric | Predicted | Actual |
+|---|---|---|
+| Distinct namespaces newly absorbed | 136 | **136** ✓ |
+| Per-app row instances absorbed | 425 | **425** ✓ |
+| `Common Unmapped` (≥2 apps) rows absorbed | 131 | **131** ✓ |
+| **Rows shadowed by a pre-existing entry** | 0 | **0** ✓ |
+
+Heaviest absorbers: `com.alibaba.fastjson` (99), `com.dcloud.zxing2` (75), `org.slf4j` (57),
+`com.facebook.crypto` (53).
+
+Running total across both native slices: **+41 rows**, 206 → 247, 0 shadowed throughout.
+`android.credentials` still **unmapped** — re-hunted this round, the index still has no
+`passkey`/`webauthn`/`fido` key, only password autofill via `autoFillManager` (`@kit.AbilityKit`).
+
 ---
 
 ## Known gaps / warts (as of 2026-08-07)
