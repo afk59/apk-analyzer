@@ -2479,6 +2479,8 @@ def export_excel_batch(
     mapped_ns_kit: dict | None = None,
     unmapped_ns_apps: dict | None = None,
     play_metadata: dict | None = None,
+    ohpm_ns_apps: dict | None = None,
+    ohpm_ns_meta: dict | None = None,
 ) -> None:
     hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C = _excel_styles()
     DKBLUE = "1F3864"
@@ -2617,6 +2619,41 @@ def export_excel_batch(
         ws_cu.freeze_panes = "A2"
         ws_cu.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_cu))}1"
 
+    if ohpm_ns_apps:
+        # Second tier. No _COMMON_MIN_APPS threshold here, unlike the Common
+        # sheets: those drop <2-app rows because they would otherwise run to
+        # thousands, whereas the whole OHPM tier is ~139 namespaces and a
+        # single-app hit is still a real migration finding. Sheet is omitted
+        # entirely when empty, so EXE/IPA-only and HMS batches never get one.
+        ws_oh = wb.create_sheet("OHPM Matches")
+        ws_oh.sheet_view.showGridLines = False
+        hdrs_oh = ["Android Namespace", "OHPM Package", "Install", "Category",
+                   "Confidence", "App Count", "Apps"]
+        for ci, h in enumerate(hdrs_oh, 1):
+            hdr(ws_oh.cell(row=1, column=ci, value=h), bg=DKBLUE)
+        ws_oh.row_dimensions[1].height = 22
+
+        meta = ohpm_ns_meta or {}
+        ohpm_rows = sorted(
+            ohpm_ns_apps.items(),
+            key=lambda kv: (-len(kv[1]), -(meta.get(kv[0], {}).get("method_count") or 0), kv[0]),
+        )
+        for ri, ((ns, pkg), apps) in enumerate(ohpm_rows, start=2):
+            bg = WHITE if ri % 2 == 0 else GRAY
+            m  = meta.get((ns, pkg), {})
+            vals = [ns, pkg, m.get("install_cmd") or f"ohpm install {pkg}",
+                    m.get("category") or "", m.get("confidence") or "",
+                    len(apps), ", ".join(sorted(apps))]
+            for ci, v in enumerate(vals, 1):
+                c = ws_oh.cell(row=ri, column=ci, value=v)
+                dat(c, align=("center" if ci in (5, 6) else "left"), wrap=(ci == 7))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws_oh.row_dimensions[ri].height = 16
+        for ci, w in enumerate([46, 30, 38, 34, 12, 11, 60], 1):
+            ws_oh.column_dimensions[get_column_letter(ci)].width = w
+        ws_oh.freeze_panes = "A2"
+        ws_oh.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_oh))}1"
+
     if unmapped_dlls:
         ws2 = wb.create_sheet("Unmapped DLLs")
         ws2.sheet_view.showGridLines = False
@@ -2720,6 +2757,17 @@ def export_excel_batch_unmapped(per_file_unmapped: dict, output_path: Path) -> N
     _print_ok(f"Batch unmapped Excel: {output_path}")
 
 
+# Emitted once at the top of agent_summary.json, never per app. The per-app
+# files carry tier:"ohpm" on every row, which is self-describing; this is the
+# prose form for a human or LLM reading the batch summary.
+OHPM_SCHEMA_NOTE = (
+    "ohpm_matches are second-tier third-party OHPM packages, NOT native "
+    "HarmonyOS kits — treat them as external dependencies with their own "
+    "license and maintenance implications, and prefer a native kit from "
+    "kit_list where one exists."
+)
+
+
 def build_agent_json(result: dict) -> dict:
     mode = result["mode"]
     now  = datetime.now().isoformat(timespec="seconds")
@@ -2728,6 +2776,11 @@ def build_agent_json(result: dict) -> dict:
     for km in result["kit_matches"]:
         entry = {
             "kit_name":    km["kit_name"],
+            # Explicit, so a consumer can positively confirm these are native
+            # kits rather than only inferring it from the absence of an OHPM tag.
+            # kit_list is rebuilt field-by-field here, so the engine's km["tier"]
+            # would otherwise be dropped.
+            "tier":        km.get("tier", "native"),
             "confidence":  km["confidence"],
             "note":        km["note"],
             "doc_url":     get_doc_url(km["kit_name"], result.get("target", "hmos")),
@@ -2806,6 +2859,14 @@ def build_agent_json(result: dict) -> dict:
     if mode == "apk":
         agent["api_matches"]     = result.get("api_matches", [])
         agent["permission_gaps"] = result.get("permission_gaps", [])
+        # Passed through verbatim, exactly like api_matches above, so each row
+        # keeps the engine's tier:"ohpm" tag without re-adding it here.
+        #
+        # NOTE: no human-readable schema note is emitted per app. Each row is
+        # already self-describing via tier:"ohpm"; the prose explanation lives
+        # ONCE at the top of agent_summary.json (see OHPM_SCHEMA_NOTE), because
+        # repeating a static sentence in all 41 per-app files is pure redundancy.
+        agent["ohpm_matches"]    = result.get("ohpm_matches", [])
     agent["device_matrix"] = result.get("device_matrix", {})
     return agent
 
