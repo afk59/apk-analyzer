@@ -5,7 +5,16 @@ Pool entries that the OHPM review (Phase 2D) found are covered by a **native
 because they belong in `mapping.json` and deserve a dedicated native round with
 its own verification pass — not a drive-by append during an OHPM slice.
 
-**Nothing in this file has been written to `mapping.json` yet.**
+## Status
+
+| Slice | Rows | State |
+|---|---|---|
+| Native round slice 1 | 25 | ✅ **WRITTEN** to `mapping.json` v1.6.0 (2026-08-12) |
+| Native round slice 2 | ~13 capabilities | ⏳ pending — everything under "Slice 2" below |
+
+**Slice 1 of the backlog is DONE — do not re-propose those rows.** They are struck through
+below and listed in the "Written" section immediately following. Everything in the *Slice 2*
+table is still outstanding.
 
 Every kit token below was confirmed against `src/data/reference/hmos_api_index.json`
 by looking up a distinctive method name — the same discipline as the Sprint 10/12
@@ -15,7 +24,30 @@ an `import` statement is quoted, it appears verbatim in the index.
 `N` = number of APKs in the 41-app batch whose `Common Unmapped` sheet contains
 the namespace (union across the listed namespaces).
 
-## Slice 1 (2026-08-12)
+## Slice 1 (2026-08-12) — ✅ WRITTEN to mapping.json v1.6.0
+
+**25 namespace rows written 2026-08-12.** Do not re-propose. The 12 capabilities below expanded
+to 25 rows because prefixes are per-namespace. Three deltas from what this table originally said,
+decided during the write:
+
+- `org.apache.commons` became a **three-way** split, not two-way: `.io` → `@kit.CoreFileKit`
+  (commons-io is file/stream IO, not ArkTS utils), `.logging` → `@kit.PerformanceAnalysisKit`
+  (medium, facade caveat), `.codec` → `@kit.CryptoArchitectureKit` (medium, row straddles two
+  kits — Base64 is `util.Base64Helper` in `@kit.ArkTS`).
+- `io.invertase.firebase.analytics` → **`@kit.PerformanceAnalysisKit`**, not `@kit.AnalyticsKit`:
+  the index attests `@kit.AnalyticsKit` nowhere, and `mapping.json` already routes
+  `com.google.firebase.analytics` to `@kit.PerformanceAnalysisKit`.
+- `io.invertase.firebase.messaging` → `@kit.PushKit` **kept despite zero index attestation**,
+  on the strength of four existing PushKit rows in `mapping.json`. Recorded in the row's note.
+
+Also written: `io.invertase.notifee` (a 25th row not in the original table, folded in with the
+other Notifee row).
+
+Absorption measured: 141 distinct namespaces / 450 per-app row instances / 130 `Common Unmapped`
+rows, **0 shadowed** — predicted and actual matched exactly.
+
+<details><summary>Original slice 1 table (all rows now written)</summary>
+
 
 | Android namespace(s) | Capability | Native kit | Attested by | N |
 |---|---|---|---|---|
@@ -31,6 +63,8 @@ the namespace (union across the listed namespaces).
 | `net.lingala.zip4j`, `com.rnziparchive` | Zip / archive compression | `@kit.BasicServicesKit` | `compressFile`, `decompressFile` → `import { zlib } from '@kit.BasicServicesKit'` | 7 |
 | `org.greenrobot.eventbus` | Pub/sub event messaging | `@kit.BasicServicesKit` | `import { emitter } from '@kit.BasicServicesKit'` | 7 |
 | `io.invertase.firebase.analytics` | Analytics events | `@kit.AnalyticsKit` | existing `mapping.json` precedent (kit already in use) | 7 |
+
+</details>
 
 ### Two of these correct earlier decisions — do not re-cut them
 

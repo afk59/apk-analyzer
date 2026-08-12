@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0",
+  "version": "1.6.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -1721,6 +1721,206 @@
       "harmony_import": "@kit.BasicServicesKit",
       "confidence": "high",
       "note": "React Native Clipboard → @kit.BasicServicesKit pasteboard; getSystemPasteboard replaces ClipboardManager."
+    },
+    {
+      "android_namespace": "android.service.media",
+      "android_display": "Android MediaBrowserService",
+      "harmony_kit": "@kit.AVSessionKit",
+      "harmony_import": "@kit.AVSessionKit",
+      "confidence": "high",
+      "note": "MediaBrowserService / MediaSession → @kit.AVSessionKit. Attested: import { avSession } from '@kit.AVSessionKit' (createAVSession, setAVMetadata). Supersedes the Sprint 10 decision to leave this unmapped, which was taken only because the kit token could not be confirmed at the time."
+    },
+    {
+      "android_namespace": "com.learnium.RNDeviceInfo",
+      "android_display": "React Native Device Info",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Device model / OS version / unique id → @kit.BasicServicesKit. Attested: import { deviceInfo } from '@kit.BasicServicesKit'. Supersedes the Sprint 12 cut, which searched for '@ohos.deviceInfo' and for property names (productModel, udid) — the index keys on method names, so those lookups missed a token that is attested verbatim."
+    },
+    {
+      "android_namespace": "dev.fluttercommunity.plus.device_info",
+      "android_display": "Flutter device_info_plus",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Flutter device_info_plus → @kit.BasicServicesKit deviceInfo; same target as com.learnium.RNDeviceInfo."
+    },
+    {
+      "android_namespace": "cl.json",
+      "android_display": "react-native-share",
+      "harmony_kit": "@kit.ShareKit",
+      "harmony_import": "@kit.ShareKit",
+      "confidence": "high",
+      "note": "Social share sheet → @kit.ShareKit. Attested: import { systemShare } from '@kit.ShareKit' (SharedData). The odd 'cl.json' root is react-native-share's actual package name."
+    },
+    {
+      "android_namespace": "dev.fluttercommunity.plus.share",
+      "android_display": "Flutter share_plus",
+      "harmony_kit": "@kit.ShareKit",
+      "harmony_import": "@kit.ShareKit",
+      "confidence": "high",
+      "note": "Flutter share_plus → @kit.ShareKit systemShare; same target as cl.json (react-native-share)."
+    },
+    {
+      "android_namespace": "com.wix.reactnativenotifications",
+      "android_display": "Wix React Native Notifications",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Local notifications → @kit.NotificationKit. Attested: import { notificationManager } from '@kit.NotificationKit' (addSlot, requestEnableNotification). Remote push delivery is @kit.PushKit."
+    },
+    {
+      "android_namespace": "com.dieam.reactnativepushnotification",
+      "android_display": "React Native Push Notification",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Local notification scheduling and channels → @kit.NotificationKit notificationManager; addSlot replaces NotificationChannel."
+    },
+    {
+      "android_namespace": "app.notifee",
+      "android_display": "Notifee",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Notifee local notifications → @kit.NotificationKit notificationManager."
+    },
+    {
+      "android_namespace": "io.invertase.notifee",
+      "android_display": "Notifee (React Native bridge)",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Notifee RN bridge module → @kit.NotificationKit; same target as app.notifee."
+    },
+    {
+      "android_namespace": "com.reactnative.ivpusic.imagepicker",
+      "android_display": "React Native Image Crop Picker",
+      "harmony_kit": "@kit.MediaLibraryKit",
+      "harmony_import": "@kit.MediaLibraryKit",
+      "confidence": "high",
+      "note": "Gallery picking → @kit.MediaLibraryKit. Attested: import { photoAccessHelper } from '@kit.MediaLibraryKit' (PhotoSelectOptions). Cropping is an ArkUI/ImageKit concern, not part of the picker."
+    },
+    {
+      "android_namespace": "com.imagepicker",
+      "android_display": "React Native Image Picker",
+      "harmony_kit": "@kit.MediaLibraryKit",
+      "harmony_import": "@kit.MediaLibraryKit",
+      "confidence": "high",
+      "note": "Image/video picking → @kit.MediaLibraryKit photoAccessHelper."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.cameraroll",
+      "android_display": "React Native CameraRoll",
+      "harmony_kit": "@kit.MediaLibraryKit",
+      "harmony_import": "@kit.MediaLibraryKit",
+      "confidence": "high",
+      "note": "Camera-roll enumeration → @kit.MediaLibraryKit photoAccessHelper."
+    },
+    {
+      "android_namespace": "com.dmcbig.mediapicker",
+      "android_display": "Media Picker",
+      "harmony_kit": "@kit.MediaLibraryKit",
+      "harmony_import": "@kit.MediaLibraryKit",
+      "confidence": "high",
+      "note": "Multi-select media picking → @kit.MediaLibraryKit photoAccessHelper."
+    },
+    {
+      "android_namespace": "org.apache.commons.codec",
+      "android_display": "Apache Commons Codec",
+      "harmony_kit": "@kit.CryptoArchitectureKit",
+      "harmony_import": "@kit.CryptoArchitectureKit",
+      "confidence": "medium",
+      "note": "This row straddles two kits: Base64/hex encoding lives in util.Base64Helper (import { util } from '@kit.ArkTS'), while message digests (DigestUtils / MD5 / SHA) live in cryptoFramework.createMd (import { cryptoFramework } from '@kit.CryptoArchitectureKit'). Mapped to @kit.CryptoArchitectureKit because the digest half has no other home; Base64-only users should prefer @kit.ArkTS util."
+    },
+    {
+      "android_namespace": "org.apache.commons.io",
+      "android_display": "Apache Commons IO",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "IOUtils / FileUtils stream and file operations → @kit.CoreFileKit. Attested: import { fileIo } from '@kit.CoreFileKit' (openSync, readSync, mkdirSync, listFileSync)."
+    },
+    {
+      "android_namespace": "org.apache.commons.logging",
+      "android_display": "Apache Commons Logging",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "Logging → hilog. Attested: import { hilog } from '@kit.PerformanceAnalysisKit' (debug, isLoggable). NOTE: this is a rough fit, not an equivalence — the Android library is a pluggable-backend logging facade (the app binds logback/log4j at deploy time); HarmonyOS has no facade/binding layer, so appenders, MDC and per-logger levels need real rework."
+    },
+    {
+      "android_namespace": "com.zoontek.rnpermissions",
+      "android_display": "React Native Permissions",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "Runtime permission request/check → @kit.AbilityKit. Attested: import { abilityAccessCtrl } from '@kit.AbilityKit' (verifyAccessToken, checkAccessToken)."
+    },
+    {
+      "android_namespace": "com.hjq.permissions",
+      "android_display": "XXPermissions",
+      "harmony_kit": "@kit.AbilityKit",
+      "harmony_import": "@kit.AbilityKit",
+      "confidence": "high",
+      "note": "Runtime permission request/check → @kit.AbilityKit abilityAccessCtrl; same target as com.zoontek.rnpermissions."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.netinfo",
+      "android_display": "React Native NetInfo",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Connectivity state and change callbacks → @kit.NetworkKit. Attested: import { connection } from '@kit.NetworkKit' (hasDefaultNet, getNetCapabilities, createNetConnection)."
+    },
+    {
+      "android_namespace": "dev.fluttercommunity.plus.connectivity",
+      "android_display": "Flutter connectivity_plus",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Flutter connectivity_plus → @kit.NetworkKit connection; same target as react-native-netinfo."
+    },
+    {
+      "android_namespace": "net.lingala.zip4j",
+      "android_display": "Zip4j",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Zip archive create/extract → @kit.BasicServicesKit. Attested: import { zlib } from '@kit.BasicServicesKit' (compressFile, decompressFile). zlib has no per-entry API, so zip4j's entry-level manipulation and AES encryption have no direct counterpart."
+    },
+    {
+      "android_namespace": "com.rnziparchive",
+      "android_display": "React Native Zip Archive",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Zip/unzip → @kit.BasicServicesKit zlib compressFile/decompressFile."
+    },
+    {
+      "android_namespace": "org.greenrobot.eventbus",
+      "android_display": "greenrobot EventBus",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "In-process pub/sub → @kit.BasicServicesKit. Attested: import { emitter } from '@kit.BasicServicesKit'. Rough fit rather than equivalence: emitter carries no counterpart to EventBus sticky events, subscriber priorities or ThreadMode dispatch, so those need rework."
+    },
+    {
+      "android_namespace": "io.invertase.firebase.messaging",
+      "android_display": "React Native Firebase Messaging",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "FCM remote messaging → @kit.PushKit; matches the existing com.google.firebase.messaging row. NOTE: the @kit.PushKit token rests on existing mapping.json precedent (4 rows) and KIT_DOC_URLS, not on an index import statement — hmos_api_index.json attests no @kit.PushKit import."
+    },
+    {
+      "android_namespace": "io.invertase.firebase.analytics",
+      "android_display": "React Native Firebase Analytics",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "high",
+      "note": "Analytics events → @kit.PerformanceAnalysisKit, matching the existing com.google.firebase.analytics row. Attested: import { hiAppEvent } from '@kit.PerformanceAnalysisKit' (addWatcher) and import { hilog } from '@kit.PerformanceAnalysisKit'. Chosen over @kit.AnalyticsKit, which the index does not attest at all."
     }
   ],
   "permission_mappings": [
