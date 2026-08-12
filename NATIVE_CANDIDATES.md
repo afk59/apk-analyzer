@@ -46,6 +46,60 @@ the namespace (union across the listed namespaces).
   `osFullName`, `udid`) are unindexed, which is normal — the index keys on method
   names, not properties.
 
+## Slice 2 (2026-08-12)
+
+Native-first routed **24 of 29** reviewed capabilities away from OHPM in this slice — including
+six that were expected to be third-party ports (barcode, JSON, logging, PDF, icon fonts,
+cookies). Only 3 OHPM mappings survived.
+
+| Android namespace(s) | Capability | Native kit | Attested by | N |
+|---|---|---|---|---|
+| `com.journeyapps.barcodescanner`, `com.dcloud.zxing2`, `org.reactnative.barcodedetector` | Barcode / QR scan | `@kit.ScanKit` | `import { detectBarcode } from '@kit.ScanKit'`; also `generateBarcode`, `scanCore` | 6 |
+| `com.alibaba.fastjson` | JSON serialization | `@kit.ArkTS` | `ArkTSUtils` parse/stringify; plus the JS builtin `JSON` | 6 |
+| `com.rnbiometrics`, `com.rnfingerprint` | Biometric / fingerprint auth | `@kit.UserAuthenticationKit` | `import { userAuth } from '@kit.UserAuthenticationKit'` — `getUserAuthInstance`, `UserAuthType`, `AuthParam` | 6 |
+| `com.oblador.vectoricons` | Icon font rendering | `@kit.ArkUI` | `registerFont`, `SymbolGlyph`, `fontFamily` | 6 |
+| `com.oblador.keychain` | Secure keystore / keychain | `@kit.UniversalKeystoreKit` | `import { huks } from '@kit.UniversalKeystoreKit'` — `generateKeyItem`, `importKeyItem`, `exportKeyItem` | 5 |
+| `com.github.barteksc`, `com.shockwave.pdfium`, `org.wonday.pdf` | PDF rendering | `@kit.PDFKit` | `import { pdfService } from '@kit.PDFKit'` — `PdfDocument`, `loadDocument` | 5 |
+| `com.rnfs` | File system read/write | `@kit.CoreFileKit` | `import { fileIo } from '@kit.CoreFileKit'` — `openSync`, `readSync`, `mkdirSync`, `listFileSync` | 5 |
+| `com.facebook.crypto`, `com.facebook.android.crypto` | Conceal encrypted storage | `@kit.CryptoArchitectureKit` | `import { cryptoFramework } from '@kit.CryptoArchitectureKit'` — `createCipher`, `createSymKeyGenerator`, `doFinal` | 5 |
+| `org.reactnative.maskedview` | Masked view overlay | `@kit.ArkUI` | `Mask`, `maskShape` | 5 |
+| `org.slf4j` | Logging facade | `@kit.PerformanceAnalysisKit` | `import { hilog } from '@kit.PerformanceAnalysisKit'` — `debug`, `isLoggable` | 4 |
+| `com.lwansbrough.RCTCamera`, `org.reactnative.camera`, `com.google.android.cameraview` | Camera capture | `@kit.CameraKit` | `import { camera } from '@kit.CameraKit'` — `getSupportedCameras`, `createPreviewOutput` | 4 |
+| `com.reactnativecommunity.cookies` | Cookie management | `@kit.ArkWeb` | `import { webview } from '@kit.ArkWeb'` — `configCookieSync`, `fetchCookieSync`, `saveCookieAsync` | 4 |
+| `com.reactnativecommunity.checkbox` | Checkbox control | `@kit.ArkUI` | `Checkbox`, `CheckboxGroup` | 4 |
+| `com.jakewharton.processphoenix`, `com.reactnativerestart` | App restart | `@kit.ArkTS` / `@kit.AbilityKit` | `process.exit`; `terminateSelf` | 4 |
+| `android.credentials`, `android.service.credentials` | Credential Manager (passkeys/autofill) | `@kit.BasicServicesKit` — **UNCERTAIN** | `appAccount.getCredential` — see caveat below | 4 |
+| `com.henninghall.date_picker` | Date picker | `@kit.ArkUI` | `showDatePickerDialog`, `DatePickerOptions` | 3 |
+| `com.reactnativecommunity.toolbarandroid` | Toolbar | `@kit.ArkUI` | `Toolbar` | 3 |
+| `com.scwang.smartrefresh` | Pull-to-refresh | `@kit.ArkUI` | `Refresh` | 3 |
+| `org.devio.rn` | Splash screen | `@kit.ArkUI` | `window.setWindowLayoutFullScreen` | 3 |
+| `com.reactnativecommunity.geolocation` | Geolocation | `@kit.LocationKit` | `import { geoLocationManager } from '@kit.LocationKit'` — `getCurrentLocation` | 3 |
+| `com.calendarevents` | Calendar events | `@kit.CalendarKit` | `import { calendarManager } from '@kit.CalendarKit'` — `getCalendarManager`, `addEvent` | 3 |
+| `com.caverock.androidsvg` | SVG rendering | `@kit.ImageKit` / `@kit.ArkGraphics2D` | `svg tags` → ImageKit; `buildFromSVGString` → ArkGraphics2D | 3 |
+| `com.brentvatne`; `androidtranscoder` | Video player; transcoding | `@kit.MediaKit` | `media.createAVPlayer`; `media.createAVTranscoder` | 3 ea |
+| `org.altbeacon` | iBeacon / BLE ranging | `@kit.ConnectivityKit` | `import { ble } from '@kit.ConnectivityKit'` — `startBLEScan`, `createGattClientDevice` | 3 |
+| `net.time4j` | Date/time + timezone | `@kit.LocalizationKit` | `import { i18n } from '@kit.LocalizationKit'` — `getTimeZone`, `getCalendar` | 3 |
+| `com.google.android.odml` | On-device ML | `@kit.MindSporeLiteKit` | `import { mindSporeLite } from '@kit.MindSporeLiteKit'` — `loadModelFromFile`, `runStep` | 3 |
+| `com.drew` (EXIF half) | Image EXIF read/write | `@kit.ImageKit` | `getImageProperty`, `getImagePropertySync`, `modifyImageProperty` | 3 |
+| `dev.fluttercommunity.plus.wakelock` | Screen keep-awake | `@kit.BasicServicesKit` | `import {runningLock} from '@kit.BasicServicesKit'` — `RunningLockType` | 2 |
+| `dev.fluttercommunity.plus.packageinfo` | Package/version info | `@kit.AbilityKit` | `import { bundleManager } from '@kit.AbilityKit'` — `getBundleInfoForSelf`, `getBundleInfo` | 2 |
+
+> The last two rows exhaust the mappable pool: after slice 2 there are **zero** unreviewed
+> capabilities left in the `Common Unmapped` demand list. See CLAUDE.md for the closing tally.
+
+### Two rows the native round must NOT accept on trust
+
+- **`org.slf4j` → `@kit.PerformanceAnalysisKit` is a rough fit, not an equivalence.** `hilog`
+  is a *platform log sink*; SLF4J is a **pluggable-backend logging facade** whose whole purpose
+  is that the application binds a backend (logback, log4j, …) at deploy time. HarmonyOS has no
+  facade/binding layer, so an app leaning on SLF4J's appenders, MDC or per-logger levels will
+  need real rework, not a symbol swap. Map it, but do not mark it `high`.
+- **`android.credentials` → `@kit.BasicServicesKit` is UNCONFIRMED.** `appAccount.getCredential`
+  is *app account* credential storage; Android's Credential Manager is passkey/WebAuthn plus
+  password autofill. Parity was **not** established — no passkey or autofill API was found in
+  the index. Re-check this properly in the native round; leaving it unmapped is preferable to a
+  wrong row. Same disposition as `android.service.media` had before Sprint 2D confirmed it.
+
 ### Notes for whoever runs the native round
 
 - `@kit.AVSessionKit` and `@kit.ShareKit` are **not** in `KIT_DOC_URLS`

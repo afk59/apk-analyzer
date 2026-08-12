@@ -924,6 +924,74 @@ latter is a Swiper-based lightbox gallery, not a zoomable ImageView.
 > genuinely return **zero** hits. The registry also carries `@tencent/mmkv`, `@umeng/apm`,
 > `@volcengine/apmplus`, `@growingio/analytics`. Always query the cache — it is local and free.
 
+#### Slice 2 (2026-08-12) — and the pool is now exhausted
+
+`ohpm_mapping.json` → **v1.1.0, 15 namespace rows / 11 distinct packages**. Slice 2 added 3
+approved mappings over 4 namespace rows:
+
+| Android namespace | OHPM package | Conf |
+|---|---|---|
+| `org.mozilla.universalchardet` | `@ohos/juniversalchardet` | high |
+| `pl.droidsonroids.gif` | `@ohos/gif-drawable` | medium |
+| `com.drew` · `com.adobe.xmp` | `@ohos/metadata-extractor` | medium |
+
+Both `medium`s are medium for the same reason — **native partly covers them**, so the row is a
+migrator's choice rather than a required dependency, the shape first used for `com.tencent.mmkv`:
+`@kit.ImageKit` decodes GIF frames but has no play/pause/seek/speed control (`ImageAnimator` is
+absent from the index), and `@kit.ImageKit`'s `getImageProperty`/`modifyImageProperty` already
+covers image EXIF — metadata-extractor earns its row only on the IPTC/XMP/ICC and audio/video
+superset.
+
+**One row was cut on function mismatch:** `org.javamoney.moneta` → `bignumber.js` (popularity
+6088, 98k downloads) was rejected despite being the obvious search hit. JavaMoney `Money` is
+amount + currency + rounding policy; `bignumber.js` supplies only the arithmetic half and is not
+a Money type, while native `intl.NumberFormat` (`@kit.LocalizationKit`) covers currency
+*formatting*. Left unmapped — a wrong mapping is worse than a gap. Popularity never overrides
+function; the same principle picked `@ohos/photoview` (364) over `@rv/image-preview` (1300) in
+slice 1.
+
+**Native-first routed 24 of 29 capabilities in slice 2** (vs 12 of 21 in slice 1), including six
+that were confidently expected to be third-party ports and are not:
+
+| Expected OHPM | Actually native |
+|---|---|
+| barcode → a zxing port | **`@kit.ScanKit`** (`import { detectBarcode } from '@kit.ScanKit'`) |
+| fastjson → a JSON lib | **`@kit.ArkTS`** + the JS builtin `JSON` |
+| SLF4J → a logback port | **`@kit.PerformanceAnalysisKit`** (`hilog`) |
+| PDF → a pdfium port | **`@kit.PDFKit`** (`import { pdfService } from '@kit.PDFKit'`) |
+| icon fonts → a vector-icons port | **`@kit.ArkUI`** (`registerFont` + `SymbolGlyph`) |
+| cookies → `@kit.NetworkKit` | **`@kit.ArkWeb`** (webview cookie manager) |
+
+> **Method-name lookups can produce false negatives — check import statements too.** `@kit.ScanKit`
+> returned NOT FOUND for `scanBarcode`/`generateBarcode`/`customScan` against the index keys, and
+> was nearly written off as having no native path. Scanning the index's *`import_statement`
+> values* for `ScanKit` immediately produced three verbatim imports. `hmos_api_index.json` keys on
+> normalized simple method names, so a kit whose methods are indexed under other names is
+> invisible to a key lookup. Always fall back to an import-statement grep before concluding a
+> capability has no native kit.
+
+**The pool is exhausted.** Of the 87 capabilities the Phase-2C pool consolidated into (50 MAP /
+37 SKIP), **all 50 MAP capabilities have now been reviewed** — 14 in slice 1, 34 in slice 2, and
+the final 2 (`wakelock`, `packageinfo`, 2 apps each) resolved to `@kit.BasicServicesKit`
+(`runningLock`) and `@kit.AbilityKit` (`bundleManager`). **There is no slice 3.** What remains
+below the capability rollup is the 567-namespace residual, all ≤3 apps and dominated by
+`cn.jiguang.*` (JPush, vendor) plus obfuscation leakage — nothing mappable.
+
+Final tally for the OHPM tier: **15 OHPM rows** against **38 native candidates** banked in
+`NATIVE_CANDIDATES.md`. The tier converged small and sharp, exactly as the native-first rule
+intends — the headline is that the batch pool's real answer was overwhelmingly *native kits*, and
+OHPM was only ever needed for vendor SDKs (WeChat, Alipay, AGConnect, MMKV) and a handful of
+genuine library ports (Lottie, PhotoView, SubsamplingScaleImageView, juniversalchardet,
+gif-drawable, metadata-extractor).
+
+**Genuine gaps recorded, deliberately unmapped:** `net.openid.appauth` / `com.rnappauth` (4 apps —
+native Account Kit is Huawei-ID-only; generic OAuth2/OIDC against arbitrary providers has no
+equivalent and the registry has only provider-specific SDKs, so it must be hand-rolled over
+`@kit.NetworkKit` + `@kit.ArkWeb`), `com.scottyab.rootbeer` (4 — zero registry hits, no native
+attestation API), and `org.reactnative.facedetector` (3 — best candidate `hfacedetect` is
+popularity 74 / 289 downloads, and `@kit.VisionKit` offers only `interactiveLiveness` /
+`visionImageAnalyzer`, not face landmarks).
+
 The Firebase bullet became **three** rows (`com.google.firebase.FirebaseApp`,
 `.FirebaseOptions`, `io.invertase.firebase.app`) rather than one: the engine matches by
 namespace prefix, and a shared `com.google.firebase.Firebase` prefix would also swallow
