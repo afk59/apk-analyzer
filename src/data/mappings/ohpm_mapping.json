@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "last_updated": "2026-08",
   "tier": "ohpm",
   "ohpm_mappings": [
@@ -134,6 +134,54 @@
       "source_repo": "https://github.com/Tencent/mmkv",
       "popularity": 14293,
       "note": "Official Tencent MMKV port (upstream repo github.com/Tencent/MMKV). NOTE: native @kit.ArkData preferences also covers key-value storage and android.content.SharedPreferences -> @kit.ArkData is existing precedent; MMKV is the mmap-based option for performance-critical cases, so this is the migrator's choice rather than a forced dependency."
+    },
+    {
+      "android_namespace": "org.mozilla.universalchardet",
+      "android_display": "juniversalchardet (charset detection)",
+      "ohpm_package": "@ohos/juniversalchardet",
+      "install_cmd": "ohpm install @ohos/juniversalchardet",
+      "category": "Tool Library > Programming Assistant Tool > Static Code Analysis > String Encoding Detection",
+      "description": "juniversalchardet是一款字符编码高效识别检测库。",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/openharmony-sig/juniversalchardet",
+      "popularity": 387,
+      "note": "The Android library IS juniversalchardet, and this is its openharmony-sig port. Detects UTF-8, UTF-16, ISO-8859 and Asian encodings from a byte stream. Native util.TextDecoder (@kit.ArkTS) decodes a KNOWN encoding but cannot detect an unknown one, so there is no native path for this. Runner-up @ohos/jchardet (popularity 34) is a different, smaller library."
+    },
+    {
+      "android_namespace": "pl.droidsonroids.gif",
+      "android_display": "android-gif-drawable",
+      "ohpm_package": "@ohos/gif-drawable",
+      "install_cmd": "ohpm install @ohos/gif-drawable",
+      "category": "Media > Video > Animation Playback",
+      "description": "gif-drawable是专门为OpenHarmony打造的一款GIF图像渲染库",
+      "confidence": "medium",
+      "source_repo": "https://gitcode.com/openharmony-sig/ohos_gif-drawable",
+      "popularity": 1918,
+      "note": "Exact port of android-gif-drawable, maintained under openharmony-sig. NOTE: native @kit.ImageKit (createPixelMapList / getFrameCount) decodes GIF frames and ArkUI displays them, but has no play/pause/seek/speed control - ImageAnimator is not in the API index. This package adds that playback control, so it is the migrator's choice rather than a forced dependency (same shape as com.tencent.mmkv)."
+    },
+    {
+      "android_namespace": "com.drew",
+      "android_display": "metadata-extractor",
+      "ohpm_package": "@ohos/metadata-extractor",
+      "install_cmd": "ohpm install @ohos/metadata-extractor",
+      "category": "Media > Video > Video Metadata Extraction",
+      "description": "Extracts Exif, IPTC, XMP, ICC and other metadata from image, video and audio files",
+      "confidence": "medium",
+      "source_repo": "https://gitcode.com/openharmony-tpc/openharmony_tpc_samples/tree/master/metadata-extractor",
+      "popularity": 96,
+      "note": "Direct port of Drew Noakes' metadata-extractor. NOTE: native @kit.ImageKit (getImageProperty / getImagePropertySync / modifyImageProperty) already covers image EXIF, which is the common case; this package earns its row only on the superset - IPTC/XMP/ICC and audio/video container metadata. If an app uses com.drew only for image EXIF, prefer the native path."
+    },
+    {
+      "android_namespace": "com.adobe.xmp",
+      "android_display": "Adobe XMP Toolkit",
+      "ohpm_package": "@ohos/metadata-extractor",
+      "install_cmd": "ohpm install @ohos/metadata-extractor",
+      "category": "Media > Video > Video Metadata Extraction",
+      "description": "Extracts Exif, IPTC, XMP, ICC and other metadata from image, video and audio files",
+      "confidence": "medium",
+      "source_repo": "https://gitcode.com/openharmony-tpc/openharmony_tpc_samples/tree/master/metadata-extractor",
+      "popularity": 96,
+      "note": "XMP parsing rides along with the metadata-extractor port, which reads XMP alongside EXIF/IPTC/ICC. Direct port of Drew Noakes' metadata-extractor. NOTE: native @kit.ImageKit (getImageProperty / getImagePropertySync / modifyImageProperty) already covers image EXIF, which is the common case; this package earns its row only on the superset - IPTC/XMP/ICC and audio/video container metadata. If an app uses com.drew only for image EXIF, prefer the native path."
     }
   ]
 }
