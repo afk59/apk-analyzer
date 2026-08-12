@@ -284,10 +284,13 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     }
 
     result["permissions"] = sorted(a.get_permissions())
-    result["activities"]  = a.get_activities()
-    result["services"]    = a.get_services()
-    result["receivers"]   = a.get_receivers()
-    result["providers"]   = a.get_providers()
+    # sorted(): androguard returns these in manifest-parse order, which is not
+    # stable between runs, so the Manifest Components table reshuffled on every
+    # re-analysis of the same APK.
+    result["activities"]  = sorted(a.get_activities())
+    result["services"]    = sorted(a.get_services())
+    result["receivers"]   = sorted(a.get_receivers())
+    result["providers"]   = sorted(a.get_providers())
 
     try:
         xml_raw = a.get_android_manifest_axml().get_xml()
@@ -486,9 +489,14 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     result["permission_gaps"]    = gaps
     result["missed_match_count"] = len(unmatched_perms)
 
-    result["unmapped_namespaces"].sort(key=lambda x: x["method_count"], reverse=True)
-    result["ohpm_matches"].sort(key=lambda x: x["method_count"], reverse=True)
-    result["private_libs"].sort(key=lambda x: x["method_count"], reverse=True)
+    # Tie-break on namespace: method_count alone leaves equal-count rows in
+    # detected_namespaces order, which varies per run. unresolvable_namespaces
+    # was never sorted at all.
+    _by_count = lambda x: (-x["method_count"], x["namespace"])
+    result["unmapped_namespaces"].sort(key=_by_count)
+    result["ohpm_matches"].sort(key=_by_count)
+    result["private_libs"].sort(key=_by_count)
+    result["unresolvable_namespaces"].sort(key=_by_count)
     result["obfuscated_count"]  = obfuscated_count
 
     print_info("Matching HarmonyOS APIs...")
@@ -496,7 +504,14 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     all_methods: list = []
     for ns_info in result["detected_namespaces"].values():
         all_methods.extend(ns_info["methods"])
-    result["api_matches"] = match_methods(all_methods)
+    # Sorted, because match_methods() de-duplicates by SIMPLE method name and
+    # keeps the FIRST occurrence. Unsorted, the winner depends on the order of
+    # detected_namespaces, which follows androguard's dx.get_classes() and varies
+    # between runs — so which class "owns" a shared name like getApplicationInfo
+    # was arbitrary, and the resulting api_matches (hence every kit row's
+    # inner_methods, and the HTML/Excel built from them) differed run-to-run for
+    # the same APK. Sorting makes the dedup deterministic and reports reproducible.
+    result["api_matches"] = match_methods(sorted(all_methods))
 
 
     if result["api_matches"]:

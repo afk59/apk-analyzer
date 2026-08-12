@@ -1249,6 +1249,51 @@ Grep imports before concluding a capability has no native kit.
 
 ---
 
+## Report reproducibility fix — 2026-08-13
+
+**Until this fix, analysing the same APK twice produced different HTML and Excel.** Not subtly:
+kit rows gained and lost `inner_methods` entries between runs, and the Manifest Components table
+reshuffled. It was found while proving Phase 3A left native output byte-identical — the
+comparison failed, and the cause turned out to be pre-existing, reproducible on **unmodified**
+code in the same process.
+
+**Root cause (the interesting one):** `api_matcher.match_methods()` de-duplicates by *simple*
+method name (`_simple()` = last dot-segment, lowercased) and keeps the **first** occurrence.
+`all_methods` was assembled by iterating `result["detected_namespaces"]`, whose insertion order
+follows androguard's `dx.get_classes()` and is not stable between runs. So for any method name
+shared by several classes — `getApplicationInfo`, `cancel`, `write` — *which class won the
+dedup was arbitrary per run*. That flowed into `api_matches`, then into each kit row's
+`inner_methods`, then into the HTML and Excel. Note the count was stable (769 matches every
+run); only the attribution moved, which is exactly why it went unnoticed.
+
+Fix: `match_methods(sorted(all_methods))` (`apk_engine.py`).
+
+**Three further sources were found while verifying** — the one-line fix alone did *not* make
+reports reproducible, and each of these had to be closed too:
+
+- `activities` / `services` / `receivers` / `providers` were stored in androguard's
+  manifest-parse order → now `sorted()`.
+- `unmapped_namespaces`, `ohpm_matches`, `private_libs` sorted on `method_count` **only**, so
+  equal-count rows kept `detected_namespaces` order → now tie-break on namespace via
+  `_by_count = (-method_count, namespace)`.
+- `unresolvable_namespaces` was **never sorted at all** → now sorted with the same key.
+
+**Verified:** after the full fix, 17 consecutive runs across two APKs produced identical
+`kit_matches`, identical whole-result dicts (excluding `analysis_time_sec`) and identical
+scrubbed HTML hashes — against a 100% reproducible failure before it. One anomalous run was
+observed mid-investigation that could not be reproduced in the 16 runs afterwards and remains
+unexplained; if report drift is ever seen again, start there rather than assuming this fix
+regressed.
+
+Two values still vary by design and are scrubbed before comparison, not "fixed":
+`analysis_time_sec` (a real measurement) and the generated-at timestamp.
+
+> **This commit deliberately CHANGES native output** — that is the point, it corrects wrong
+> attribution. It is therefore kept separate from the Phase 3A commit, whose entire claim is that
+> native output is byte-identical. Do not squash them.
+
+---
+
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.
