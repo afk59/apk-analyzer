@@ -857,6 +857,81 @@ backoff before the sweep parks itself for resume. Full sweep ≈ 77s wall-clock.
 Field coverage across the 3499: `name`/`popularity`/`points`/`likes`/`latest_version` 100%,
 `description` 3496 (99.9%), `license` 3495, `org` 69%, `keywords` 63%.
 
+### OHPM Phase 2D: `ohpm_mapping.json` exists — slice 1 (2026-08-12)
+
+`src/data/mappings/ohpm_mapping.json` v1.0.0 — **11 namespace rows / 8 distinct packages**,
+the first OHPM second-tier mappings. Nothing in the analysis pipeline reads it yet; it is data
+only, built slice by slice from the batch pool with per-slice review.
+
+**Schema** — deliberately *not* the `mapping.json` shape:
+
+```json
+{"version":"1.0.0","last_updated":"2026-08","tier":"ohpm",
+ "ohpm_mappings":[{"android_namespace","android_display","ohpm_package","install_cmd",
+                   "category","description","confidence","source_repo","popularity","note"}]}
+```
+
+- The list key is **`ohpm_mappings`**, not `namespace_mappings`, and there is a `tier` field —
+  so OHPM rows can never be loaded into the native matcher by accident.
+- **No `harmony_import`.** The API has no import statement; `install_cmd`
+  (`ohpm install <name>`) takes its place. It is derivable from `ohpm_package` via
+  `ohpm_fetch.install_cmd()` and is stored redundantly for readability.
+- `category` comes from `/ohpm/tech-map` and is **nullable** — only ~30% of the registry is
+  categorised (2 of the 11 rows are `null`). `source_repo` is nullable too and is `null` for 7
+  of 11: vendor packages (`@hw-agconnect/*`, `@tencent/wechat_open_sdk`,
+  `@cashier_alipay/cashiersdk`) are closed-source and publish no repository. README
+  verification for those used the registry's own `readmeEnUrl` CDN copy instead, which is
+  better evidence anyway — it is the package's own documentation.
+- `popularity` is stored because it is the tiebreak that justified the pick, which makes a
+  stale row auditable later.
+
+**Native-first is the dominant rule, and it routes most of the pool AWAY from OHPM.** Before
+any OHPM package may be proposed, the capability is checked against `hmos_api_index.json`; if a
+native `@kit.*` genuinely covers it, **no OHPM row is written**. In slice 1 this disqualified
+**12 of 21** reviewed capabilities — including several that look like obvious third-party
+libraries (permissions, connectivity, zip, EventBus, share, notifications, image picker). OHPM
+is only for what native cannot cover, exactly as the native kits stay the priority tier.
+
+Those 12 are not lost: they accumulate in **`NATIVE_CANDIDATES.md`** (repo root, tracked) as a
+backlog for a dedicated native mapping round. Two of them **correct earlier cuts** and must not
+be re-cut — `android.service.media` → `@kit.AVSessionKit` (Sprint 10 could not confirm the kit
+token; now attested) and `com.learnium.RNDeviceInfo` → `@kit.BasicServicesKit` (Sprint 12
+searched for the wrong token — `import { deviceInfo } from '@kit.BasicServicesKit'` is attested
+verbatim).
+
+**Verification discipline per proposed row** — unchanged in spirit from the Sprint 10/12 native
+rounds, plus one addition:
+
+1. native-first check against `hmos_api_index.json` (above);
+2. match on **function** — description + keywords + tech-map category, never on name alone;
+3. rank competing candidates by popularity/points/likes, propose the top one, record the
+   runners-up in `note`;
+4. **fetch and read the package README** (repository, or the registry `readmeEnUrl` for
+   closed-source vendor packages) and confirm it does what the Android library did;
+5. **existence-check against the cache** before the row may be written — this is where the
+   `isinstance(body, dict)` gotcha earns its keep.
+
+Popularity does **not** override function. `com.github.chrisbanes.photoview` →
+`@ohos/photoview` (popularity 364) was chosen over `@rv/image-preview` (1300) because the
+latter is a Swiper-based lightbox gallery, not a zoomable ImageView.
+
+> **Vendor SaaS SDKs must be checked, not assumed absent.** Phase 2C initially classified
+> WeChat/Alipay/Stripe/Braze/Xiaomi/Amazon as "vendor SDK → skip" on the assumption that a
+> vendor's own SDK would not be an ohpm package. That was wrong for two of the six, and they
+> are high-frequency: `@tencent/wechat_open_sdk` (popularity 13301) and
+> `@cashier_alipay/cashiersdk` (13325) are official, first-party, and matched
+> `com.tencent.mm.opensdk` / `com.alipay.sdk.app` exactly. Stripe, Braze and Xiaomi push
+> genuinely return **zero** hits. The registry also carries `@tencent/mmkv`, `@umeng/apm`,
+> `@volcengine/apmplus`, `@growingio/analytics`. Always query the cache — it is local and free.
+
+The Firebase bullet became **three** rows (`com.google.firebase.FirebaseApp`,
+`.FirebaseOptions`, `io.invertase.firebase.app`) rather than one: the engine matches by
+namespace prefix, and a shared `com.google.firebase.Firebase` prefix would also swallow
+`FirebaseCommonRegistrar`, which is deliberately left unmapped. Firebase's other halves route
+to **native** kits — `.messaging` → `@kit.PushKit`, `.analytics` → `@kit.AnalyticsKit` — and
+its DI/telemetry plumbing (`datatransport` 21/41, `events` 18/41, `heartbeatinfo`, `inject`,
+`platforminfo`, `tracing`) stays unmapped, as Sprint 12 already decided.
+
 ---
 
 ## Known gaps / warts (as of 2026-08-07)
