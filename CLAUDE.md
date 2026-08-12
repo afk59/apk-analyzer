@@ -996,9 +996,108 @@ The Firebase bullet became **three** rows (`com.google.firebase.FirebaseApp`,
 `.FirebaseOptions`, `io.invertase.firebase.app`) rather than one: the engine matches by
 namespace prefix, and a shared `com.google.firebase.Firebase` prefix would also swallow
 `FirebaseCommonRegistrar`, which is deliberately left unmapped. Firebase's other halves route
-to **native** kits — `.messaging` → `@kit.PushKit`, `.analytics` → `@kit.AnalyticsKit` — and
-its DI/telemetry plumbing (`datatransport` 21/41, `events` 18/41, `heartbeatinfo`, `inject`,
-`platforminfo`, `tracing`) stays unmapped, as Sprint 12 already decided.
+to **native** kits — `.messaging` → `@kit.PushKit`, `.analytics` → `@kit.PerformanceAnalysisKit`
+(corrected from `@kit.AnalyticsKit` during the native round below) — and its DI/telemetry
+plumbing (`datatransport` 21/41, `events` 18/41, `heartbeatinfo`, `inject`, `platforminfo`,
+`tracing`) stays unmapped, as Sprint 12 already decided.
+
+---
+
+## Native mapping round — slice 1 (2026-08-12)
+
+Writes the `NATIVE_CANDIDATES.md` backlog into `mapping.json`. These are native `@kit.*` rows;
+`ohpm_mapping.json` is **not** touched and the OHPM tier is frozen at 15 rows.
+
+`mapping.json` **v1.5.0 → v1.6.0, 206 → 231 `namespace_mappings` (+25)**. `last_updated` stays
+`2026-08` (same month). `permission_mappings` untouched (38). Append-only — no existing entry
+modified or reordered. 22 high / 3 medium.
+
+The 25 rows cover the 12 capabilities that OHPM slice 1's native-first check disqualified:
+MediaBrowser, device info, share, notifications, image picker, Apache Commons, permissions,
+connectivity, zip, EventBus, FCM push, Firebase analytics. Row count exceeds capability count
+because prefixes are per-namespace — e.g. notifications needed four rows (`com.wix…`,
+`com.dieam…`, `app.notifee`, `io.invertase.notifee`).
+
+**File convention:** `harmony_import` is the **kit token**, not the full import line — 205/206
+pre-existing rows have `harmony_import == harmony_kit` (the sole exception, `android.renderscript`,
+is pre-existing). The verbatim import statement therefore goes in `note`, which is where the
+attestation now lives for every new row.
+
+### Two rows that correct earlier cuts
+
+Both were re-verified against `hmos_api_index.json` this round, not taken on the backlog's word:
+
+- **`android.service.media` → `@kit.AVSessionKit`** — `import { avSession } from '@kit.AVSessionKit'`
+  (4 distinct imports in the index). Sprint 10 left it unmapped *only* because the kit token
+  could not be confirmed at the time.
+- **`com.learnium.RNDeviceInfo` → `@kit.BasicServicesKit`** — `import { deviceInfo } from
+  '@kit.BasicServicesKit'`. Sprint 12 cut it after searching for `@ohos.deviceInfo` and for
+  *property* names (`productModel`, `udid`). The index keys on **method** names, so those lookups
+  missed a token that is attested verbatim.
+
+### Three judgment calls recorded in the rows themselves
+
+- **`@kit.PushKit` rests on precedent, not the index.** `io.invertase.firebase.messaging` →
+  `@kit.PushKit` was kept even though the index attests **zero** `@kit.PushKit` imports, because
+  `mapping.json` already has four PushKit rows including `com.google.firebase.messaging` →
+  `@kit.PushKit` (high). The RN wrapper follows a decision this repo already made. The row's
+  `note` says so explicitly so the weaker basis is not forgotten.
+- **`@kit.AnalyticsKit` was rejected** for `io.invertase.firebase.analytics` on two grounds: the
+  index attests it nowhere, and `mapping.json` already routes `com.google.firebase.analytics` to
+  `@kit.PerformanceAnalysisKit`. Consistency won; the RN wrapper now matches its own product.
+- **`org.apache.commons` is a three-way split**, not the two-way one the backlog assumed:
+  `.io` → `@kit.CoreFileKit` (`fileIo`, high) — commons-io is file/stream IO, not ArkTS utils;
+  `.logging` → `@kit.PerformanceAnalysisKit` (`hilog`, medium); and `.codec` →
+  `@kit.CryptoArchitectureKit` (medium) with a note that the row **straddles two kits** — Base64
+  is `util.Base64Helper` (`@kit.ArkTS`), digests are `cryptoFramework.createMd`.
+
+**Facade caveats** are written into the notes for `org.apache.commons.logging`,
+`org.greenrobot.eventbus` and (pending, slice 2) `org.slf4j`: `hilog` is a *platform log sink*,
+not a pluggable-backend facade, and `emitter` has no counterpart to EventBus sticky events,
+subscriber priorities or ThreadMode dispatch. These are mapped `medium` deliberately — a
+migrator hitting them needs rework, not a symbol swap.
+
+**`android.credentials` / `android.service.credentials` remains UNMAPPED.** The index has no
+`passkey`, `webauthn` or `fido` key. It does have password autofill
+(`requestPasswordAutofill`, `enableAutofill`, `import { autoFillManager } from '@kit.AbilityKit'`),
+but that is only half of Credential Manager, whose headline capability is passkeys. Partial
+parity is not parity — a wrong row is worse than a gap. Still flagged in `NATIVE_CANDIDATES.md`.
+
+### Shadowing / absorption — predicted, then confirmed
+
+Same method as Sprint 12: replay the real match loop (`ns_mappings` sorted longest-prefix-first,
+break on first match) over all 15,011 per-app rows of `batch_unmapped.xlsx`, comparing the old
+mapping against old+new.
+
+| Metric | Predicted | Actual |
+|---|---|---|
+| Distinct namespaces newly absorbed | 141 | **141** ✓ |
+| Per-app row instances absorbed | 450 | **450** ✓ |
+| `Common Unmapped` (≥2 apps) rows absorbed | 130 | **130** ✓ |
+| **Rows shadowed by a pre-existing entry** | 0 | **0** ✓ |
+
+> **Definition matters here.** "Shadowed" counts only rows where a *new* prefix wins **and** an
+> old prefix would also have matched — i.e. the new row duplicates or overrides existing
+> coverage. It is **not** "rows already matched by pre-existing entries", which is simply prior
+> coverage; measuring it that way returns 1,823, a number that merely re-reports the Sprint 12
+> round's own absorption and says nothing about this one.
+
+Widest new prefixes are `com.hjq.permissions` (93 row instances), `cl.json` (56),
+`com.learnium.RNDeviceInfo` (36), `net.lingala.zip4j` (36), `org.greenrobot.eventbus` (34) — all
+single-library roots, nothing foreign swept in.
+
+### KIT_DOC_URLS gap — batch fix still pending
+
+`KIT_DOC_URLS` (`core/mapping.py`) has 50 entries. **Seven** kit tokens used across the backlog
+are missing, so those rows render without an "Official Docs" anchor:
+
+`@kit.AVSessionKit` · `@kit.ArkTS` · `@kit.MediaLibraryKit` · `@kit.ShareKit` ·
+`@kit.AnalyticsKit` · `@kit.LocalizationKit` · `@kit.PDFKit`
+
+Four of them (`AVSessionKit`, `ArkTS`, `MediaLibraryKit`, `ShareKit`) are live as of this slice.
+`get_doc_url` returns `None` and the renderer omits the `<a>` cleanly, so this is cosmetic, not a
+broken link — but it now supersedes the narrower Sprint 10/12 notes, which listed only
+`@kit.ArkTS`, `@kit.LocalizationKit` and `@kit.MediaLibraryKit`. Fix all seven together.
 
 ---
 
