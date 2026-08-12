@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -1577,6 +1577,150 @@
       "harmony_import": "@kit.ArkData",
       "confidence": "high",
       "note": "React Native AsyncStorage key-value store → @kit.ArkData preferences."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.webview",
+      "android_display": "React Native WebView",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "high",
+      "note": "React Native WebView → @kit.ArkWeb webview controller; runJavaScript and registerJavaScriptProxy replace the injected-JS and postMessage bridge."
+    },
+    {
+      "android_namespace": "com.swmansion.gesturehandler",
+      "android_display": "React Native Gesture Handler",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Gesture Handler → @kit.ArkUI gesture system; pan, tap, and pinch gestures are declarative ArkUI attributes rather than imported APIs."
+    },
+    {
+      "android_namespace": "com.th3rdwave.safeareacontext",
+      "android_display": "React Native Safe Area Context",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "React Native Safe Area Context → @kit.ArkUI window APIs; safe-area insets come from getWindowAvoidArea and setWindowLayoutFullScreen."
+    },
+    {
+      "android_namespace": "com.swmansion.rnscreens",
+      "android_display": "React Native Screens",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Screens native stack → @kit.ArkUI Navigation; navDestination and navPathStack provide the native screen stack."
+    },
+    {
+      "android_namespace": "com.swmansion.reanimated",
+      "android_display": "React Native Reanimated",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Reanimated → @kit.ArkUI animation; animateTo and keyframeAnimateTo cover the declarative animation cases."
+    },
+    {
+      "android_namespace": "org.apache.http",
+      "android_display": "Apache HttpClient",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "Apache HttpClient core interfaces → @kit.NetworkKit http; broadens the existing org.apache.http.client entry to the remaining sub-packages."
+    },
+    {
+      "android_namespace": "org.w3c.dom",
+      "android_display": "W3C DOM",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "high",
+      "note": "W3C DOM interfaces → @kit.ArkTS xml and convertxml parsing APIs."
+    },
+    {
+      "android_namespace": "com.horcrux.svg",
+      "android_display": "React Native SVG",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native SVG → @kit.ArkUI Shape and Path drawing; @kit.ArkGraphics2D is also plausible for the canvas-backed rendering path."
+    },
+    {
+      "android_namespace": "org.xml.sax",
+      "android_display": "SAX XML Parser",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "high",
+      "note": "SAX XML parsing interfaces → @kit.ArkTS xml parsing APIs."
+    },
+    {
+      "android_namespace": "com.pichillilorenzo.flutter_inappwebview_android",
+      "android_display": "Flutter InAppWebView",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "high",
+      "note": "Flutter InAppWebView plugin → @kit.ArkWeb webview controller and cookie management."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.picker",
+      "android_display": "React Native Picker",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Picker → @kit.ArkUI TextPicker and its dialog variant."
+    },
+    {
+      "android_namespace": "me.leolin.shortcutbadger",
+      "android_display": "ShortcutBadger",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "ShortcutBadger launcher badge counts → @kit.NotificationKit notificationManager badge APIs."
+    },
+    {
+      "android_namespace": "com.yalantis.ucrop",
+      "android_display": "uCrop Image Cropper",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "uCrop image cropping → @kit.ImageKit image source and packer APIs."
+    },
+    {
+      "android_namespace": "android.provider.MediaStore",
+      "android_display": "Android MediaStore",
+      "harmony_kit": "@kit.MediaLibraryKit",
+      "harmony_import": "@kit.MediaLibraryKit",
+      "confidence": "high",
+      "note": "Android MediaStore media queries → @kit.MediaLibraryKit photoAccessHelper."
+    },
+    {
+      "android_namespace": "com.BV.LinearGradient",
+      "android_display": "React Native Linear Gradient",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Linear Gradient → @kit.ArkUI linearGradient attribute."
+    },
+    {
+      "android_namespace": "com.reactnativepagerview",
+      "android_display": "React Native Pager View",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "React Native Pager View → @kit.ArkUI Swiper."
+    },
+    {
+      "android_namespace": "com.google.maps.android",
+      "android_display": "Google Maps Android Utils",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "high",
+      "note": "Google Maps Android utility library → @kit.MapKit MapComponent and map overlays."
+    },
+    {
+      "android_namespace": "com.reactnativecommunity.clipboard",
+      "android_display": "React Native Clipboard",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "React Native Clipboard → @kit.BasicServicesKit pasteboard; getSystemPasteboard replaces ClipboardManager."
     }
   ],
   "permission_mappings": [

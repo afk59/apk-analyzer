@@ -618,6 +618,130 @@ call still produces exactly `['Batch Summary']`.
 
 ---
 
+## Sprint 12 — 2026-08-12 — Mapping expansion, round 2 (41-app batch)
+
+Second pass over the `Common Unmapped` sheet, same discipline as the round-1 expansion in
+Sprint 10 (`61f7c42`): rank candidates by how many APKs each namespace appears in, then ground
+every one against `hmos_api_index.json` by looking up distinctive method names before proposing
+it. Nothing was mapped on vibes, and two proposed rows were cut in review for failing exactly
+that test (below).
+
+| File | Version | `namespace_mappings` | Added |
+|---|---|---|---|
+| `mapping.json` | 1.4.0 → **1.5.0** | 188 → **206** | **+18** |
+| `hms_mapping.json` | 1.3.0 → **1.4.0** | 136 → **137** | **+1** |
+
+`last_updated` already read `2026-08` on both and stays there — the field is `YYYY-MM` and this
+round landed in the same month as round 1. Append-only; no existing entry modified or reordered.
+`permission_mappings` untouched (38 / 27). `harmony_import == harmony_kit` on all 18 HMOS rows
+(the single file-wide exception, `android.renderscript`, is pre-existing and was not touched).
+
+> **The batch is 41 APKs, not 43.** `Batch Summary` has `max_row = 43` = 1 title + 1 header +
+> 41 app rows, and that arithmetic is where the "43" in circulation comes from. Cross-checked
+> against 41 `_agent.json` files, 41 `_report.html` files, and 39 sheets in
+> `batch_unmapped.xlsx`. Unrelated to the 43-package Play corpus in Sprint 11, which counts
+> *packages queried*, not APKs analysed. All frequencies below are **N of 41**.
+
+### What was added
+
+Three groups, by what made them findable:
+
+- **React Native community modules (11 rows)** — `rnscreens`, `gesturehandler`, `reanimated`,
+  `safeareacontext`, `horcrux.svg`, `reactnativecommunity.webview` / `picker` / `clipboard`,
+  `reactnativepagerview`, `BV.LinearGradient`, `me.leolin.shortcutbadger`. These dominate by
+  *row* count because RN libraries are extremely granular — `com.horcrux.svg` alone is 52
+  distinct unmapped namespaces and `com.swmansion.rnscreens` is 45, each absorbed by one prefix
+  rule. Precedent already existed (`com.rnmaps.maps`, `com.agontuk.RNFusedLocation`,
+  `com.reactnativecommunity.asyncstorage`).
+- **Alias / breadth completion (4 rows)** — `org.apache.http` broadens the existing
+  `org.apache.http.client` to the sibling sub-packages (same kit, so no behaviour change for
+  already-matched namespaces); `org.w3c.dom` and `org.xml.sax` join the existing `org.xmlpull`
+  → `@kit.ArkTS` family; `com.google.maps.android` joins `com.google.android.gms.maps` →
+  `@kit.MapKit`.
+- **Single-target libraries (3 rows)** — `com.pichillilorenzo.flutter_inappwebview_android` →
+  `@kit.ArkWeb` (follows the `io.flutter.plugins.*` per-plugin precedent),
+  `com.yalantis.ucrop` → `@kit.ImageKit`, `android.provider.MediaStore` →
+  `@kit.MediaLibraryKit`.
+
+`com.horcrux.svg` carries an explicit ambiguity note: `@kit.ArkGraphics2D` is also plausible for
+the canvas-backed rendering path. It is recorded in the entry rather than resolved, because the
+index confirms ArkUI owns `createPath2D` but does not settle which kit a full SVG renderer
+should target.
+
+**HMS gets one row again, for the same structural reason as round 1** — HMS apps are still
+Android apps, so RN/Flutter/Java libraries run unchanged there and mapping them would falsely
+imply migration work. `com.google.maps.android` → `Map Kit` (medium) qualifies on the same
+grounds as `com.android.installreferrer` did: a Google service with a real Huawei counterpart.
+
+### Cut in review — both had frequency but failed grounding
+
+- **`com.learnium.RNDeviceInfo`** (12/41). Grounding did not merely come back weak, it came
+  back **empty**: `@ohos.deviceInfo` is absent from `hmos_api_index.json` entirely —
+  `osFullName`, `productModel`, `udid`, `buildVersion` all return nothing, and a search for
+  `deviceinfo` surfaces only `remoteDevice` from `@kit.NearLinkKit`, a different API. Same
+  disposition as `android.service.media` in round 1: the target is probably right, the kit
+  token cannot be confirmed. Note the index is not exhaustive, so NOT FOUND means *unconfirmed*,
+  not *nonexistent*.
+- **`android.preference`** (13/41). Half-true rather than unconfirmed. `PreferenceActivity` is a
+  *UI* class; `@kit.ArkData` is the *storage* half, and HarmonyOS has no preference-screen
+  abstraction at all. Sibling precedent cuts both ways — `android.content.SharedPreferences` →
+  `@kit.ArkData` is correct because it really is storage, while
+  `android.security.NetworkSecurityPolicy` was left unmapped for being config-not-API.
+
+### Left unmapped on purpose (beyond the round-1 list, which still stands)
+
+- **Firebase core plumbing** — `datatransport` (21/41), `events`, `heartbeatinfo`, `inject`,
+  `platforminfo`, `FirebaseApp`, `FirebaseOptions`, `tracing`, `StartupTime`, `logger`
+  (≈130 rows). DI-container and telemetry-transport internals, the same category as the Fresco
+  plumbing left in round 1. `FirebaseApp` / `FirebaseOptions` *do* have a real counterpart, but
+  it is **AGConnect — an ohpm package (`@hw-agconnect/core`), not a `@kit.*`**. Same for
+  `io.invertase.firebase.*` and `com.airbnb.lottie` (→ `@ohos/lottie`). These are the intended
+  catch for the OHPM second tier and were deliberately not forced into a native kit.
+- **`org.openjsse.javax.net`** (12/41) — JSSE provider internals, identical in kind to
+  `org.conscrypt`, which round 1 left unmapped. Consistency.
+- **Vendor SDKs** — `com.alipay.*` (8/41), `com.tencent.mm.opensdk` (8/41). Third-party
+  HarmonyOS SDKs exist but are not native kits.
+- **`com.google.android.libraries`** (9/41) — too vague to attribute to any kit.
+
+### Verified against real engine output
+
+Two passes, because they measure different things and the row-count units are easy to conflate.
+
+**Analytical** — the real match loop (`apk_engine.py:312-316`, `break`-on-first-match in file
+order) replayed over all 41 per-app sheets of `batch_unmapped.xlsx`:
+
+| Metric | Result |
+|---|---|
+| Distinct namespaces in `Common Unmapped` (≥2 apps) now matched | **255** of 2,180 |
+| Predicted at proposal time | 260 |
+| Delta | exactly the 2 cut rows — `android.preference` (1) + `com.learnium.RNDeviceInfo` (4) |
+| Per-app row instances absorbed | 1,823 of 15,011 (12.1%) |
+| Distinct namespaces incl. 1-app-only (not in the sheet) | 284 |
+| **Rows absorbed by a pre-existing entry (shadowing)** | **0** |
+
+The shadowing count is the load-bearing one: every absorbed row resolves to one of the 18 new
+entries, so appending could not have changed the result for any namespace that already matched.
+
+**Empirical** — full `analyze_apk` runs, old unmapped count vs new:
+
+| APK | Before | After | Drop | Predicted |
+|---|---|---|---|---|
+| `com.hph.odt.stacks` | 71 | 23 | **48** | 48 ✓ |
+| `com.polyulife` | 371 | 216 | **155** | 155 ✓ |
+
+Both exact, and no namespace covered by a new rule leaked back into `unmapped_namespaces`.
+
+### Pending follow-up (deliberately NOT done here)
+
+`@kit.MediaLibraryKit` joins `@kit.ArkTS` and `@kit.LocalizationKit` as kit tokens absent from
+`KIT_DOC_URLS` (`core/mapping.py`, 50 entries), so rows using them render with no "Official
+Docs" anchor. `get_doc_url` returns `None` and the renderer omits the `<a>` cleanly, so this is
+cosmetic, not a broken link — but it now affects four of the new rows (`org.w3c.dom`,
+`org.xml.sax`, `android.provider.MediaStore`). `KIT_DOC_URLS` was left untouched in this commit;
+fixing all three tokens together is a separate change.
+
+---
+
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.

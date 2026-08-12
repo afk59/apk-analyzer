@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "last_updated": "2026-08",
   "target": "hms",
   "namespace_mappings": [
@@ -954,6 +954,13 @@
       "hms_kit": "Analytics Kit",
       "confidence": "medium",
       "note": "Google Play Install Referrer → Analytics Kit provides install source attribution on HMS."
+    },
+    {
+      "android_namespace": "com.google.maps.android",
+      "android_display": "Google Maps Android Utils",
+      "hms_kit": "Map Kit",
+      "confidence": "medium",
+      "note": "Google Maps Android utility library → Map Kit provides the equivalent map overlay support on HMS."
     }
   ],
   "permission_mappings": [
