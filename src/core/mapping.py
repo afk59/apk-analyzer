@@ -110,6 +110,46 @@ def load_mapping(mapping_path: Path) -> dict:
         return json.load(f)
 
 
+def load_ohpm_mapping(mapping_path: Path) -> dict | None:
+    """Load the OHPM second-tier mapping. Returns None if unavailable.
+
+    Deliberately does NOT `sys.exit(1)` the way `load_mapping` does. The native
+    mapping is required — without it there is no analysis — but OHPM is an
+    optional second tier layered on top of it. A missing or corrupt
+    `ohpm_mapping.json` must degrade to "no OHPM tier", leaving every native
+    result byte-identical, rather than killing the run. Same containment rule as
+    `_ensure_play_scraper` vs `_ensure_deps`.
+    """
+    from ui.terminal import print_warn
+    if not mapping_path.exists():
+        return None
+    try:
+        with open(mapping_path, encoding="utf-8") as f:
+            doc = json.load(f)
+    except (OSError, ValueError) as exc:
+        print_warn(f"OHPM mapping unreadable, second tier disabled — {exc}")
+        return None
+    if not isinstance(doc.get("ohpm_mappings"), list):
+        print_warn("OHPM mapping has no 'ohpm_mappings' list — second tier disabled")
+        return None
+    return doc
+
+
+def build_ohpm_entries(ohpm_doc: dict | None) -> list:
+    """Sort OHPM rows longest-prefix-first, mirroring the native matcher.
+
+    `apk_engine` sorts `namespace_mappings` by descending `android_namespace`
+    length and breaks on the first prefix hit; the second tier uses the exact
+    same shape so a longer OHPM prefix always beats a shorter one. Returns [] if
+    there is no usable mapping, which disables the tier at zero cost.
+    """
+    if not ohpm_doc:
+        return []
+    rows = [r for r in ohpm_doc.get("ohpm_mappings", [])
+            if isinstance(r, dict) and r.get("android_namespace") and r.get("ohpm_package")]
+    return sorted(rows, key=lambda r: len(r["android_namespace"]), reverse=True)
+
+
 def get_doc_url(kit_name: str, target: str = "hmos") -> str | None:
     if target == "hms":
         return HMS_DOC_URLS.get(kit_name)
