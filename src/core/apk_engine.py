@@ -111,6 +111,9 @@ def _suggest_hmos_perm(android_perm: str) -> tuple:
 
 _OBFUS_SIMPLE = re.compile(r'^[A-Za-z]{1,2}[0-9]{0,2}$')
 _OBFUS_SHORT  = re.compile(r'^[A-Z]\.[A-Za-z0-9]{2,5}$')
+# An R8/ProGuard-renamed *package root* -- every segment a letter plus at most
+# one more char: "f.d.c.a", "k.k0.l.i", "c.h.o.i0".
+_OBFUS_PKG    = re.compile(r'^[A-Za-z][A-Za-z0-9]?(\.[A-Za-z][A-Za-z0-9]?)+$')
 
 
 def _is_obfuscated(class_name: str, method_name: str) -> bool:
@@ -128,7 +131,86 @@ def _is_unresolvable(ns: str) -> bool:
         or "._" in ns
         or "$" in ns
         or ns.startswith("kotlinx.")
+        # Obfuscated package root. _is_obfuscated() cannot catch these: the
+        # classes underneath are inner classes ("f.d.c.a.a0.a$a"), whose simple
+        # name keeps the "$" and so misses _OBFUS_SIMPLE, while the namespace
+        # key is truncated to 4 segments and so never contains the "$" either.
+        # The result was an obfuscated package leaking into the report's
+        # "Unrecognized Third-Party Libraries" table as if it were a real
+        # library. Deliberately namespace-level, NOT class-level: a class like
+        # "com.bumptech.glide.load.a$a" is obfuscated too, but its *package*
+        # still identifies the library, so it must stay attributed to Glide.
+        # Verified against all 415 patterns in mapping.json / hms_mapping.json /
+        # ohpm_mapping.json - none matches.
+        or bool(_OBFUS_PKG.match(ns))
     )
+
+
+_CTOR_SUFFIXES = (".<init>", ".<clinit>")
+# An R8-renamed trailing package segment: "m", "j", "b1", "e1", "a0".
+# Deliberately [A-Za-z][0-9]* and not [A-Za-z]{1,2}: two-LETTER segments are
+# overwhelmingly real ("com.huawei.hms.ui", "org.spongycastle.math.ec",
+# "com.tom_roush.pdfbox.io", "expo.modules.updates.db" -- 77 such namespaces in
+# the 43-app corpus) and must not be swept up.
+_OBFUS_TAIL = re.compile(r'^[A-Za-z][0-9]{0,3}$')
+
+
+def _is_synthetic_method(method: str) -> bool:
+    """Compiler-generated bridge/lambda: access$000, $r8$lambda$x, -$$Nest$mfoo.
+
+    Note this tests the METHOD name only. A "$" in the class part is an ordinary
+    inner class ("com.facebook.hermes.intl.c$b.clone") and says nothing about the
+    method, which is the only thing the report renders.
+    """
+    return "$" in method.split(".")[-1]
+
+
+def _sample_methods(methods, limit: int = 5) -> list:
+    """Pick sample methods worth showing.
+
+    Two kinds of noise crowd out real API surface in an R8 build:
+
+    * synthetic accessors (access$000, $r8$lambda$...) -- pure compiler
+      plumbing, dropped outright; they carried 3,004 of the corpus's unmapped
+      rows before this filter;
+    * "<init>"/"<clinit>", which only say "this class was constructed" (32% of
+      all methods under com.fairwood.app's unmapped namespaces). Held back
+      rather than dropped, so a namespace with nothing else still shows
+      something instead of a blank cell.
+    """
+    ordered = sorted(m for m in methods if not _is_synthetic_method(m))
+    real    = [m for m in ordered if not m.endswith(_CTOR_SUFFIXES)]
+    return (real or ordered)[:limit]
+
+
+def _informative_class(cls: str, ns: str) -> bool:
+    """Does any segment of `cls` below `ns` carry a readable name?"""
+    rest = cls[len(ns) + 1:] if cls.startswith(ns + ".") else ""
+    if not rest:
+        return False
+    return any(seg.split("$")[0] and not _OBFUS_TAIL.match(seg.split("$")[0])
+               for seg in rest.split("."))
+
+
+def _is_obfuscated_pkg(ns: str, classes) -> bool:
+    """An R8-renamed package segment, e.g. "com.google.firebase.m".
+
+    _OBFUS_PKG only catches roots where EVERY segment is obfuscated; R8 also
+    renames a single segment under an intact vendor prefix, which then shows up
+    in the report as a library called "com.google.firebase.m" or
+    "com.facebook.i1.e1".
+
+    The trailing segment alone is not sufficient evidence -- it also matches real
+    packages ("org.spongycastle.asn1.x509", "com.dcloud.android.v4",
+    "com.zipow.videobox.I420", "com.ibm.security.x509"). What separates them is
+    the classes underneath: a real package keeps its class names
+    ("x509.AccessDescription"), an R8-renamed one does not ("m.c$b"). Measured
+    over the 43-app corpus this splits 82 candidates into 74 obfuscated and 8
+    real, with no false positive on either side.
+    """
+    if not _OBFUS_TAIL.match(ns.split(".")[-1]):
+        return False
+    return not any(_informative_class(c, ns) for c in classes)
 
 
 def _is_private_lib(ns: str, package_name: str, ns_mappings: list) -> bool:
@@ -209,11 +291,30 @@ def _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes) -> Non
         "namespace":      ns,
         "method_count":   ns_info["method_count"],
         "class_count":    ns_info["class_count"],
-        "sample_methods": sorted(ns_info["methods"])[:5],
+        "sample_methods": _sample_methods(ns_info["methods"]),
     }
 
     hit = _match_ohpm(ns, ohpm_entries)
     if hit is None:
+        # Last stop before the report: nothing maps this namespace, so if it is
+        # an R8-renamed package it is pure noise and belongs in FILTERED.
+        #
+        # This check MUST stay here, after both tiers have missed, and must never
+        # be hoisted into the pre-matching loop. Tried that first and it deleted
+        # a real result: com.facebook.login's only non-"$" namespace is
+        # "com.facebook.login.u0", so filtering it up front left the
+        # com.facebook.login pattern with no source at all and @kit.AccountKit
+        # vanished from an app that genuinely uses Facebook Login. A namespace
+        # that matches a mapping rule is evidence of a real library no matter how
+        # badly R8 mangled its name.
+        if _is_obfuscated_pkg(ns, ns_info["classes"]):
+            result["unresolvable_namespaces"].append({
+                "namespace":      ns,
+                "method_count":   ns_info["method_count"],
+                "class_count":    ns_info["class_count"],
+                "sample_methods": row["sample_methods"],
+            })
+            return
         row["tier"] = "unmapped"
         result["unmapped_namespaces"].append(row)
         return
@@ -363,7 +464,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 "namespace":      ns,
                 "method_count":   ns_info["method_count"],
                 "class_count":    ns_info["class_count"],
-                "sample_methods": sorted(ns_info["methods"])[:5],
+                "sample_methods": _sample_methods(ns_info["methods"]),
             })
             continue
 
@@ -372,7 +473,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 "namespace":      ns,
                 "method_count":   ns_info["method_count"],
                 "class_count":    ns_info["class_count"],
-                "sample_methods": sorted(ns_info["methods"])[:5],
+                "sample_methods": _sample_methods(ns_info["methods"]),
             })
             continue
 
@@ -460,7 +561,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 "android_display":   v["android_display"],
                 "class_count":       v["class_count"],
                 "method_count":      v["method_count"],
-                "sample_methods":    sorted(v["sample_methods"])[:8],
+                "sample_methods":    _sample_methods(v["sample_methods"], 8),
             }
             for v in kit_data.pop("_agg").values()
         ]
