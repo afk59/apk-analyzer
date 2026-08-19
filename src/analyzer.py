@@ -249,7 +249,11 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     agg["apps"].append(file_path.name)
             print_ok(f"HTML report: {output_html}")
             write_agent_json(result, agent_path)
-            agent_files.append({"source_file": file_path.name, "agent_json": str(agent_path),
+            # Filename only, not str(agent_path): agent_summary.json lives in the
+            # same directory as the per-app files, so a bare name is unambiguous
+            # AND survives being handed to someone else. An absolute path resolves
+            # only on the machine that produced it.
+            agent_files.append({"source_file": file_path.name, "agent_json": agent_path.name,
                                  **build_agent_json(result)})
         except Exception as exc:
             print_warn(f"Failed: {file_path.name} — {exc}")
