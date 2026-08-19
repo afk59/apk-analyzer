@@ -1456,6 +1456,86 @@ Two values still vary by design and are scrubbed before comparison, not "fixed":
 
 ---
 
+## Report noise filters — 2026-08-19
+
+Three filters in `apk_engine.py` that keep obfuscated build artefacts out of the report's
+**Unrecognized Third-Party Libraries** table. All are report-quality only: no mapping file is
+touched and native kit matching is unchanged.
+
+### 1. `_OBFUS_PKG` — fully obfuscated package roots
+
+`f.d.c.a`, `k.k0.l.i`, `c.h.o.i0` were rendering as if they were real libraries.
+`_is_obfuscated()` cannot catch them: the classes underneath are inner classes
+(`f.d.c.a.a0.a$a`) whose simple name keeps the `$` and so misses `_OBFUS_SIMPLE`, while the
+namespace key is truncated to 4 segments and therefore never contains a `$` either.
+
+`_OBFUS_PKG = ^[A-Za-z][A-Za-z0-9]?(\.[A-Za-z][A-Za-z0-9]?)+$` — every segment obfuscated —
+is tested inside `_is_unresolvable`, so these land in FILTERED.
+
+**Deliberately namespace-level, not class-level.** A class-level version was tried first and
+would have dropped 153/157 classes from `com.bumptech.glide.load` and 123/128 from
+`com.google.firebase.crashlytics`: `com.bumptech.glide.load.a$a` is obfuscated too, but its
+*package* still identifies the library. Verified against all 415 patterns in
+`mapping.json` / `hms_mapping.json` / `ohpm_mapping.json` — none matches.
+
+### 2. `_is_obfuscated_pkg` — a single R8-renamed segment under an intact prefix
+
+R8 also renames one segment below a real vendor prefix, producing `com.google.firebase.m`,
+`com.facebook.internal.b1`, `com.facebook.i1.e1`, `cn.jpush.android.b`.
+
+**The trailing segment alone is not sufficient evidence.** `_OBFUS_TAIL` also matches real
+packages — `org.spongycastle.asn1.x509` (897 methods), `com.dcloud.android.v4` (3099),
+`com.compathnion.sdk.v2` (1975), `com.ibm.security.x509` (480), `com.zipow.videobox.I420`.
+What separates them is the **classes underneath**: a real package keeps its class names
+(`x509.AccessDescription`), an R8-renamed one does not (`m.c$b`). Over the 43-app corpus this
+splits 82 candidates into **74 obfuscated / 8 real**, with no false positive on either side.
+
+`_OBFUS_TAIL = ^[A-Za-z][0-9]{0,3}$` is deliberately letter-plus-digits and **not**
+`[A-Za-z]{1,2}`: two-LETTER segments are overwhelmingly real — `com.huawei.hms.ui`,
+`org.spongycastle.math.ec`, `com.tom_roush.pdfbox.io`, `expo.modules.updates.db`, 77 such
+namespaces in the corpus — and the looser form would have eaten all of them.
+
+> **Placement is load-bearing: the check lives in `_record_second_tier`, in the branch where
+> BOTH tiers have already missed. Do NOT hoist it into the pre-matching loop.** That was tried
+> and it deleted a real result: `com.facebook.login`'s only non-`$` namespace is
+> `com.facebook.login.u0`, so filtering it up front left the pattern with no source and
+> **`@kit.AccountKit` disappeared from an app that genuinely uses Facebook Login**. A namespace
+> that matches a mapping rule is evidence of a real library however badly R8 mangled its name.
+> The same reasoning keeps `com.airbnb.lottie.s` as an OHPM row rather than filtering it.
+
+### 3. `_sample_methods` — synthetic accessors and constructors
+
+Sample lists were filling with compiler plumbing instead of API surface:
+
+- **synthetic accessors** (`access$000`, `$r8$lambda$…`, `-$$Nest$m…`) — dropped outright by
+  `_is_synthetic_method`, which tests the **method** name only; a `$` in the class part is an
+  ordinary inner class (`com.facebook.hermes.intl.c$b.clone`) and says nothing about the method,
+  which is all the report renders. 3,004 of the corpus's unmapped rows carried one.
+- **`<init>` / `<clinit>`** — 32% of all methods under `com.fairwood.app`'s unmapped namespaces.
+  Held *back* rather than dropped, so a namespace with nothing else still shows something
+  instead of a blank cell. Only 282 lists corpus-wide end up empty.
+
+### Measured effect over the 43-app corpus
+
+| | before | after |
+|---|---|---|
+| `batch_unmapped.xlsx` rows | 13,386 | **13,299** |
+| rows whose sample methods contained `$` | 3,004 | **0** |
+| `Common Unmapped` rows | 1,943 | **1,931** |
+| — with an R8 trailing segment | 16 | **4** (all genuinely real packages) |
+| HTML method tags containing `$` (43 reports) | — | **0 of 5,075** |
+| `OHPM Matches` · `Common Mapped` · `Batch Summary` | 140 · 219 · 43 | **unchanged** |
+| `com.fairwood.app` unmapped | 67 | **47** |
+
+Kit counts and permission counts are unchanged for every one of the 43 apps.
+
+> **The shipped `result/` was regenerated from stored result dumps, not re-analysed** (43 APKs
+> is ~1.5 h of androguard). Parity was then proven by running the real `analyze_apk` on
+> `com.fairwood.app` and diffing every bucket against the regenerated file: `kit_matches`,
+> `unmapped_namespaces`, `ohpm_matches`, `unresolvable_namespaces`, `private_libs`,
+> `total_3p_ns`, `total_detected_ns`, `api_matches` and `permission_gaps` all identical.
+
+
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.
