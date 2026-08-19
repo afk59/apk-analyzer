@@ -1,4 +1,5 @@
 
+import os
 import re
 import json
 from pathlib import Path
@@ -2470,6 +2471,29 @@ def export_excel_ipa(result: dict, output_path: Path):
     _print_ok(f"Excel report: {output_path}")
 
 
+def _rel_link(html_path, output_path) -> str:
+    """Hyperlink target for a report, relative to the workbook that points at it.
+
+    An absolute `file:///C:/Users/<me>/...` URI resolves only on the machine that
+    produced the workbook; hand the file to anyone else and every link is dead.
+    Excel resolves a relative target against the workbook's own location, and the
+    reports sit beside `batch_summary.xlsx` in `result/`, so a bare filename
+    travels with the folder.
+
+    Forward slashes on purpose: the OOXML relationship target is a URI, not a
+    Windows path, and a backslash is not a separator there.
+
+    Falls back to the absolute URI only when no relative path exists at all --
+    a different drive on Windows, where os.path.relpath raises.
+    """
+    src = Path(html_path).resolve()
+    try:
+        rel = os.path.relpath(src, Path(output_path).resolve().parent)
+    except ValueError:
+        return src.as_uri()
+    return rel.replace("\\", "/")
+
+
 def export_excel_batch(
     rows: list,
     output_path: Path,
@@ -2506,7 +2530,7 @@ def export_excel_batch(
 
         cell = ws.cell(row=ri, column=1, value=row["file_name"])
         if row.get("html_path"):
-            cell.hyperlink = str(Path(row["html_path"]).resolve().as_uri())
+            cell.hyperlink = _rel_link(row["html_path"], output_path)
             cell.font = Font(name="Arial", size=9, color="0563C1", underline="single")
         else:
             dat(cell)
