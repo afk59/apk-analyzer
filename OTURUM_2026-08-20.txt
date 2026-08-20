@@ -580,3 +580,90 @@ DIKKAT - DOSYA KILITLI: batch_summary.xlsx swap sirasinda Excel'de ACIKTI, o
 yuzden yeni surum "batch_summary_new.xlsx" olarak yazildi. Excel kapatilinca
 eskisinin uzerine tasinmasi gerekiyor. batch_unmapped.xlsx acik olmadigi icin
 yerinde guncellendi (icerigi ayni).
+
+================================================================================
+16. OTURUM SONU - DEVIR TESLIM (2026-08-21 01:0x)
+================================================================================
+
+COMMIT DURUMU
+--------------------------------------------------------------------------------
+Dal: fix/report-noise-filters   (PUSH EDILMEDI - lokal)
+Calisma agaci: TEMIZ
+
+  28004b4  docs: record the 43-app rounds, the open decisions and the runner procedure
+  f647235  feat(report): packed-DEX honesty, OHPM in single-app exports, Platform + Coverage columns
+  8a0de8a  fix(batch): repair unmapped aggregation, carry framework/coverage, add metadata provenance
+  168fc51  fix(engine): reproducible reports, conservative kit confidence, honest API matches
+  c3a172e  feat(mappings): +16 native kits from the 43-app batch (v1.8.0 -> v1.10.0)
+  73b5f28  (onceki oturum) feat(analysis): APK framework detection
+
+Bolme mantigi: CIKTIYI DEGISTIREN isler (mapping + motor) kendi commit'lerinde,
+projenin 2026-08-13 reproducibility commit'i icin koydugu kuralin aynisi.
+Sira da bozulmadi: analyzer.py'ye total_*_ns alanlarini ekleyen commit, o
+alanlari okuyan renderer commit'inden ONCE geliyor.
+
+DOSYA DURUMU
+--------------------------------------------------------------------------------
+  src/result/                  son batch (43 HTML + 43 agent JSON + 2 xlsx)
+  src/result/old_result/       v1.8.0 kosusu
+  src/result/old_result2/      v1.9.0 kosusu
+  src/result/old_result3/      v1.9.0+fix kosusu
+  src/result.rar               senin zip'in (gitignore'da, commit'e girmedi)
+  mapping.json                 v1.10.0 / 279 namespace
+  ohpm_mapping.json            v1.1.0 / 15 satir (bu oturumda DOKUNULMADI)
+
+BEKLEYEN TEK IS
+--------------------------------------------------------------------------------
+  batch_summary_new.xlsx  ->  batch_summary.xlsx  (yeniden adlandirilacak)
+  Sebep: swap sirasinda dosya Excel'de acikti, uzerine yazilamadi.
+  Yeni dosyada olan, eskisinde OLMAYAN:
+     - Coverage % sutunu Platform'un hemen sonrasinda
+     - OHPM Matches sekmesi Common Unmapped'ten ONCE
+  Eski dosyada Coverage sutunu Unmapped'ten sonra ve OHPM en sonda.
+  Tek komut:
+     Move-Item src\result\batch_summary_new.xlsx src\result\batch_summary.xlsx -Force
+
+SONRAKI OTURUMDA DEVAM NOKTALARI (oncelik sirasi)
+--------------------------------------------------------------------------------
+1) Yeni feature (sen soyleyeceksin). Kod tabani temiz ve commit'li, uzerine
+   rahatca eklenir.
+
+2) ACIK KARAR - kit guven politikasi min kaldi. 1.219 kit satirinin 370'inde
+   (%30,4) katki veren satirlar zaten birbiriyle celisiyor. min uygulandi ve
+   korpusta olculdu (bkz. bolum 8 ve 10). Fikrin degisirse max/ilk-sirali'ya
+   donmek tek fonksiyonda (apk_engine._CONF_RANK blogu).
+
+3) ACIK BUG - encoding tuzagi. analyzer.py --batch ciktisi pipe'a giderse
+   cp1254'e dusuyor, CJK isimli uygulamalar UnicodeEncodeError ile komple
+   kayboluyor. Iki satirlik is: print_summary_apk cagrisini rows.append() ve
+   write_agent_json()'dan SONRAYA almak, ya da analyzer.py basinda
+   sys.stdout.reconfigure(encoding="utf-8"). Simdilik PYTHONIOENCODING=utf-8
+   ile calisiyoruz.
+
+4) ACIK BUG - framework_detect split-APK bundle'i fark etmiyor; icinde base.apk
+   olan bir zip'e "Native (Java/Kotlin)" diyor. Bu korpusta tetiklenmiyor
+   (Octopus.apk gercek APK ile degistirilmis) ama kural acik.
+
+5) DENETLENMEMIS - KIT_DOC_URLS'teki eski "-V5" formatli 50 URL. Huawei SPA
+   her slug icin ayni 200 kabugu donduruyor, curl ile dogrulama ise yaramaz;
+   arama indeksi uzerinden kontrol gerekiyor.
+
+6) KORPUS VERI HATASI (senin karar: dokunmayacaksin) - com.macauwynn.android.apk
+   aslinda Aptoide, hk.edu.cityu.mobile.apk aslinda Uptodown. Bu iki uygulama
+   hakkindaki her cikarim aslinda o magazalar hakkinda. App Info'daki Source
+   sutunu ikisini de "not on Play" gosteriyor.
+
+7) okio ve bolts Sprint 10'da GEREKCESIZ kesilmisti, bu oturumda geri eklendi.
+   O kesmenin bir sebebi varsa yazilmali ki dorduncu turda tekrar tartisilmasin.
+
+KORPUSU YENIDEN CALISTIRMA PROSEDURU (degismedi, bkz. bolum 1)
+--------------------------------------------------------------------------------
+  - APK basina AYRI process. run_batch tek surecte bu makinede duser.
+  - HSBC EN SONA, TEK BASINA, PowerShell Start-Process ile ayrik.
+  - HSBC bitince process SONLANMIYOR (8-11 GB tutuyor) - PID'i elle oldur.
+  - Her zaman PYTHONIOENCODING=utf-8 PYTHONUTF8=1.
+  - Sureler: 42 uygulama ~29-31 dk, HSBC ~22-25 dk.
+  - Yardimci scriptler oturum scratchpad'inde: worker.py / drive.py /
+    aggregate.py / html_audit2.py / find_ns.py / ground.py / predict2.py
+    Kalici olmalari gerekiyorsa repoya alinmalari lazim - SU AN DEGILLER.
+================================================================================
