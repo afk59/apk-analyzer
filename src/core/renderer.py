@@ -51,6 +51,73 @@ def _qt6_banner(qt6_dlls: list) -> str:
     )
 
 
+def _framework_badge(fw: dict) -> str:
+    """The "Built with" bar. Descriptive only -- nothing here feeds matching.
+
+    Three shapes, because the honest answer differs:
+      * determined      -> "Built with React Native (Hermes)"
+      * hybrid          -> primary, then "with embedded Capacitor", never one
+                           merged label; the reason is spelled out under evidence
+      * packed DEX      -> "Unknown", the packer named, and no framework guessed
+    """
+    if not fw:
+        return ""
+    name   = fw.get("framework") or "Unknown"
+    conf   = fw.get("confidence") or "none"
+    packer = (fw.get("detail") or {}).get("packer")
+    note   = (fw.get("detail") or {}).get("note") or ""
+    packed = "packed" in note.lower()
+
+    bits = []
+    if fw.get("engine") and fw["engine"] != "N/A":
+        bits.append(_esc(fw["engine"]))
+    if fw.get("version") and fw["version"] != "N/A":
+        bits.append("v" + _esc(fw["version"]))
+    meta = (" &nbsp;&middot;&nbsp; " + " &nbsp;&middot;&nbsp; ".join(bits)) if bits else ""
+
+    hybrid = fw.get("hybrid") or []
+    hyb_inline = ""
+    if hybrid:
+        hyb_inline = ('<span class="fw-meta">with embedded '
+                      + ", ".join(_esc(h["framework"]) for h in hybrid) + "</span>")
+
+    packed_chip = (f'<span class="fw-packed">DEX packed{" &middot; " + _esc(packer) if packer else ""}</span>'
+                   if packed else "")
+    conf_chip = (f'<span class="badge {conf}">{_esc(conf)}</span>'
+                 if conf in ("high", "medium", "low") else "")
+
+    rows = []
+    if fw.get("evidence"):
+        rows.append('<div class="fw-ev-row">Signature files: '
+                    + "".join(f'<span class="fw-file">{_esc(e)}</span>' for e in fw["evidence"])
+                    + "</div>")
+    for h in hybrid:
+        extra = f' &mdash; {_esc(h["note"])}' if h.get("note") else ""
+        rows.append(f'<div class="fw-ev-row"><b>{_esc(h["framework"])}</b> '
+                    f'({_esc(h.get("confidence", ""))}): '
+                    + "".join(f'<span class="fw-file">{_esc(e)}</span>'
+                              for e in h.get("evidence", []))
+                    + extra + "</div>")
+    for k, v in (fw.get("detail") or {}).items():
+        rows.append(f'<div class="fw-ev-row">{_esc(k)}: {_esc(str(v))}</div>')
+    if not rows:
+        rows.append('<div class="fw-ev-row">No signature file matched.</div>')
+
+    return (
+        '<div class="fw-bar" id="fw-bar">'
+        '<div class="fw-line">'
+        '<span class="fw-label">Built with</span>'
+        f'<span class="fw-name">{_esc(name)}</span>'
+        f'<span class="fw-meta">{meta}</span>'
+        f'{hyb_inline}{conf_chip}{packed_chip}'
+        '<button class="fw-toggle" onclick="document.getElementById(\'fw-bar\')'
+        '.classList.toggle(\'open\')">Evidence</button>'
+        '</div>'
+        f'<div class="fw-eviqq">{"".join(rows)}</div>'
+        '</div>'
+    )
+
+
 _HTML_BASE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,6 +182,24 @@ _HTML_BASE = r"""<!DOCTYPE html>
   .badge.low    { background:#fee2e2; color:var(--low);  border:1px solid #fecaca; }
   .delay-badge  { background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe;
                   padding:1px 8px; border-radius:20px; font-size:.65rem; font-weight:600; }
+  /* "Built with" bar. Descriptive metadata, so it is deliberately neutral slate
+     rather than accent red -- red is reserved for HarmonyOS kit chrome. */
+  .fw-bar { background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--text2);
+            border-radius:7px; padding:13px 17px; margin-bottom:18px; }
+  .fw-line { display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+  .fw-label { font-size:.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; font-weight:700; }
+  .fw-name { font-size:1.06rem; font-weight:700; color:var(--text); }
+  .fw-meta { font-size:.84rem; color:var(--text2); }
+  .fw-packed { background:#fee2e2; color:var(--low); border:1px solid #fecaca;
+               padding:2px 10px; border-radius:20px; font-size:.68rem; font-weight:700; }
+  .fw-toggle { margin-left:auto; background:none; border:1px solid var(--border); border-radius:5px;
+               color:var(--text2); font-size:.75rem; padding:3px 11px; cursor:pointer; }
+  .fw-toggle:hover { background:var(--surface2); }
+  .fw-eviqq { display:none; margin-top:11px; padding-top:11px; border-top:1px dashed var(--border); }
+  .fw-bar.open .fw-eviqq { display:block; }
+  .fw-ev-row { font-size:.8rem; color:var(--text2); margin-bottom:5px; }
+  .fw-ev-row .mono, .fw-file { font-family:monospace; font-size:.76rem; background:var(--bg);
+            border:1px solid var(--border); border-radius:4px; padding:1px 7px; color:var(--text2); margin-right:5px; }
   .import-tag   { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8;
                   border-radius:5px; padding:2px 9px; font-size:.73rem; font-family:monospace; }
   .note { background:#fff5f5; border-left:3px solid var(--accent); padding:7px 12px;
@@ -1270,7 +1355,10 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
     )
 
     body_sections = (
-        _collapsible_section(
+        # sits above the kit table: it describes what the app IS, which frames
+        # everything below it. Informational -- it feeds no count or ratio.
+        _framework_badge(result.get("framework"))
+        + _collapsible_section(
             "kit-matches-section", kit_section_title,
             _render_kit_table_apk(flat_ns_rows, ns_lookup, is_hmos=is_hmos)
         )
@@ -1324,6 +1412,7 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "total_detected_ns":       result.get("total_detected_ns", 0),
         "total_3p_ns":             result.get("total_3p_ns", 0),
         "ohpm_matches":            result.get("ohpm_matches", []),
+        "framework":               result.get("framework") or {},
     }
 
     subs = {
@@ -2505,6 +2594,7 @@ def export_excel_batch(
     play_metadata: dict | None = None,
     ohpm_ns_apps: dict | None = None,
     ohpm_ns_meta: dict | None = None,
+    frameworks: dict | None = None,
 ) -> None:
     hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C = _excel_styles()
     DKBLUE = "1F3864"
@@ -2557,8 +2647,13 @@ def export_excel_batch(
     if play_metadata:
         ws_ai = wb.create_sheet("App Info", 0)
         ws_ai.sheet_view.showGridLines = False
+        # Framework columns ride on App Info rather than a sheet of their own:
+        # it is already the one row-per-app descriptive sheet. "Framework Version"
+        # is spelled out because "Version" here already means the Play release.
         hdrs_ai = ["Package Name", "App Name", "Category", "Installs", "Rating",
-                   "Rating Count", "Developer", "Last Updated", "Version"]
+                   "Rating Count", "Developer", "Last Updated", "Version",
+                   "Framework", "Engine", "Framework Version", "Confidence",
+                   "Packer", "Evidence"]
         for ci, h in enumerate(hdrs_ai, 1):
             hdr(ws_ai.cell(row=1, column=ci, value=h), bg=DKBLUE)
         ws_ai.row_dimensions[1].height = 22
@@ -2566,23 +2661,73 @@ def export_excel_batch(
         for ri, (pkg, meta) in enumerate(play_metadata.items(), start=2):
             bg   = WHITE if ri % 2 == 0 else GRAY
             meta = meta or {}
+            fw   = (frameworks or {}).get(pkg) or {}
+            fdet = fw.get("detail") or {}
+            hyb  = ", ".join(h["framework"] for h in (fw.get("hybrid") or []))
+            fname = fw.get("framework", "") or ""
+            if hyb:
+                fname = f"{fname} (+ {hyb})"
             vals = [
                 pkg,
                 meta.get("app_name", ""),     meta.get("category", ""),
                 meta.get("installs", ""),     meta.get("rating", ""),
                 meta.get("rating_count", ""), meta.get("developer", ""),
                 meta.get("last_updated", ""), meta.get("version", ""),
+                fname,
+                fw.get("engine", "") or "",
+                fw.get("version", "") or "",
+                fw.get("confidence", "") or "",
+                fdet.get("packer", "") or "",
+                ", ".join(fw.get("evidence", []) or []),
             ]
             for ci, v in enumerate(vals, 1):
                 c = ws_ai.cell(row=ri, column=ci, value=v)
-                dat(c, align=("center" if ci in (4, 5, 6) else "left"))
+                dat(c, align=("center" if ci in (4, 5, 6, 11, 13) else "left"),
+                    wrap=(ci == 15))
                 c.fill = PatternFill("solid", start_color=bg)
             ws_ai.row_dimensions[ri].height = 16
 
-        for ci, w in enumerate([34, 30, 20, 18, 10, 14, 30, 16, 20], 1):
+        for ci, w in enumerate([34, 30, 20, 18, 10, 14, 30, 16, 20,
+                                22, 10, 16, 12, 16, 46], 1):
             ws_ai.column_dimensions[get_column_letter(ci)].width = w
         ws_ai.freeze_panes = "A2"
         ws_ai.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_ai))}1"
+
+    # Batch rollup: one row per framework, for a leadership-level read of the
+    # portfolio. Its own sheet rather than a block on App Info, which would break
+    # that sheet's freeze pane and auto-filter. Placed directly after App Info.
+    if frameworks:
+        counts, examples = {}, {}
+        for pkg, fw in frameworks.items():
+            key = (fw or {}).get("framework") or "Unknown"
+            counts[key] = counts.get(key, 0) + 1
+            examples.setdefault(key, []).append(pkg)
+        total_fw = sum(counts.values()) or 1
+        idx = 1 if play_metadata else 0
+        ws_fr = wb.create_sheet("Framework Rollup", idx)
+        ws_fr.sheet_view.showGridLines = False
+        ws_fr.merge_cells("A1:D1")
+        ws_fr["A1"] = f"Built-with breakdown — {total_fw} app(s)"
+        ws_fr["A1"].font = Font(bold=True, size=13, color=RED, name="Arial")
+        ws_fr["A1"].alignment = Alignment(horizontal="left", vertical="center")
+        ws_fr.row_dimensions[1].height = 26
+        hdrs_fr = ["Framework", "Apps", "Share", "Example apps"]
+        for ci, h in enumerate(hdrs_fr, 1):
+            hdr(ws_fr.cell(row=2, column=ci, value=h), bg=DKBLUE)
+        ws_fr.row_dimensions[2].height = 22
+        for ri, (name, n) in enumerate(
+                sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])), start=3):
+            bg = WHITE if ri % 2 == 0 else GRAY
+            vals = [name, n, round(100.0 * n / total_fw, 1),
+                    ", ".join(sorted(examples[name])[:4])]
+            for ci, v in enumerate(vals, 1):
+                c = ws_fr.cell(row=ri, column=ci, value=v)
+                dat(c, align=("center" if ci in (2, 3) else "left"), wrap=(ci == 4))
+                c.fill = PatternFill("solid", start_color=bg)
+            ws_fr.row_dimensions[ri].height = 16
+        for ci, w in enumerate([26, 9, 9, 70], 1):
+            ws_fr.column_dimensions[get_column_letter(ci)].width = w
+        ws_fr.freeze_panes = "A3"
 
     def _common_rows(freq: dict) -> list:
         return sorted(
@@ -2891,6 +3036,10 @@ def build_agent_json(result: dict) -> dict:
         # ONCE at the top of agent_summary.json (see OHPM_SCHEMA_NOTE), because
         # repeating a static sentence in all 41 per-app files is pure redundancy.
         agent["ohpm_matches"]    = result.get("ohpm_matches", [])
+        # Top level and tier-independent: this describes what the app was BUILT
+        # with, which is orthogonal to the native/OHPM mapping tiers. Passed
+        # through verbatim so the packer name and both confidence values survive.
+        agent["framework"]       = result.get("framework") or {}
     agent["device_matrix"] = result.get("device_matrix", {})
     return agent
 
