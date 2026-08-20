@@ -612,16 +612,23 @@ DOSYA DURUMU
   mapping.json                 v1.10.0 / 279 namespace
   ohpm_mapping.json            v1.1.0 / 15 satir (bu oturumda DOKUNULMADI)
 
-BEKLEYEN TEK IS
+ARSIV DURUMU - src/result/ BOS, HER SEY src/result.rar ICINDE
 --------------------------------------------------------------------------------
-  batch_summary_new.xlsx  ->  batch_summary.xlsx  (yeniden adlandirilacak)
-  Sebep: swap sirasinda dosya Excel'de acikti, uzerine yazilamadi.
-  Yeni dosyada olan, eskisinde OLMAYAN:
+2026-08-21 01:05'te zip alinip klasor temizlendi. Arsiv DOGRULANDI, 25.9 MB:
+  - result\agent_outputs\  43 agent JSON + agent_summary.json       VAR
+  - result\batch_unmapped.xlsx                                      VAR
+  - result\batch_summary_new.xlsx                                   VAR
+  - result\old_result\ , old_result2\ , old_result3\ tamami         VAR
+  - toplam 172 HTML raporu (4 kosu x 43)                            VAR
+
+TEK YAPILACAK: arsivi actiktan sonra
+     batch_summary_new.xlsx  ->  batch_summary.xlsx
+  DOGRU DOSYA BUDUR. Icinde:
      - Coverage % sutunu Platform'un hemen sonrasinda
      - OHPM Matches sekmesi Common Unmapped'ten ONCE
-  Eski dosyada Coverage sutunu Unmapped'ten sonra ve OHPM en sonda.
-  Tek komut:
-     Move-Item src\result\batch_summary_new.xlsx src\result\batch_summary.xlsx -Force
+  Eski isimli batch_summary.xlsx arsivde YOK - zip alinirken Excel'de acik
+  oldugu icin atlanmis. Kayip degil: _new zaten onun yerini alan surum ve
+  eskisinde sutun/sekme sirasi hataliydi.
 
 SONRAKI OTURUMDA DEVAM NOKTALARI (oncelik sirasi)
 --------------------------------------------------------------------------------
