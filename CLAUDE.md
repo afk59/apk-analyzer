@@ -1536,6 +1536,127 @@ Kit counts and permission counts are unchanged for every one of the 43 apps.
 > `total_3p_ns`, `total_detected_ns`, `api_matches` and `permission_gaps` all identical.
 
 
+## Framework detection — 2026-08-20
+
+`src/core/framework_detect.py` answers "what was this app built with". **Info only.** No
+mapping file is read, no matching logic sees it; `result["framework"]` is a label alongside
+`package_name`, and it is excluded from every count, ratio and coverage figure. APK only.
+
+Isolation matches `play_meta.py` / `ohpm_fetch.py`: the engine side imports it, it imports
+nothing back, opens no socket, and never raises — any failure degrades to
+`{"framework": "Unknown"}`.
+
+### The signature table is ASSET-first, and that is the whole design
+
+Published detectors key on native libraries (`libflutter.so`, `libreactnativejni.so`).
+Measured on this corpus, **27 of 43 APKs (63%) have no `lib/` directory at all** — they are
+the base split of an App Bundle and every `.so` sits in a sibling `split_config.*.apk`. All
+nine Flutter apps are in that group: **not one carries `libflutter.so`.** Asset paths are
+therefore primary and `.so` names corroborate. That inversion is the difference between
+detecting 34 of 43 apps and detecting 16.
+
+Weights: **3** = unique to the framework · **2** = strong but shared · **1** = corroboration
+only, never enough to name a framework alone (primary requires ≥2).
+
+| Framework | Primary signatures |
+|---|---|
+| Flutter | `assets/flutter_assets/` · `libflutter.so` · `kernel_blob.bin` |
+| React Native | `assets/index.android.bundle` · `libreactnativejni.so` |
+| Expo | `assets/app.manifest` · `assets/EXSplash` — **never primary**, it is an RN distribution |
+| Cordova | `assets/www/cordova.js` · `cordova_plugins.js` |
+| Capacitor | `capacitor.config.json` · `capacitor.plugins.json` · `assets/public/` |
+| Xamarin/MAUI · Unity · Unreal · NativeScript · Weex · Kony · LibGDX | `libmonodroid.so` · `libunity.so` / `assets/bin/Data/` · `libUE4.so` · `libNativeScript.so` · `libweexcore.so` · `konyframework.js` · `libgdx.so` |
+| uni-app/DCloud | `assets/apps/__UNI__*/` · `assets/data/dcloud_control.xml` |
+| mPaaS (Alipay) | `libmpaascpu.so` · `libmpaas_crypto.so` |
+| APICloud · Qt | `assets/widget/config.xml` · `lib/*/libQt{5,6}Core*.so` |
+
+### Three matching rules that exist because a naive version got it wrong
+
+- **Anchored matching, never substring.** Probing for `dcloud` flagged a Capacitor app as
+  uni-app off `assets/public/svg/logo-soundcloud.svg` — "soun|dcloud".
+- **`res/xml/config.xml` is not Cordova evidence.** Capacitor emits it too; using it alone
+  misclassified `com.secmenu.chineselearning`, which ships no `cordova.js` at all. Same for
+  bare `assets/www/` — the Flutter app `com.tamjai.android` has one.
+- **A config `appId` that is not the APK package means an embedded SDK.** `com.fairwood.app`
+  is React Native whose `capacitor.config.json` reads `com.aigens.sdk` (an ordering SDK).
+  Scoring alone called it Capacitor, because the SDK contributes three signature files
+  against React Native's one bundle. Headline stays React Native; Capacitor is reported as a
+  secondary with the reason inline.
+
+### Version / engine — proven, not promised
+
+Nothing is emitted that was not demonstrated on a real file; everything else is `N/A`.
+
+| Signal | Status |
+|---|---|
+| Hermes vs JSC | OK — decided by the bundle's own magic `c61fbc03c103191f`. Library presence cannot: `hk.ust.student` ships **both** `libhermes.so` and `libjscinstance.so` |
+| Hermes bytecode version | OK — 98 / 96 / 84, reported **raw**, never mapped to a React Native release; that table is not derivable from the file |
+| Cordova version | OK — `8.1.0` from `PLATFORM_VERSION_BUILD_LABEL` |
+| uni-app app id / version | OK but kept in `detail`, **not** in `version` — it is the app's version, not the framework's |
+| React Native version | NOT AVAILABLE — absent from the bundle in this corpus, including the JSC one |
+| Flutter engine hash | NOT AVAILABLE — needs `libflutter.so`, which no corpus app has. `NOTICES.Z` was decompressed and checked: licence text only |
+| Capacitor version | NOT AVAILABLE — `capacitor.config.json` has no version field |
+| Unity · Qt | UNVERIFIED — implemented, never exercised by this corpus |
+
+### Packed DEX — never assert "Native" from absence of evidence
+
+A packer encrypts the real classes, so "no cross-platform signature found" says nothing.
+Detected from the ZIP (`assets/libjiagu*.so`, `libDexHelper.so`, `assets/bangcle_*`) **and**
+from the namespace list the caller passes in (`com.secneo`, `com.stub.StubApp`,
+`com.antsafe`, `com.bangcle`) — both are needed, since `com.wlb.android` shows a packer only
+in the ZIP and `mo.gov.safp.portal` only in the DEX.
+
+> **A marker alone is not packing.** `com.ctm` carries `com.bangcle.andJni.JniLib*` and still
+> exposes **19,156** namespaces — a JNI helper, not an encrypted DEX. The rule is
+> `marker AND < 500 visible namespaces`. `com.ctm` keeps Flutter/high and merely records the
+> marker.
+
+> `libmpaas*.so` is deliberately NOT a packer marker. It is the mPaaS *framework* signature;
+> listing it there would report "packer: mPaaS", which is untrue. Both mPaaS apps are still
+> caught as packed, by the markers above.
+
+Behaviour once packed: **no signature → `"Unknown"`** plus `detail.packer`; **signature present
+→ keep the framework, downgrade `high`→`medium`**, note `"DEX packed, corroboration
+unavailable"`. Four corpus apps are packed: `com.huayuan.namkwong` (33 ns, 360 Jiagu) and
+`hk.gov.ogcio.iamsmart` (52 ns, SecNeo) → Unknown; `com.wlb.android` (190 ns, Bangcle) and
+`mo.gov.safp.portal` (65 ns, Ant hardening) → mPaaS at medium.
+
+`namespaces=` is optional and one-way: the engine already computed the keys, and isolation is
+intact because nothing flows back.
+
+### Self-validation — 39/43 corroborated, no external ground truth needed
+
+The ZIP layout and the DEX namespace list are independent parts of the file, so agreement
+between them is real evidence. **39 AGREE · 4 INCONCLUSIVE (all packed) · 0 CONFLICT ·
+0 false positives.** Two rules were corrected by this cross-check:
+
+- **`com.facebook.soloader` is NOT React Native evidence.** It is a standalone native-library
+  loader that ships with Fresco. Using it flagged two genuinely native apps (`Octopus`,
+  `com.hse28.hse28_2`) as conflicts — both have **zero** `com.facebook.react` namespaces and
+  27–31 Fresco ones. The React Native signal is `com.facebook.react` and nothing else.
+- **Corroboration is core-package presence, not a namespace count.**
+  `hk.edu.polyu.polyumobile` shows only 16 React Native namespaces and looked like an embedded
+  screen; those 16 are the *entire* runtime — `bridge` 588 methods, `devsupport` 456, `fabric`
+  265, `views` 187, `uimanager` 135. The test is `bridge`/`uimanager`/`views`, not a threshold.
+
+### Surfaces
+
+- **HTML** — a "Built with" bar above the kit table, neutral slate (accent red stays reserved
+  for HarmonyOS kit chrome), with an Evidence toggle listing the triggering files, hybrid
+  reasons and packer. Packed apps read *"Unknown · DEX packed · 360 Jiagu"*.
+- **Batch Excel** — six columns on the existing **App Info** sheet: `Framework` (with
+  `(+ secondary)` when hybrid) · `Engine` · `Framework Version` (spelled out because `Version`
+  there already means the Play release) · `Confidence` · `Packer` · `Evidence`. Plus a
+  **Framework Rollup** sheet after App Info — framework, apps, share, examples — as a
+  leadership-level read.
+- **Agent JSON** — top-level `framework`, tier-independent, verbatim including packer and both
+  confidence values.
+- **Console** — a `Built with: 17 React Native · 9 Flutter · …` line in the batch summary.
+
+Corpus result: React Native 17 (Hermes 16 / JSC 1) · Flutter 9 · Native 8 · uni-app/DCloud 3 ·
+mPaaS 2 · Unknown (packed) 2 · Capacitor 1 · Cordova 1.
+
+
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.

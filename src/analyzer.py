@@ -106,6 +106,7 @@ from core.renderer import (render_html_apk, render_html_exe, render_html_exe_fol
                            export_excel_batch, export_excel_batch_unmapped,
                            write_agent_json, build_agent_json, OHPM_SCHEMA_NOTE)
 from core.play_meta import fetch_metadata, cache_path_for
+from core.framework_detect import detect_framework
 from ui.terminal   import print_summary_apk, print_summary_exe, print_summary_exe_folder, print_summary_ipa
 
 
@@ -147,6 +148,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     ohpm_ns_apps         = {}
     ohpm_ns_meta         = {}
     apk_apps             = []
+    frameworks           = {}
     for file_path in all_files:
         sfx = file_path.suffix.lower()
         if sfx == ".ipa":
@@ -169,6 +171,12 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             if mode == "apk":
                 result = analyze_apk(str(file_path), apk_mapping, file_target,
                                      ohpm_mapping=ohpm_mapping)
+                # Descriptive only -- never read by mapping or matching. The
+                # namespace keys are handed over so the detector can tell a
+                # packed DEX from a genuinely native app.
+                result["framework"] = detect_framework(
+                    str(file_path), package_name=result.get("package_name"),
+                    namespaces=list(result.get("detected_namespaces", {}).keys()))
                 html   = render_html_apk(result, apk_mapping)
                 output_html.write_text(html, encoding="utf-8")
                 print_summary_apk(result)
@@ -183,6 +191,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 apk_unmapped_by_file[file_path.stem] = result.get("unmapped_namespaces", [])
                 if result.get("package_name"):
                     apk_apps.append((result["package_name"], result.get("app_name") or ""))
+                    frameworks[result["package_name"]] = result["framework"]
                 for km in result.get("kit_matches", []):
                     for src in km.get("android_sources", []):
                         ns = src["android_namespace"]
@@ -297,10 +306,20 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             ohpm_ns_apps=ohpm_ns_apps if apk_files else None,
             ohpm_ns_meta=ohpm_ns_meta,
             play_metadata=play_metadata,
+            frameworks=frameworks if apk_files else None,
         )
 
         batch_unmapped_xlsx = result_dir / "batch_unmapped.xlsx"
         export_excel_batch_unmapped(apk_unmapped_by_file, batch_unmapped_xlsx)
+
+        if frameworks:
+            tally = {}
+            for fw in frameworks.values():
+                k = (fw or {}).get("framework") or "Unknown"
+                tally[k] = tally.get(k, 0) + 1
+            print_ok("Built with: " + " · ".join(
+                f"{n} {name}" for name, n in
+                sorted(tally.items(), key=lambda kv: (-kv[1], kv[0]))))
 
         if unmapped_ns_list or unmapped_dll_list or unmapped_fw_list:
             print_ok(
@@ -460,6 +479,9 @@ CLI (EXE):
         ohpm_mapping = (load_ohpm_mapping(script_dir / "data" / "mappings" / "ohpm_mapping.json")
                         if target != "hms" else None)
         result = analyze_apk(str(file_path), mapping, target, ohpm_mapping=ohpm_mapping)
+        result["framework"] = detect_framework(
+            str(file_path), package_name=result.get("package_name"),
+            namespaces=list(result.get("detected_namespaces", {}).keys()))
         html   = render_html_apk(result, mapping)
         if args.excel:
             export_excel_apk(result, output_html.with_suffix(".xlsx"))
