@@ -428,7 +428,17 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 ns_data[ns_key]["classes"].add(cc)
                 ns_data[ns_key]["methods"].add(f"{cc}.{call.name}")
 
-    for ns, data in ns_data.items():
+    # sorted(): ns_data is filled in dx.get_classes() order, which is not stable
+    # between runs. Every DOWNSTREAM list was sorted by the 2026-08-13
+    # reproducibility fix, but the ITERATION was not -- and a kit entry takes its
+    # confidence / note / sample_url / harmony_import from whichever mapped
+    # namespace creates it first (`if kit not in matched_kits` below). So the same
+    # APK could render @kit.AbilityKit as "medium" on one run and "high" on the
+    # next, purely because android.content.pm or android.content.Intent happened
+    # to be reached first. Reproduced on com.storellet with identical code.
+    # Sorting here fixes the matching loop, the android_sources order and the
+    # serialized dict in one place.
+    for ns, data in sorted(ns_data.items()):
         result["detected_namespaces"][ns] = {
             "classes":      sorted(data["classes"]),
             "methods":      sorted(data["methods"]),
@@ -448,6 +458,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
 
     matched_kits: dict = {}
     matched_ns:   set  = set()
+    _CONF_RANK = {"low": 0, "medium": 1, "high": 2}
 
     skip_prefixes = [
         "java.", "javax.", "kotlin.", "android.os", "sun.",
@@ -508,6 +519,27 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 }
                 if is_hmos:
                     matched_kits[kit]["harmony_import"] = best_match.get("harmony_import", kit)
+            elif _CONF_RANK.get(best_match["confidence"], 3) <                  _CONF_RANK.get(matched_kits[kit]["confidence"], 3):
+                # WEAKEST CONTRIBUTOR WINS. One kit is often fed by several
+                # mapping rows whose confidences disagree -- measured over the
+                # 43-app corpus, 370 of 1,219 kit rows (30.4%). Taking the first
+                # row's value meant the badge depended on which namespace the
+                # loop reached first, which was arbitrary even after the
+                # iteration was made deterministic.
+                #
+                # min, not max, because this is a migration RISK tool: a kit
+                # badged "Supported" while one of the libraries feeding it is
+                # only "Should Confirm" understates the work. Cost measured on
+                # the corpus: high 821 -> 554, medium 358 -> 570, low 40 -> 95.
+                # note / import / links move with the confidence so the row
+                # stays internally coherent rather than mixing two entries.
+                _weakest = matched_kits[kit]
+                _weakest["confidence"]  = best_match["confidence"]
+                _weakest["note"]        = best_match["note"]
+                _weakest["sample_url"]  = best_match.get("sample_url")
+                _weakest["codelab_url"] = best_match.get("codelab_url")
+                if is_hmos:
+                    _weakest["harmony_import"] = best_match.get("harmony_import", kit)
 
             agg = matched_kits[kit]["_agg"]
             if pattern not in agg:
@@ -615,12 +647,20 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     result["api_matches"] = match_methods(sorted(all_methods))
 
 
-    if result["api_matches"]:
-        _conf_up = {"low": "medium", "medium": "high", "high": "high"}
-        boosted_kits = {m["kit"] for m in result["api_matches"] if m.get("kit")}
-        for km in result["kit_matches"]:
-            if km["kit_name"] in boosted_kits:
-                km["confidence"] = _conf_up.get(km["confidence"], km["confidence"])
+    # NO CONFIDENCE BOOSTING HERE -- and there never effectively was any.
+    #
+    # Sprint 7 added a block that bumped a kit one level whenever an api_match
+    # carried the same kit. It compared km["kit_name"] ("@kit.AbilityKit") against
+    # the index's `kit` field, which is a DOCUMENTATION CATEGORY ("Ability Kit",
+    # "ArkUI", "Application Framework") -- 0 of the 16,167 index entries hold a
+    # "@kit.*" token, so the intersection was always empty and the boost never
+    # fired for any app in any run. Measured on the 43-app corpus: empty set.
+    #
+    # It is deleted rather than repaired because repairing it would ENABLE a boost
+    # driven by matches that are mostly wrong: api_matcher keys on the bare simple
+    # method name, so "Intent.clone" resolves to ArrayList (@kit.ArkTS) and
+    # "MediaBrowserService.onBind" to NodeController (@kit.ArkUI). Confidence stays
+    # mapping-derived, which is what every report has actually shown to date.
 
 
     _status_map = {"high": "Supported", "medium": "Replaceable", "low": "Should Confirm"}
@@ -639,6 +679,18 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 seen: set   = set()
                 for am in result["api_matches"]:
                     m = am.get("android_method", "")
+                    imp = am.get("import_statement") or ""
+                    # Two gates, both necessary. The namespace gate was already
+                    # here; the kit gate is new. api_matcher matches on the bare
+                    # simple method name, so a namespace-scoped hit still lands on
+                    # an unrelated kit most of the time -- measured across the 43
+                    # corpus reports, 58.8% of these rows suggested an API from a
+                    # DIFFERENT kit than the row claims and a further 23.4% had no
+                    # import statement at all, leaving 17.8% self-consistent.
+                    # Requiring the suggested import to name this very kit is what
+                    # separates them.
+                    if not imp or km["kit_name"] not in imp:
+                        continue
                     if m.startswith(ns_prefix) and m not in seen:
                         seen.add(m)
                         inner.append({
