@@ -45,6 +45,22 @@ _META_FIELDS = [
     "rating_count", "developer", "last_updated", "version",
 ]
 
+# Provenance, carried on every row. Without it a row served from a 29-day-old
+# cache is indistinguishable from one fetched seconds ago, and an "N/A" that
+# means "not on Play" is indistinguishable from one that means "we never asked".
+# The scraper is an unofficial HTML scrape that can start returning N/A without
+# warning (see Known gaps), so knowing WHEN and FROM WHERE a row came is the
+# difference between "this app has no rating" and "our data is stale".
+_PROV_FIELDS = ["store_region", "fetched_on", "data_source"]
+
+
+def _prov(source: str, region=None, fetched_at=None) -> dict:
+    return {
+        "store_region": (region or "").upper() or NOT_AVAILABLE,
+        "fetched_on":   (fetched_at or "")[:10] or NOT_AVAILABLE,
+        "data_source":  source,
+    }
+
 
 def cache_path_for(script_dir: Path) -> Path:
     return script_dir / "data" / "reference" / "play_metadata_cache.json"
@@ -88,6 +104,24 @@ def _placeholder_row(value: str, app_name_fallback: str = "") -> dict:
     row = {f: value for f in _META_FIELDS}
     if value == NOT_AVAILABLE and app_name_fallback:
         row["app_name"] = app_name_fallback
+    row.update(_prov("not on Play" if value == NOT_AVAILABLE else "offline"))
+    return row
+
+
+def _stale_row(pkg: str, cache: dict):
+    """Last-known data for an app we cannot reach right now, or None.
+
+    An entry past _CACHE_TTL_DAYS is stale, not worthless: month-old install
+    counts and ratings are far more useful than the string "No internet
+    connection", as long as the row says which it is. Only reached on the
+    offline path -- a fresh entry is served by the normal cache hit above, and
+    when we ARE online a stale entry is refetched rather than reused.
+    """
+    entry = cache.get(pkg)
+    if not isinstance(entry, dict) or not isinstance(entry.get("data"), dict):
+        return None
+    row = dict(entry["data"])
+    row.update(_prov("stale cache", entry.get("region"), entry.get("fetched_at")))
     return row
 
 
@@ -168,6 +202,8 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
         entry = cache.get(pkg)
         if _is_fresh(entry):
             results[pkg] = dict(entry["data"])
+            results[pkg].update(_prov("cache", entry.get("region"),
+                                      entry.get("fetched_at")))
         else:
             results[pkg] = None          # placeholder, filled below
             pending.append((pkg, apk_name))
@@ -187,7 +223,7 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
         print_warn("google-play-scraper unavailable — skipping metadata, "
                    "batch continues with offline analysis")
         for pkg, _apk_name in pending:
-            results[pkg] = _placeholder_row(NO_INTERNET)
+            results[pkg] = _stale_row(pkg, cache) or _placeholder_row(NO_INTERNET)
         return results
 
     fetched     = 0
@@ -199,7 +235,7 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
         socket.setdefaulttimeout(_PROBE_TIMEOUT_SEC)
         for pkg, apk_name in pending:
             if offline:
-                results[pkg] = _placeholder_row(NO_INTERNET)
+                results[pkg] = _stale_row(pkg, cache) or _placeholder_row(NO_INTERNET)
                 continue
 
             detail, hit_region, lost = None, None, None
@@ -222,7 +258,7 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
 
             if lost is not None:
                 offline = True
-                results[pkg] = _placeholder_row(NO_INTERNET)
+                results[pkg] = _stale_row(pkg, cache) or _placeholder_row(NO_INTERNET)
                 if not online_seen:
                     print_warn("No internet — skipping metadata, batch continues "
                                "with offline analysis")
@@ -236,13 +272,18 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
                 results[pkg] = _placeholder_row(NOT_AVAILABLE, apk_name)
                 continue
 
+            now_iso = datetime.now().isoformat(timespec="seconds")
             results[pkg] = _extract(detail, apk_name)
             by_region[hit_region] = by_region.get(hit_region, 0) + 1
+            # Cached WITHOUT the provenance fields: they describe this fetch, not
+            # the data, and a later run must stamp its own ("cache" / "stale
+            # cache"). Writing them in would make every cached row claim "live".
             cache[pkg] = {
-                "fetched_at": datetime.now().isoformat(timespec="seconds"),
+                "fetched_at": now_iso,
                 "region":     hit_region,
-                "data":       results[pkg],
+                "data":       dict(results[pkg]),
             }
+            results[pkg].update(_prov("live", hit_region, now_iso))
             fetched += 1
     finally:
         socket.setdefaulttimeout(prev_timeout)
