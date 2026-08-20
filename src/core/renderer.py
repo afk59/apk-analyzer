@@ -51,6 +51,72 @@ def _qt6_banner(qt6_dlls: list) -> str:
     )
 
 
+def _packed_dex_banner(fw: dict, total_3p_ns: int, kit_count: int) -> str:
+    """Say plainly that a packed APK's numbers describe the stub, not the app.
+
+    Without this the report is actively misleading rather than merely thin: the
+    four packed apps in the corpus expose 2 / 3 / 5 / 56 third-party namespaces
+    and one of them rendered "100% coverage", which reads BETTER than the 93.4%
+    of an app that was genuinely analysed end to end. The packer name is already
+    known -- it is just buried behind the "Built with" evidence toggle, which
+    nobody opens before reading the stat cards.
+    """
+    detail = (fw or {}).get("detail") or {}
+    if "packed" not in (detail.get("note") or "").lower():
+        return ""
+    packer = detail.get("packer") or "unknown packer"
+    return (
+        f'<div style="background:#fef2f2;border:1.5px solid #dc2626;border-radius:8px;'
+        f'padding:14px 18px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start">'
+        f'<span style="font-size:1.3rem">&#128274;</span>'
+        f'<div><div style="font-weight:700;color:#991b1b;margin-bottom:4px">'
+        f'DEX is packed &mdash; {_esc(packer)}. The figures below describe the loader, not the app.</div>'
+        f'<div style="font-size:.84rem;color:#7f1d1d">'
+        f'The real classes are encrypted and are only decrypted at runtime, so bytecode analysis sees '
+        f'the unpacking stub. This report found <b>{kit_count}</b> kit match(es) across '
+        f'<b>{total_3p_ns}</b> third-party namespace(s) &mdash; an analysable app in this corpus exposes '
+        f'400&ndash;6,700. The coverage percentage is withheld for that reason: a high ratio over a '
+        f'handful of references means nothing. '
+        f'To assess this app for real, obtain an unpacked build or dump the DEX from a running instance; '
+        f'the manifest, permissions and native libraries below ARE accurate, because they are read from '
+        f'the archive rather than the bytecode.</div></div></div>'
+    )
+
+
+# Below this many third-party namespaces a percentage is arithmetic, not a
+# measurement. Chosen from the 43-app corpus: the four packed apps sit at
+# 2 / 3 / 5 / 56 and the lowest genuinely analysable app is at 429.
+_LOW_SAMPLE_NS = 50
+
+
+def coverage_status(result: dict) -> tuple:
+    """(percent, status) for native namespace coverage.
+
+    ONE source of truth, deliberately: the HTML stat card and the batch sheet's
+    Coverage column both call this, so a report and the workbook can never
+    disagree about an app. status is "ok" | "packed" | "low" | "none", and the
+    percent is None for everything except "ok".
+
+    Withholding beats reporting here. A packed APK exposes only the unpacking
+    stub, and hk.gov.ogcio.iamsmart rendered "100% coverage" off a denominator
+    of 3 while the fully analysable com.polyulife rendered 93.4% off 2,020 --
+    the packed app read BETTER than the real one.
+
+    Accepts anything carrying total_detected_ns / total_3p_ns / framework, which
+    is true of both a result dict and a batch row.
+    """
+    matched = result.get("total_detected_ns", 0) or 0
+    total   = result.get("total_3p_ns", 0) or 0
+    detail  = (result.get("framework") or {}).get("detail") or {}
+    if "packed" in (detail.get("note") or "").lower():
+        return None, "packed"
+    if total <= 0:
+        return None, "none"
+    if total < _LOW_SAMPLE_NS:
+        return None, "low"
+    return round(matched / total * 100, 1), "ok"
+
+
 def _framework_badge(fw: dict) -> str:
     """The "Built with" bar. Descriptive only -- nothing here feeds matching.
 
@@ -618,7 +684,10 @@ function buildExcel() {
       ['Min SDK',d.min_sdk],['Target SDK',d.target_sdk],
       ['Analysis Date',d.report_date],['Analysis Time (s)',d.analysis_time_sec],
       [],['Metric','Count'],
-      ['Number of Libraries Mapped',d.kit_matches.length],
+      ['Kit Matches',d.kit_matches.length],
+      ['Mapped Namespace Rows',d.kit_matches.reduce((n,km)=>n+(km.android_sources||[]).length,0)],
+      ['3rd Party (OHPM)',(d.ohpm_matches||[]).length],
+      ['Built With',(d.framework||{}).framework||'N/A'],
       ['Permission Matches',d.permission_matches.length],
       ['Total Permissions',d.permissions.length],
       ['Native .so Libraries',d.native_libs.length],
@@ -640,6 +709,21 @@ function buildExcel() {
     const ws2 = XLSX.utils.aoa_to_sheet(km_rows);
     ws2['!cols'] = [{wch:42},{wch:34},{wch:30},{wch:28},{wch:12},{wch:55},{wch:16}];
     XLSX.utils.book_append_sheet(wb, ws2, 'Kit Matches');
+
+    // Second tier. REPORT_DATA has carried ohpm_matches since phase 3B but no
+    // sheet was ever written from it, so the tier existed only in the batch
+    // workbook. Skipped when empty, matching the report's own section.
+    if ((d.ohpm_matches||[]).length) {
+      const oh_rows = [['Android Namespace','OHPM Package','Install Command','Category',
+        'Confidence','Class Count','Method Count','Sample Methods','Repository']];
+      d.ohpm_matches.forEach(om => oh_rows.push([om.namespace, om.ohpm_package,
+        om.install_cmd||'', om.category||'--', om.confidence||'',
+        om.class_count, om.method_count, (om.sample_methods||[]).join(', '),
+        om.source_repo||'--']));
+      const wso = XLSX.utils.aoa_to_sheet(oh_rows);
+      wso['!cols'] = [{wch:44},{wch:30},{wch:34},{wch:30},{wch:12},{wch:12},{wch:13},{wch:55},{wch:40}];
+      XLSX.utils.book_append_sheet(wb, wso, '3rd Party (OHPM)');
+    }
 
     const hdrs = isHmos
       ? ['Android Permission','HarmonyOS Permission','HarmonyOS Kit','Status']
@@ -887,11 +971,24 @@ def _render_kit_table_apk(flat_rows: list, ns_lookup: dict, is_hmos: bool = True
                 )
 
                 for im in inner_matches:
+                    # The HarmonyOS side, NOT im["method_name"] -- that is the
+                    # Android method already printed by the ns-row directly above,
+                    # so printing it again made level 3 a duplicate of level 2 and
+                    # the import statement (the only reason this level exists)
+                    # never reached the page.
+                    hmos = im.get("hmos_method") or ""
+                    st   = im.get("status", "Supported")
+                    sc   = im.get("status_color", "green")
+                    body = (f'<span style="font-family:monospace;font-size:.75rem;color:var(--text2)">'
+                            f'{_esc(hmos)}</span> <span class="badge status-{sc}">{_esc(st)}</span>'
+                            if hmos else
+                            '<span style="font-size:.75rem;color:var(--text3)">'
+                            'No import statement recorded for this API</span>')
                     rows.append(
                         f'<tr class="inner-row hidden inner-group-{ri}-{mi}">'
-                        f'<td colspan="6">'
-                        f'<span style="font-family:monospace;font-size:.75rem;color:var(--text2)">'
-                        f'{_esc(im["method_name"])}</span>'
+                        f'<td colspan="6" style="padding-left:44px">'
+                        f'<span style="color:var(--text3);margin-right:6px">&rarr;</span>'
+                        f'{body}'
                         f'</td></tr>'
                     )
 
@@ -1211,8 +1308,14 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
 
     unmapped = ""
     if result["unmapped_namespaces"]:
+        # Capped at 30 rows, and the cap is STATED below. It used to be silent:
+        # HSBC has 1,458 unmapped namespaces and the section rendered 30 of them
+        # under an untitled heading, so the page read as "this app has 30
+        # unrecognised libraries". Same principle as the batch sheets -- a
+        # truncation nobody can see reads as completeness.
+        _UNMAPPED_SHOWN = 30
         items = ""
-        for u in result["unmapped_namespaces"][:30]:
+        for u in result["unmapped_namespaces"][:_UNMAPPED_SHOWN]:
             methods = "".join(
                 f'<span class="method-tag">{_esc(m.split(".")[-1])}</span>'
                 for m in u["sample_methods"]
@@ -1223,11 +1326,15 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
                 f'<div class="source-counts">{u["class_count"]} classes &middot; {u["method_count"]} methods</div>'
                 f'<div class="methods-list">{methods}</div></div>'
             )
+        _un_total = len(result["unmapped_namespaces"])
+        _un_note  = (f' Showing the {_UNMAPPED_SHOWN} with the most method references; '
+                     f'all {_un_total} are in the Excel export.'
+                     if _un_total > _UNMAPPED_SHOWN else "")
         unmapped = _collapsible_section(
             "unmapped-section",
-            "Unrecognized Third-Party Libraries",
+            f"Unrecognized Third-Party Libraries ({_un_total})",
             f'<p style="font-size:.83rem;color:var(--text2);margin-bottom:11px;">'
-            f'External libraries with no current mapping.</p>{items}'
+            f'External libraries with no current mapping.{_un_note}</p>{items}'
         )
 
     manifest_xml = ""
@@ -1260,8 +1367,12 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
 
     matched_ns = result.get("total_detected_ns", 0)
     total_ns   = result.get("total_3p_ns", 0)
-    coverage_pct = round(matched_ns / total_ns * 100, 1) if total_ns > 0 else 0
-    if coverage_pct >= 70:
+    coverage_pct, _cov_status = coverage_status(result)
+    is_packed  = _cov_status == "packed"
+    low_sample = _cov_status == "low"
+    if coverage_pct is None:
+        coverage_color = "var(--low)"
+    elif coverage_pct >= 70:
         coverage_color = "var(--high)"
     elif coverage_pct >= 40:
         coverage_color = "var(--med)"
@@ -1280,10 +1391,17 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         f'Restricted: {_grant_counts["restricted"]}'
     )
 
-    coverage_sublabel = (
-        f'<div class="sublabel" style="color:{coverage_color};font-weight:700">{coverage_pct}% coverage</div>'
-        if is_hmos else ""
-    )
+    if not is_hmos:
+        coverage_sublabel = ""
+    elif is_packed:
+        coverage_sublabel = ('<div class="sublabel" style="color:var(--low);font-weight:700">'
+                             'coverage not measurable</div>')
+    elif low_sample:
+        coverage_sublabel = ('<div class="sublabel" style="color:var(--med);font-weight:700">'
+                             f'{total_ns} refs &mdash; too few to rate</div>')
+    else:
+        coverage_sublabel = (f'<div class="sublabel" style="color:{coverage_color};'
+                             f'font-weight:700">{coverage_pct}% coverage</div>')
     stat_cards = (
         f'<a class="stat clickable" href="#kit-matches-section">'
         f'<div class="num">{kit_count}</div>'
@@ -1355,9 +1473,11 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
     )
 
     body_sections = (
+        # Packed first: it changes how everything below it must be read.
+        _packed_dex_banner(result.get("framework"), total_ns, kit_count)
         # sits above the kit table: it describes what the app IS, which frames
         # everything below it. Informational -- it feeds no count or ratio.
-        _framework_badge(result.get("framework"))
+        + _framework_badge(result.get("framework"))
         + _collapsible_section(
             "kit-matches-section", kit_section_title,
             _render_kit_table_apk(flat_ns_rows, ns_lookup, is_hmos=is_hmos)
@@ -1384,6 +1504,14 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         ("AndroidManifest.xml", "manifest-xml-section"),
         ("Manifest Components", "manifest-components-section"),
     ]
+    # Drop links whose section was not rendered. Several sections are conditional
+    # (Permission Gaps is absent for 13 of the 43 corpus apps, Unmatched
+    # Permissions and Unrecognized Libraries can be too) but the sidebar listed
+    # them unconditionally, so the link scrolled nowhere. Testing body_sections
+    # rather than repeating each section's own condition keeps this correct even
+    # if a section's condition later changes.
+    sidebar_links = [(label, sid) for label, sid in sidebar_links
+                     if f'id="{sid}"' in body_sections]
     sidebar_html = (
         '<div class="sidebar"><nav>'
         + "".join(f'<a href="#{sid}">{_esc(label)}</a>' for label, sid in sidebar_links)
@@ -1536,10 +1664,13 @@ def render_html_exe(result: dict) -> str:
 
     exports_section = ""
     if result["exports"]:
+        _exp_total = len(result["exports"])
         tags = "".join(f'<span class="tag">{_esc(e)}</span>' for e in result["exports"][:100])
+        _exp_note = (f'<p style="font-size:.83rem;color:var(--text2);margin-bottom:11px;">'
+                     f'Showing the first 100 of {_exp_total}.</p>' if _exp_total > 100 else "")
         exports_section = _collapsible_section(
-            "exports-section", f'Export Table ({len(result["exports"])} symbols)',
-            f'<div class="tag-list">{tags}</div>'
+            "exports-section", f'Export Table ({_exp_total} symbols)',
+            f'{_exp_note}<div class="tag-list">{tags}</div>'
         )
 
 
@@ -1622,6 +1753,10 @@ def render_html_exe(result: dict) -> str:
         ("Export Table", "exports-section"),
         ("Unmapped DLLs", "unmapped-dlls-section"),
     ]
+    # Same guard as render_html_apk: the Export Table / Unmapped DLLs section is conditional, so an unconditional
+    # link scrolled nowhere when it was absent.
+    sidebar_links = [(label, sid) for label, sid in sidebar_links
+                     if f'id="{sid}"' in body_sections]
     sidebar_html = (
         '<div class="sidebar"><nav>'
         + "".join(f'<a href="#{sid}">{_esc(label)}</a>' for label, sid in sidebar_links)
@@ -1802,6 +1937,10 @@ def render_html_exe_folder(result: dict) -> str:
         ("Merged Import Table", "import-table-section"),
         ("Unmapped DLLs", "unmapped-dlls-section"),
     ]
+    # Same guard as render_html_apk: the Export Table / Unmapped DLLs section is conditional, so an unconditional
+    # link scrolled nowhere when it was absent.
+    sidebar_links = [(label, sid) for label, sid in sidebar_links
+                     if f'id="{sid}"' in body_sections]
     sidebar_html = (
         '<div class="sidebar"><nav>'
         + "".join(f'<a href="#{sid}">{_esc(label)}</a>' for label, sid in sidebar_links)
@@ -2075,8 +2214,16 @@ def export_excel_apk(result: dict, output_path: Path):
     ws1.merge_cells(f"A{r}:B{r}")
     ws1[f"A{r}"] = "Summary"
     hdr(ws1[f"A{r}"])
+    # "Number of Libraries Mapped" used to sit here carrying len(kit_matches),
+    # while the HTML stat card of the SAME NAME carries the namespace-row count.
+    # The two disagreed on 42 of the 43 corpus reports. Both numbers are useful,
+    # so both are emitted -- under names that say which is which.
+    _ns_rows = sum(len(km.get("android_sources", [])) for km in result["kit_matches"])
     for i, (k, v) in enumerate([
-        ("Number of Libraries Mapped", len(result["kit_matches"])),
+        ("Kit Matches",           len(result["kit_matches"])),
+        ("Mapped Namespace Rows", _ns_rows),
+        ("3rd Party (OHPM)",      len(result.get("ohpm_matches", []))),
+        ("Built With",            (result.get("framework") or {}).get("framework") or "N/A"),
         ("Permission Matches",    len(result["permission_matches"])),
         ("Total Permissions",     len(result["permissions"])),
         ("Native .so Libraries",  len(result["native_libs"])),
@@ -2131,6 +2278,38 @@ def export_excel_apk(result: dict, output_path: Path):
         ws2.column_dimensions[get_column_letter(ci)].width = w
     ws2.freeze_panes = "A2"
     ws2.auto_filter.ref = f"A1:{get_column_letter(len(hdrs2))}1"
+
+
+    # Second tier. Omitted when empty, exactly like the HTML section, so a clean
+    # app gets no hollow sheet. Created here so it lands directly after Kit
+    # Matches, mirroring the report's own section order. Until this existed the
+    # OHPM tier was visible ONLY in the batch workbook -- 481 rows across 32 of
+    # the 43 corpus apps never reached a single-app export.
+    ohpm_rows = result.get("ohpm_matches", [])
+    if ohpm_rows:
+        wso = wb.create_sheet("3rd Party (OHPM)")
+        wso.sheet_view.showGridLines = False
+        hdrs_o = ["Android Namespace", "OHPM Package", "Install Command", "Category",
+                  "Confidence", "Class Count", "Method Count", "Sample Methods", "Repository"]
+        for ci, h in enumerate(hdrs_o, 1):
+            hdr(wso.cell(row=1, column=ci, value=h))
+        wso.row_dimensions[1].height = 22
+        for ri_o, om in enumerate(ohpm_rows, start=2):
+            bg_o = WHITE if ri_o % 2 == 0 else GRAY
+            vals_o = [om.get("namespace", ""), om.get("ohpm_package", ""),
+                      om.get("install_cmd", ""), om.get("category") or "--",
+                      om.get("confidence", ""), om.get("class_count", ""),
+                      om.get("method_count", ""), ", ".join(om.get("sample_methods", [])),
+                      om.get("source_repo") or "--"]
+            for ci, v in enumerate(vals_o, 1):
+                c = wso.cell(row=ri_o, column=ci, value=v)
+                dat(c, align=("center" if ci in (5, 6, 7) else "left"), wrap=(ci == 8))
+                c.fill = PatternFill("solid", start_color=bg_o)
+            wso.row_dimensions[ri_o].height = 16
+        for ci, w in enumerate([44, 30, 34, 30, 12, 12, 13, 55, 40], 1):
+            wso.column_dimensions[get_column_letter(ci)].width = w
+        wso.freeze_panes = "A2"
+        wso.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_o))}1"
 
 
     ws3 = wb.create_sheet("Permissions")
@@ -2604,13 +2783,13 @@ def export_excel_batch(
     ws.title = "Batch Summary"
     ws.sheet_view.showGridLines = False
 
-    ws.merge_cells("A1:E1")
+    ws.merge_cells("A1:G1")
     ws["A1"] = "Migration Analyzer — Batch Summary"
     ws["A1"].font      = Font(bold=True, size=14, color=RED, name="Arial")
     ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
     ws.row_dimensions[1].height = 30
 
-    headers = ["File", "App Name", "Kit Count", "Unmapped", "Permissions"]
+    headers = ["File", "App Name", "Platform", "Coverage %", "Kit Count", "Unmapped", "Permissions"]
     for ci, h in enumerate(headers, 1):
         hdr(ws.cell(row=2, column=ci, value=h), bg=DKBLUE)
     ws.row_dimensions[2].height = 22
@@ -2627,17 +2806,53 @@ def export_excel_batch(
         cell.fill = PatternFill("solid", start_color=bg)
         cell.border = bdr
 
-        for ci, key in enumerate(["app_name", "kit_count", "unmapped_count", "permission_count"], start=2):
-            c = ws.cell(row=ri, column=ci, value=row.get(key, ""))
-            dat(c, align=("center" if ci >= 3 else "left"))
+        # Platform reads off the row's own framework dict, NOT the `frameworks`
+        # argument: that one is keyed by package_name, which this sheet does not
+        # carry, and it is populated only for APKs that resolved a package. The
+        # "(+ secondary)" form matches the Framework column on App Info so the
+        # two sheets never disagree. EXE/IPA rows have no framework and stay blank.
+        fw   = row.get("framework") or {}
+        plat = fw.get("framework") or ""
+        hyb  = ", ".join(h["framework"] for h in (fw.get("hybrid") or []))
+        if plat and hyb:
+            plat = f"{plat} (+ {hyb})"
+        # A packed app's Kit Count / Unmapped columns are single digits and look
+        # like an analysis failure. Naming the packer right here is what turns
+        # "Unknown, 1 kit" from a mystery into a finding -- the alternative is
+        # cross-referencing the Packer column on another sheet.
+        _fd = fw.get("detail") or {}
+        if plat and "packed" in (_fd.get("note") or "").lower():
+            plat = f"{plat} — DEX packed: {_fd.get('packer') or 'unknown'}"
+
+        # Same rule as the report's stat card, via the same function, so the
+        # sheet and the HTML can never disagree. Not measurable -> an em-dash
+        # rather than a number; the Platform cell alongside already says why
+        # (it carries the packer name).
+        cov_pct, cov_state = coverage_status(row)
+        cov_val = cov_pct if cov_pct is not None else "—"
+
+        # Coverage sits next to Platform, not next to the counts: the two are
+        # read together (a packed platform is exactly why a coverage cell is
+        # blank), and it is the headline number a reader scans for.
+        vals = [row.get("app_name", ""), plat, cov_val, row.get("kit_count", ""),
+                row.get("unmapped_count", ""), row.get("permission_count", "")]
+        for ci, v in enumerate(vals, start=2):
+            c = ws.cell(row=ri, column=ci, value=v)
+            dat(c, align=("center" if ci >= 4 else "left"))
             c.fill = PatternFill("solid", start_color=bg)
+            # Colour-coded at the same 70 / 40 thresholds the report uses.
+            if ci == 4 and cov_pct is not None:
+                c.font = Font(name="Arial", size=9, bold=True,
+                              color=(GRN if cov_pct >= 70 else AMB if cov_pct >= 40 else RED_C))
+            elif ci == 4:
+                c.font = Font(name="Arial", size=9, color="9AA0AE")
 
         ws.row_dimensions[ri].height = 18
 
-    for ci, w in enumerate([40, 32, 12, 13, 14], 1):
+    for ci, w in enumerate([40, 32, 38, 13, 12, 13, 14], 1):
         ws.column_dimensions[get_column_letter(ci)].width = w
     ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:{get_column_letter(5)}2"
+    ws.auto_filter.ref = f"A2:{get_column_letter(7)}2"
 
     # Play Store metadata — inserted at index 0 so it lands FIRST in tab order,
     # ahead of Batch Summary. APK-only; omitted entirely when there is nothing
@@ -2650,8 +2865,14 @@ def export_excel_batch(
         # Framework columns ride on App Info rather than a sheet of their own:
         # it is already the one row-per-app descriptive sheet. "Framework Version"
         # is spelled out because "Version" here already means the Play release.
+        # Store Region / Data Fetched / Source are provenance, not Play fields.
+        # They answer "how much do I trust this row", which matters because the
+        # scraper is an unofficial HTML scrape: a wave of N/A can mean Play
+        # changed its page, and a cached row can be a month old. Without them a
+        # stale row and a live row look identical.
         hdrs_ai = ["Package Name", "App Name", "Category", "Installs", "Rating",
                    "Rating Count", "Developer", "Last Updated", "Version",
+                   "Store Region", "Data Fetched", "Source",
                    "Framework", "Engine", "Framework Version", "Confidence",
                    "Packer", "Evidence"]
         for ci, h in enumerate(hdrs_ai, 1):
@@ -2673,6 +2894,8 @@ def export_excel_batch(
                 meta.get("installs", ""),     meta.get("rating", ""),
                 meta.get("rating_count", ""), meta.get("developer", ""),
                 meta.get("last_updated", ""), meta.get("version", ""),
+                meta.get("store_region", ""), meta.get("fetched_on", ""),
+                meta.get("data_source", ""),
                 fname,
                 fw.get("engine", "") or "",
                 fw.get("version", "") or "",
@@ -2682,12 +2905,13 @@ def export_excel_batch(
             ]
             for ci, v in enumerate(vals, 1):
                 c = ws_ai.cell(row=ri, column=ci, value=v)
-                dat(c, align=("center" if ci in (4, 5, 6, 11, 13) else "left"),
-                    wrap=(ci == 15))
+                dat(c, align=("center" if ci in (4, 5, 6, 10, 11, 14, 16) else "left"),
+                    wrap=(ci == 18))
                 c.fill = PatternFill("solid", start_color=bg)
             ws_ai.row_dimensions[ri].height = 16
 
         for ci, w in enumerate([34, 30, 20, 18, 10, 14, 30, 16, 20,
+                                13, 14, 15,
                                 22, 10, 16, 12, 16, 46], 1):
             ws_ai.column_dimensions[get_column_letter(ci)].width = w
         ws_ai.freeze_panes = "A2"
@@ -2865,6 +3089,22 @@ def export_excel_batch(
             ws3.column_dimensions[get_column_letter(ci)].width = w
         ws3.freeze_panes = "A2"
         ws3.auto_filter.ref = f"A1:{get_column_letter(len(hdrs3))}1"
+
+    # Tab order is asserted here rather than left to the order the code happens
+    # to build sheets in, which is how OHPM Matches ended up after Common
+    # Unmapped. The order tells a story: what the portfolio IS (App Info,
+    # Framework Rollup), then per-app results (Batch Summary), then what DID map
+    # (Common Mapped, then the OHPM second tier), then what did NOT (Common
+    # Unmapped and the EXE/IPA equivalents). Any sheet not listed keeps its
+    # relative position at the end.
+    _TAB_ORDER = ["App Info", "Framework Rollup", "Batch Summary", "Common Mapped",
+                  "OHPM Matches", "Common Unmapped", "Unmapped DLLs",
+                  "Unmapped Frameworks"]
+    for name in reversed(_TAB_ORDER):
+        if name in wb.sheetnames:
+            sheet = wb[name]
+            wb.move_sheet(sheet, offset=-wb.index(sheet))   # to the front
+    wb.active = 0
 
     wb.save(output_path)
     _print_ok(f"Batch Excel: {output_path}")
