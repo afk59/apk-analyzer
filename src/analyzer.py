@@ -183,6 +183,16 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 rows.append({
                     "file_name":        file_path.name,
                     "app_name":         result.get("app_name") or "",
+                    # Descriptive label for the Batch Summary "Platform" column.
+                    # Carried on the row because that sheet has no package_name to
+                    # look the `frameworks` dict up by.
+                    "framework":        result["framework"],
+                    # Coverage is derived, not stored: export_excel_batch calls
+                    # renderer.coverage_status() on the row, the same function the
+                    # HTML stat card uses, so both apply the packed / low-sample
+                    # rule identically.
+                    "total_detected_ns": result.get("total_detected_ns", 0),
+                    "total_3p_ns":       result.get("total_3p_ns", 0),
                     "kit_count":        len(result["kit_matches"]),
                     "unmapped_count":   len(result.get("unmapped_namespaces", [])),
                     "permission_count": len(result.get("permissions", [])),
@@ -199,6 +209,14 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                         mapped_ns_kit.setdefault(ns, km["kit_name"])
                 for u in result.get("unmapped_namespaces", []):
                     unmapped_ns_apps.setdefault(u["namespace"], set()).add(file_path.name)
+                    agg = unmapped_ns_agg.setdefault(u["namespace"], {
+                        "namespace": u["namespace"], "class_count": 0, "method_count": 0,
+                        "sample_methods": set(), "apps": [],
+                    })
+                    agg["class_count"]  += u["class_count"]
+                    agg["method_count"] += u["method_count"]
+                    agg["sample_methods"].update(u["sample_methods"])
+                    agg["apps"].append(file_path.name)
                 # Second tier, aggregated cross-app on (namespace -> package)
                 # so App Count is distinct APKs, matching the Common sheets.
                 for om in result.get("ohpm_matches", []):
@@ -211,14 +229,6 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                         "method_count": 0,
                     })
                     prev["method_count"] = max(prev["method_count"], om.get("method_count") or 0)
-                    agg = unmapped_ns_agg.setdefault(u["namespace"], {
-                        "namespace": u["namespace"], "class_count": 0, "method_count": 0,
-                        "sample_methods": set(), "apps": [],
-                    })
-                    agg["class_count"]  += u["class_count"]
-                    agg["method_count"] += u["method_count"]
-                    agg["sample_methods"].update(u["sample_methods"])
-                    agg["apps"].append(file_path.name)
             elif mode == "ipa":
                 result = analyze_ipa(str(file_path), ipa_mapping)
                 html   = render_html_ipa(result)
