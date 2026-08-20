@@ -1,5 +1,5 @@
 {
-  "version": "1.8.0",
+  "version": "1.10.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -2177,6 +2177,134 @@
       "harmony_import": "@kit.AbilityKit",
       "confidence": "high",
       "note": "Package name / version / build number → @kit.AbilityKit. Attested: import { bundleManager } from '@kit.AbilityKit' (getBundleInfoForSelf, getBundleInfo)."
+    },
+    {
+      "android_namespace": "okio",
+      "android_display": "Okio (I/O buffers & byte strings)",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "medium",
+      "note": "okio's core (Buffer, ByteString, Source/Sink, Utf8) → import { buffer } from '@kit.ArkTS'; Base64 is util.encodeSync / util.decodeSync (@kit.ArkTS). This row STRADDLES two further kits and a migrator will need both: okio.FileSystem / FileHandle / Path / ZipFileSystem are fileIo (@kit.CoreFileKit), and GzipSource / GzipSink / DeflaterSink / InflaterSource are zlib (@kit.BasicServicesKit, createGzip / inflate attested). Medium because of that three-way split, not because the target is uncertain."
+    },
+    {
+      "android_namespace": "bolts",
+      "android_display": "Bolts-Android (task continuations)",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "medium",
+      "note": "Bolts Task / TaskCompletionSource are continuation chains; the HarmonyOS equivalent is the JS Promise plus import { taskpool } from '@kit.ArkTS' for worker dispatch. Medium deliberately: CancellationToken / CancellationTokenSource / CancellationTokenRegistration have no direct counterpart and need real rework, not a symbol swap."
+    },
+    {
+      "android_namespace": "com.facebook.widget.text",
+      "android_display": "Fresco / RN text layout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Text measurement (line width, font height, baseline offset) → import { MeasureText } from '@kit.ArkUI'. Medium: ArkUI lays text out declaratively, so the measuring code around it is rewritten rather than ported."
+    },
+    {
+      "android_namespace": "com.facebook.animated",
+      "android_display": "Fresco animated GIF / WebP",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "Animated image decoding → import { image } from '@kit.ImageKit' (createImageSource, getFrameCount, createPixelMap). @kit.ImageKit decodes the frames but has no play / pause / seek control; when playback control is required see @ohos/gif-drawable in ohpm_mapping.json, the same call made for pl.droidsonroids.gif."
+    },
+    {
+      "android_namespace": "com.facebook.systrace",
+      "android_display": "Facebook Systrace",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "Trace sections → import { hiTraceMeter } from '@kit.PerformanceAnalysisKit' (startTrace, finishTrace). Medium for the same reason org.slf4j is: hiTraceMeter is a platform trace sink, and Systrace's async-flow ids (beginAsyncSection / endAsyncFlow) have no counterpart."
+    },
+    {
+      "android_namespace": "com.google.android.flexbox",
+      "android_display": "Google FlexboxLayout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "FlexboxLayout → ArkUI Flex / Row / Column containers. NOT attested in hmos_api_index.json, and cannot be: ArkUI containers are declarative built-ins rather than imported APIs, so a grep for Flex over the index's import statements returns zero. The basis is precedent — com.facebook.yoga, RN's own flexbox engine, is already @kit.ArkUI medium — stated here so the weaker footing is not forgotten."
+    },
+    {
+      "android_namespace": "com.google.android.cameraview",
+      "android_display": "Google CameraView",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "high",
+      "note": "Camera preview / capture → import { camera } from '@kit.CameraKit' (createCameraInput, createPreviewOutput, getSupportedCameras)."
+    },
+    {
+      "android_namespace": "io.invertase.googlemobileads",
+      "android_display": "React Native Google Mobile Ads",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Google Mobile Ads → import { advertising } from '@kit.AdsKit'. Medium: banner / interstitial / rewarded formats exist on both sides, but the mediation layer and the UMP consent flow do not port. Seen in 1 of the 43 corpus apps — kept because the correspondence is exact."
+    },
+    {
+      "android_namespace": "dc.squareup.okhttp3",
+      "android_display": "OkHttp (shaded by DCloud)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "A relocated copy of OkHttp bundled inside the DCloud/uni-app runtime -- identical API (OkHttpClient, HttpUrl, Interceptor, CertificatePinner), only the package was renamed. Maps exactly where okhttp3 does: import { http } from '@kit.NetworkKit' (createHttp), plus webSocket for the WebSocket half. NOTE the caveat that applies to every dc.* row: the uni-app runtime around it does not port, so this is accurate namespace attribution, not a promise that swapping this one library completes the migration."
+    },
+    {
+      "android_namespace": "dc.squareup.okio",
+      "android_display": "Okio (shaded by DCloud)",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "medium",
+      "note": "The shaded twin of okio, same reasoning and same three-way straddle as the okio row: core buffers are import { buffer } from '@kit.ArkTS', the filesystem half is fileIo (@kit.CoreFileKit) and the compression half is zlib (@kit.BasicServicesKit)."
+    },
+    {
+      "android_namespace": "org.apache.commons.httpclient",
+      "android_display": "Apache Commons HttpClient (legacy)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "The pre-4.x Apache HTTP client. Same target as the existing org.apache.http row: import { http } from '@kit.NetworkKit' (createHttp / request). Kept as its own row because the package root is org.apache.commons, which the org.apache.http prefix cannot reach."
+    },
+    {
+      "android_namespace": "org.springframework.http",
+      "android_display": "Spring HTTP (RestTemplate stack)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "HttpHeaders / HttpMessageConverter / HttpOutputMessage are the request-response abstraction under RestTemplate -> import { http } from '@kit.NetworkKit'. Medium and deliberately scoped to .http only: org.springframework.core, .util and especially .web.servlet are general framework and server-side code with no client-side counterpart, and are left unmapped."
+    },
+    {
+      "android_namespace": "io.ktor",
+      "android_display": "Ktor client (HTTP + WebSocket)",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "Ktor's client stack -> import { http } from '@kit.NetworkKit' with import { webSocket } from '@kit.NetworkKit' for io.ktor.websocket. Medium because the row covers the whole io.ktor root: the client, http and websocket packages port, while io.ktor.serialization and io.ktor.util are Kotlin-idiomatic plumbing that is rewritten rather than swapped, and Ktor's server side has no place on a device."
+    },
+    {
+      "android_namespace": "com.mr.http",
+      "android_display": "Volley-derived HTTP client",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "medium",
+      "note": "A vendored Volley fork (MR_RequestQueue / MR_RetryPolicy / MR_CacheDispatcher mirror Volley's RequestQueue / RetryPolicy / CacheDispatcher) -> import { http } from '@kit.NetworkKit', the same target as the existing com.android.volley row. Medium rather than high because the request-queue, retry and disk-cache policy layers are app code that must be rebuilt on top of http, not API that NetworkKit provides."
+    },
+    {
+      "android_namespace": "org.webrtc.audio",
+      "android_display": "WebRTC audio device layer",
+      "harmony_kit": "@kit.AudioKit",
+      "harmony_import": "@kit.AudioKit",
+      "confidence": "medium",
+      "note": "The LOCAL AUDIO I/O HALF of WebRTC only. WebRtcAudioRecord -> audio.createAudioCapturer, WebRtcAudioTrack -> audio.createAudioRenderer, WebRtcAudioEffects (AEC / NS) -> audio.getAudioEffectMode / setAudioEffectMode, all from import { audio } from '@kit.AudioKit'. READ THE SCOPE: org.webrtc as a whole is deliberately NOT mapped -- PeerConnection, ICE/SDP negotiation, SRTP/DTLS and the RTP transport have no HarmonyOS counterpart and must be hand-rolled or replaced with a vendor RTC SDK. This row says the microphone and speaker path ports, nothing more."
+    },
+    {
+      "android_namespace": "org.webrtc.Camera",
+      "android_display": "WebRTC camera capture layer",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "The CAPTURE HALF of WebRTC only: CameraCapturer / Camera1Session / Camera2Session / CameraEnumerator -> import { camera } from '@kit.CameraKit' (createCameraInput, createPreviewOutput, getSupportedCameras). Same scope warning as org.webrtc.audio -- the RTC stack itself does not port, and the video encode path (HardwareVideoEncoder, AndroidVideoDecoder) is left unmapped because no encoder/decoder API is attested in hmos_api_index.json."
     }
   ],
   "permission_mappings": [
