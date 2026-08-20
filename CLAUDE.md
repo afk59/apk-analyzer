@@ -1694,3 +1694,394 @@ mPaaS 2 · Unknown (packed) 2 · Capacitor 1 · Cordova 1.
 ## Bugfix Round — 2026-06-30
 
 Four post-Sprint-7 fixes: `dfd76da` added `grant_level` to all 38 `permission_mappings` entries and fixed the Permission Coverage stat-card sublabel in `renderer.py` to display real system/user/restricted tier counts instead of always showing zero. `2daca8a` restructured the namespace-matching loop in `apk_engine.py` so `namespace_mappings` is tried first for all namespaces — the blanket androidx→ArkUI fallback had been running before the loop with a `continue`, making 20 specific androidx entries (camera, media3, biometric, room, etc.) permanently unreachable. `f6bcc99` replaced hard key accesses with `.get()` fallbacks throughout `export_excel_apk()`, `export_excel_exe()`, and `export_excel_ipa()` to prevent intermittent `AttributeError` when a mapping entry has a null `confidence` or `note` field. `e208272` corrected six semantic errors in `mapping.json`: `android.hardware.sensor` → `android.hardware.Sensor` (capital S, so `SensorManager`/`Sensor`/`SensorEvent` now match), recaptcha → `@kit.UserAuthenticationKit`, protobuf → `@kit.ArkData`, freshchat → `@kit.ArkWeb`, xposed `harmony_kit` → `null` (engine now routes null-kit matches to `unmapped_namespaces` instead of crashing), and commons.lang3 kit label tightened to `"HarmonyOS NDK (libc++)"` / low confidence.
+
+---
+
+## Report + export fixes and mapping v1.9.0 — 2026-08-20
+
+Driven by a full 43-app re-run of the HK/Macau corpus and a programmatic audit of all 43 HTML
+reports (stat cards vs data, coverage arithmetic, section counts, anchor targets, group-id
+collisions, embedded-JSON validity). Everything below is verified against that run, not asserted.
+
+### `Batch Summary` gained a **Platform** column
+
+`File · App Name · Platform · Kit Count · Unmapped · Permissions`. Merge range, widths and
+auto-filter widened by one column accordingly.
+
+The value comes from **`row["framework"]`**, not from the `frameworks` argument. That argument is
+keyed by `package_name`, which this sheet does not carry, and it only holds APKs whose package
+resolved — reading it here would have produced blanks. `run_batch` therefore attaches the
+framework dict to the row it already builds. Format matches App Info's Framework column exactly
+(`React Native (+ Expo)`), so the two sheets can never disagree. EXE/IPA rows have no framework
+and stay blank.
+
+### Four report/export defects found by the audit
+
+1. **Sidebar linked sections that were never rendered.** Permission Gaps is absent for 13 of the
+   43 apps, and Unmatched Permissions / Unrecognized Libraries can be too, but the links were
+   emitted unconditionally, so they scrolled nowhere. Fixed by filtering `sidebar_links` against
+   `body_sections` (`if f'id="{sid}"' in body_sections`) rather than repeating each section's own
+   condition — that stays correct if a section's condition later changes. **The same defect
+   existed in `render_html_exe` and `render_html_exe_folder`** (Export Table, Unmapped DLLs) and
+   is fixed the same way. IPA has no sidebar and is unaffected. Audit: 13 dangling links → 0.
+
+2. **Level 3 of the kit table printed the Android method again.** `_render_kit_table_apk` rendered
+   `im["method_name"]` — the same string the ns-row above it already shows — so the import
+   statement, the only reason that level exists, never reached the page. `hmos_method`, `status`
+   and `status_color` were computed and thrown away. It now renders the import plus a status
+   badge, and says so explicitly when the index has no import statement for that API.
+
+3. **`api_matches` are mostly wrong, and fixing (2) made that visible.** `api_matcher` keys on the
+   bare simple method name, so `Intent.clone` resolves to `ArrayList` (`@kit.ArkTS`),
+   `Intent.getComponent` to `image` (`@kit.ImageKit`) and `MediaBrowserService.onBind` to
+   `NodeController` (`@kit.ArkUI`). Measured across the 43 reports: of **9,199** level-3 rows,
+   **58.8%** suggested an API from a *different* kit than the row claims and a further **23.4%**
+   had no import statement at all — leaving **17.8%** self-consistent.
+
+   `inner_methods` now applies a second gate alongside the existing namespace gate: the suggested
+   import must name the row's own kit. Corpus effect **8,886 → 2,817 rows** (31.7% kept, the rest
+   being HSBC-free arithmetic on the 42 comparable reports), and 0 surviving rows point at a
+   foreign kit. Under `--target hms` the kit names are HMS kits and the HarmonyOS index cannot
+   name them, so this gate empties level 3 for HMS — which is honest, since those matches were
+   never meaningful there.
+
+4. **The Sprint-7 "kit confidence boosting" never fired — not once, in any run.** It compared
+   `km["kit_name"]` (`"@kit.AbilityKit"`) against the index's `kit` field, which is a
+   documentation category (`"Ability Kit"`, `"ArkUI"`, `"Application Framework"`). **0 of the
+   16,167 index entries hold a `@kit.*` token**, so the intersection was always empty. Deleted
+   rather than repaired: repairing it would switch ON a boost driven by the matches measured in
+   (3), i.e. mostly wrong ones. Confidence stays mapping-derived, which is what every report has
+   in fact always shown. Verified as a no-op — no confidence changed for that reason.
+
+### The OHPM tier reached single-app exports for the first time
+
+`report_data` has carried `ohpm_matches` since Phase 3B "so the in-browser XLSX export can see
+it", but no sheet was ever written from it, and `export_excel_apk` never had one either. The tier
+existed **only** in `batch_summary.xlsx` — 481 rows across 32 of the 43 apps were invisible to
+anyone exporting a single report.
+
+Both exports now emit **"3rd Party (OHPM)"** directly after Kit Matches (mirroring the report's
+section order), omitted entirely when empty. Nine columns: Android Namespace · OHPM Package ·
+Install Command · Category · Confidence · Class Count · Method Count · Sample Methods ·
+Repository. The JS half was verified by *executing* it under node with a stubbed `XLSX` — 7
+sheets for an app with OHPM rows, 6 for one without.
+
+### One label, two numbers — fixed in both exports
+
+The Overview sheet's `Number of Libraries Mapped` carried `len(kit_matches)` while the HTML stat
+card of the *same name* carries the namespace-row count; they disagreed on **42 of 43** reports
+(`com.ctm`: card 133, export 38). Both numbers are useful, so both are emitted under names that
+say which is which — `Kit Matches` and `Mapped Namespace Rows` — joined by `3rd Party (OHPM)` and
+`Built With`, neither of which had reached an export before.
+
+### `mapping.json` v1.8.0 → **v1.9.0**, 263 → **271** (+8)
+
+Append-only, `last_updated` stays `2026-08`, `permission_mappings` untouched (38). Candidates came
+from ranking the run's 13,299 unmapped rows by distinct-APK frequency, excluding anything an
+existing prefix already claims, then grounding each against `hmos_api_index.json` — by method key
+*and* by grepping `import_statement` values. Full write-up, including what was rejected and why,
+is in `MAPPING_CANDIDATES_2026-08-20.md`.
+
+| Namespace | apps | Kit | Conf |
+|---|---|---|---|
+| `okio` | 20 | `@kit.ArkTS` | medium |
+| `bolts` | 16 | `@kit.ArkTS` | medium |
+| `com.facebook.widget.text` | 16 | `@kit.ArkUI` | medium |
+| `com.facebook.animated` | 13 | `@kit.ImageKit` | high |
+| `com.facebook.systrace` | 11 | `@kit.PerformanceAnalysisKit` | medium |
+| `com.google.android.flexbox` | 5 | `@kit.ArkUI` | medium |
+| `com.google.android.cameraview` | 3 | `@kit.CameraKit` | high |
+| `io.invertase.googlemobileads` | 1 | `@kit.AdsKit` | medium |
+
+`okio` is a **three-way straddle** and its note says so: core buffers are `buffer`/`util`
+(`@kit.ArkTS`), the filesystem half is `fileIo` (`@kit.CoreFileKit`), the compression half is
+`zlib` (`@kit.BasicServicesKit`). `com.google.android.flexbox` is the one row with **no index
+attestation and none possible** — ArkUI containers are declarative built-ins, so a grep for `Flex`
+over the index returns zero; it rests on the existing `com.facebook.yoga → @kit.ArkUI` precedent
+and the note records that weaker footing. All 8 kit tokens already resolve in `KIT_DOC_URLS`.
+
+**`okio` and `bolts` were cut in Sprint 10** as "proposed and cut during review", with no recorded
+reason. They are back because the grounding now exists verbatim and because the accepted
+`org.apache.commons.io → @kit.CoreFileKit` row is the same shape. If the original cut had a reason
+that still stands, write it down — otherwise a fourth round will re-propose them.
+
+**Absorption, predicted then confirmed** (real match loop replayed, then a real 43-app run):
+
+| Metric | Predicted | Actual |
+|---|---|---|
+| Unmapped row instances absorbed | 961 | **961** ✓ |
+| Distinct namespaces absorbed | 100 | 100 |
+| Rows shadowed by a pre-existing rule | 0 | **0** ✓ |
+| Namespaces covered by a new rule leaking back to unmapped | 0 | **0** ✓ |
+
+Corpus totals: `batch_unmapped.xlsx` **13,299 → 12,338** rows, `Common Unmapped` **1,931 →
+1,845**, `Common Mapped` **219 → 226** (+7, not +8 — `io.invertase.googlemobileads` appears in one
+app and so falls under `_COMMON_MIN_APPS`), kit rows **1,256 → 1,259**.
+
+### STILL OPEN — kit `confidence` / `note` are NOT reproducible
+
+Found while validating the above; **pre-existing, not introduced here.** Two runs of the *same
+code* on the *same APK*:
+
+```
+com.storellet  @kit.AbilityKit  run A: medium   first source android.content.pm
+               @kit.AbilityKit  run B: high     first source android.content.Intent
+```
+
+Identical source *sets*, different source *order*. `analyze_apk` takes a kit's `confidence`,
+`note`, `sample_url` and `harmony_import` from whichever mapped namespace creates the kit entry
+first (`if kit not in matched_kits`), and iteration still follows `detected_namespaces`, which is
+built in `dx.get_classes()` order. **The 2026-08-13 reproducibility fix sorted the output lists
+but not the iteration**, so this window stayed open — and it is the most likely explanation for
+the "one anomalous run that could not be reproduced" recorded there.
+
+User-visible effect: the same APK can render a kit as `Supported` (green) or `Replaceable` (amber)
+on different runs. It also means a mapping addition can flip an unrelated kit's badge by changing
+which row wins creation — 3 of the 4 confidence differences between the v1.8.0 and v1.9.0 runs are
+this, triggered by the new `com.facebook.systrace` row joining `@kit.PerformanceAnalysisKit`.
+
+The fix is one line — iterate `detected_namespaces` in sorted order (or build it sorted) — but it
+changes output, so it needs its own run and its own commit. **Not applied here.**
+
+---
+
+## Reproducibility, packed-APK honesty, metadata provenance — 2026-08-20 (round 2)
+
+Same 43-app corpus, re-run after each change. Four defects, one of them the reason the
+2026-08-13 reproducibility work was incomplete.
+
+### `detected_namespaces` is now built sorted — reports are finally reproducible
+
+**Two runs of identical code on the same APK disagreed:**
+
+```
+com.storellet  @kit.AbilityKit  run A: medium   first source android.content.pm
+               @kit.AbilityKit  run B: high     first source android.content.Intent
+```
+
+Identical source *sets*, different source *order*. A kit entry takes its `confidence`, `note`,
+`sample_url` and `harmony_import` from whichever mapped namespace creates it first
+(`if kit not in matched_kits`), and the matching loop iterated `detected_namespaces`, which is
+filled in `dx.get_classes()` order. **The 2026-08-13 fix sorted every output list but not the
+iteration**, so this window stayed open — and it is the most likely explanation for the "one
+anomalous run that could not be reproduced" recorded there.
+
+Fix: `for ns, data in sorted(ns_data.items())` when building `result["detected_namespaces"]`.
+One line, and it covers the matching loop, the `android_sources` order and the serialized dict
+at once. Verified: `com.storellet` three consecutive runs, all 37 kits identical, against a
+reproducible disagreement before.
+
+**Blast radius, measured over the 42 non-HSBC apps:** kit counts, unmapped counts, OHPM counts
+and every `(namespace, kit)` pair are **identical** — matching did not change. What changed is
+attribution: **165 of 1,219 kit rows (13.5%) now carry a different confidence** than the
+previous run, because the winner is no longer a coin flip.
+
+> **Open design question this exposes — NOT decided here.** For **370 of 1,219 kit rows (30.4%)**
+> the contributing namespaces *disagree* on confidence (`@kit.BasicServicesKit` is fed by high +
+> medium + low rows in one app). The engine must pick one, and "alphabetically first" is stable
+> but arbitrary. Distribution under each policy across the corpus:
+>
+> | policy | high | medium | low |
+> |---|---|---|---|
+> | current (first sorted) | 821 | 358 | 40 |
+> | max (optimistic) | 923 | 257 | 39 |
+> | min (conservative) | 554 | 570 | 95 |
+>
+> `min` is the defensible choice for a migration-*risk* tool — a kit badged "Supported" while one
+> of its contributing libraries is only "Should Confirm" understates the work. It also costs 267
+> green badges, which is why it is a product decision and not a silent refactor.
+
+### Packed APKs no longer report a flattering coverage figure
+
+Four corpus apps are packed and expose almost nothing: `com.huayuan.namkwong` (360 Jiagu, 2
+third-party namespaces, 1 kit), `hk.gov.ogcio.iamsmart` (SecNeo, 3 ns, 2 kits),
+`mo.gov.safp.portal` (Ant hardening, 5 ns, 2 kits), `com.wlb.android` (Bangcle, 56 ns, 6 kits).
+Analysis takes 1.8–4.8 s against 30–100 s for a real app.
+
+**The reports were actively misleading, not merely thin:** `hk.gov.ogcio.iamsmart` rendered
+**"100% coverage"** off a denominator of 3, while the fully analysable `com.polyulife` rendered
+93.4% off 2,020. The packer was already known — it was just buried behind the "Built with"
+evidence toggle, which nobody opens before reading the stat cards.
+
+- `_packed_dex_banner()` — red banner above everything, naming the packer, stating the kit and
+  namespace counts against the corpus range (400–6,700), and pointing out that the manifest,
+  permissions and native libraries **are** accurate because they come from the archive rather
+  than the bytecode. It also says what to do about it: get an unpacked build or dump the DEX
+  from a running instance.
+- The coverage sublabel reads **"coverage not measurable"** instead of a percentage.
+- A secondary guard covers an app gutted by something other than a known packer:
+  `total_3p_ns < 50` renders "N refs — too few to rate". The threshold comes from the corpus,
+  where the packed apps sit at 2 / 3 / 5 / 56 and the lowest genuinely analysable app is 429.
+- `Batch Summary` → the Platform cell becomes `Unknown — DEX packed: 360 Jiagu`, so a one-kit row
+  in the list explains itself instead of looking like an analysis failure.
+
+### Silent truncation in the report is now stated
+
+`Unrecognized Third-Party Libraries` rendered the first 30 rows with **no count in the heading
+and no note**. On HSBC that is 30 of 1,458 — the page read as "this app has 30 unrecognised
+libraries". The heading now carries the true total and the body says the 30 shown are those with
+the most method references, with the full list in the Excel export. The EXE report's
+`Export Table` had an honest count but a silent 100-tag cap; that now says so too.
+
+### App Info gained provenance — and offline runs reuse stale data
+
+Three columns after `Version`: **`Store Region` · `Data Fetched` · `Source`**.
+
+`google-play-scraper` is an unofficial HTML scrape that can start returning `N/A` without notice
+(see Known gaps), and a row served from a 29-day-old cache was indistinguishable from one fetched
+seconds ago. `data_source` is one of **live · cache · stale cache · not on Play · offline**, so
+the two very different meanings of a blank cell are now visibly different.
+
+**Stale-cache fallback.** Previously an offline run wrote `No internet connection` even when a
+cache entry existed but had aged past `_CACHE_TTL_DAYS`. It now serves that entry and labels it
+`stale cache` — month-old install counts and ratings beat a placeholder, as long as the row says
+which it is. Fresh entries are still served normally, and when online a stale entry is still
+refetched rather than reused.
+
+Provenance is deliberately **not written into the cache** (`cache[pkg]["data"]` is a copy taken
+before the fields are added). Storing them would make every later cached read claim `live`.
+
+### Also in this round
+
+- `Batch Summary` gained a **Platform** column (`File · App Name · Platform · Kit Count ·
+  Unmapped · Permissions`), read from `row["framework"]` — the `frameworks` argument is keyed by
+  `package_name`, which this sheet does not carry.
+- The sidebar-link guard added for APK was extended to `render_html_exe` and
+  `render_html_exe_folder`, which had the same defect on Export Table / Unmapped DLLs.
+- IPA and EXE were checked for the same first-seen ordering bug and are clean: `analyze_ipa`
+  iterates an already-sorted framework list, and `analyze_exe` iterates the PE import table,
+  which is fixed per binary.
+
+### Operational notes for the corpus (see also the memory file)
+
+- **The HSBC worker does not exit after finishing.** It writes its outputs, then lingers holding
+  ~8–10 GB and burning CPU. Everything run afterwards was 2–3× slower until it was killed. Check
+  for a stray `python` process once the row file appears.
+- Background commands that wrap the run get killed by the harness time limit; launching the
+  worker with PowerShell `Start-Process -NoNewWindow -PassThru` detaches it properly and it
+  survives.
+
+---
+
+## Conservative kit confidence + network/WebRTC mappings — 2026-08-20 (round 3)
+
+### The weakest contributing row now defines a kit's badge
+
+One kit is usually fed by several mapping rows, and **370 of 1,219 kit rows (30.4%) across the
+corpus are fed by rows whose confidences disagree** — `@kit.BasicServicesKit` is high + medium +
+low in a single app. Until now the badge came from whichever row created the kit entry first,
+which was arbitrary (and, before the sort fix above, not even stable).
+
+`analyze_apk` now keeps the **minimum**: when a later row is weaker, its `confidence`, `note`,
+`sample_url`, `codelab_url` and `harmony_import` all replace the incumbent's, so the row stays
+internally coherent instead of mixing two entries.
+
+**`min`, not `max`, because this is a migration-risk tool.** A kit badged "Supported" while one
+of the libraries feeding it is only "Should Confirm" understates the work; the weakest link is
+what a migrator will actually hit. The cost is real and was measured before committing to it:
+
+| policy | high | medium | low |
+|---|---|---|---|
+| first-sorted (previous) | 821 | 358 | 40 |
+| max | 923 | 257 | 39 |
+| **min (adopted)** | **554** | **570** | **95** |
+
+Spot-checked on `com.hopetrip.gzhkbus`: 19/8/1 → 14/13/1, five kits downgraded
+(`@kit.AbilityKit`, `@kit.ArkUI`, `@kit.ArkWeb`, `@kit.BasicServicesKit`, `@kit.CoreFileKit`),
+kit count unchanged at 28. Nothing is *matched* differently — only the badge.
+
+### `mapping.json` v1.9.0 → **v1.10.0**, 271 → **279** (+8)
+
+Two questions drove this round: whether the `http`-bearing namespaces in `Common Unmapped` belong
+to a network kit, and whether WebRTC's audio belongs to Audio/Media Kit. Both partly yes.
+Full reasoning, including the rejected families, is in `MAPPING_CANDIDATES_2026-08-20.md`.
+
+| Namespace | apps | Kit | Conf |
+|---|---|---|---|
+| `dc.squareup.okhttp3` | 3 | `@kit.NetworkKit` | high |
+| `dc.squareup.okio` | 3 | `@kit.ArkTS` | medium |
+| `io.ktor` | 1 | `@kit.NetworkKit` | medium |
+| `com.mr.http` | 1 | `@kit.NetworkKit` | medium |
+| `org.webrtc.Camera` | 2 | `@kit.CameraKit` | medium |
+| `org.webrtc.audio` | 2 | `@kit.AudioKit` | medium |
+| `org.springframework.http` | 4 | `@kit.NetworkKit` | medium |
+| `org.apache.commons.httpclient` | 1 | `@kit.NetworkKit` | high |
+
+> **`@kit.RemoteCommunicationKit` (`rcp`) was NOT used: the index attests it zero times.**
+> `@kit.NetworkKit` is attested with `http` (58), `socket` (64), `webSocket` (24) and
+> `connection` (75), so that is where the HTTP clients go. If `rcp` is real and merely absent
+> from `hmos_api_index.json`, these rows deserve a revisit — NOT FOUND means unconfirmed, not
+> nonexistent.
+
+**`dc.squareup.*` is shaded, not vendored-and-forked.** It is the DCloud/uni-app runtime's
+relocated copy of OkHttp and Okio with identical APIs, so each row simply follows its original.
+The note carries the `com.dcloud.zxing2` caveat: accurate namespace attribution, not a promise
+that swapping one library completes a uni-app migration.
+
+**WebRTC is deliberately mapped by half.** Only the sub-packages whose own core work has a native
+counterpart are claimed — `org.webrtc.audio` → `audio.createAudioCapturer` /
+`createAudioRenderer` / `get|setAudioEffectMode`, and `org.webrtc.Camera*` →
+`camera.createCameraInput` / `createPreviewOutput`. `PeerConnection`, ICE/SDP, SRTP/DTLS,
+`RtpSender`, `DataChannel` stay unmapped: no counterpart exists, and this is exactly the test
+that cut `org.altbeacon` in slice 2b. On `com.mpsaps.cmoffice`, 20 of 123 `org.webrtc`
+namespaces are absorbed and **103 remain unmapped** — the honest picture. The video codec path is
+also unmapped; neither `@kit.AVCodecKit` nor `createVideoEncoder`/`createVideoDecoder` is in the
+index.
+
+**"http" in a name is not evidence.** Of the 123 unmapped namespaces containing "http", fewer
+than half are HTTP clients. `com.google.api.HttpRule`/`HttpBody` are protobuf message classes;
+`freemarker.ext.servlet.Http*` is server-side; `io.grpc.okhttp` is an RPC framework's transport,
+not something NetworkKit replaces; `org.jsoup.helper.HttpConnection` belongs to an HTML parser.
+All rejected, with the reasons tabulated in the candidates file so the sweep is not repeated.
+
+**Absorption:** 264 row instances (2.1% of 12,338), 129 distinct namespaces, **0 shadowed**.
+Confirmed against real runs — `com.hopetrip.gzhkbus` 350 → 292 unmapped (predicted −58),
+`com.mpsaps.cmoffice` 164 → 144 (predicted −20).
+
+> **Confirmed on the full corpus (2026-08-20, 43 apps).** Absorption landed on the predicted
+> **264** rows with **0** shadowing and **0** leak-back; `batch_unmapped.xlsx` 12,338 → **12,074**,
+> `Common Unmapped` 1,845 → **1,771**, `Common Mapped` 226 → **231** (+5 not +8 — `com.mr.http`,
+> `io.ktor` and `org.apache.commons.httpclient` each appear in a single app and fall under
+> `_COMMON_MIN_APPS`). Kit counts are unchanged in 42 of 42 comparable apps; only badges moved,
+> to 568 high / 592 medium / 99 low across the 43 reports. All 43 reports pass the structural
+> audit.
+
+### `Batch Summary` gained a **Coverage %** column — 2026-08-21
+
+`File · App Name · Platform · Coverage % · Kit Count · Unmapped · Permissions` (merge range,
+widths and auto-filter widened to G). Coverage sits next to Platform rather than next to the
+counts: the two are read together — a packed platform is exactly why a coverage cell is blank —
+and it is the headline number a reader scans for.
+
+The number is not recomputed here. `coverage_status(result_or_row)` was extracted as the **single
+source of truth** and is now called by both `render_html_apk`'s stat card and
+`export_excel_batch`, so a report and the workbook cannot disagree about an app — verified across
+all 43 rows, **0 disagreements** with the corresponding report. It returns
+`(percent, status)` where status is `ok | packed | low | none` and the percent is `None` for
+everything but `ok`; the sheet writes an em-dash in that case and the Platform cell beside it
+already carries the reason (`Unknown — DEX packed: 360 Jiagu`).
+
+Cells are colour-coded at the same 70 / 40 thresholds the report uses. On the corpus: 39 numeric
+rows spanning 54.1 – 99.9% (avg 85.9%) and 4 em-dashes, which are exactly the four packed apps.
+
+`run_batch` now puts `total_detected_ns` / `total_3p_ns` on each row, because that is all
+`coverage_status` needs and it keeps the policy in one function rather than duplicated between
+the engine, the report and the exporter.
+
+The extraction was verified to be **output-neutral**: `com.mtr.mobile` and
+`com.huayuan.namkwong` re-render byte-identically to their pre-refactor reports once the
+analysis-time string is scrubbed.
+
+### Tab order is now asserted, not incidental
+
+`export_excel_batch` built its sheets in whatever order the code happened to reach them, which is
+how **OHPM Matches** ended up *after* Common Unmapped — mapped results printed after unmapped
+ones. A short pass before `wb.save` now moves the known sheets to a declared order:
+
+**App Info → Framework Rollup → Batch Summary → Common Mapped → OHPM Matches → Common Unmapped →
+[Unmapped DLLs] → [Unmapped Frameworks]**
+
+That order is the narrative: what the portfolio *is*, then per-app results, then what **did** map
+(native first, then the OHPM second tier), then what did **not**. It uses the public
+`wb.move_sheet` / `wb.index` API and skips any sheet that was not created, so EXE/IPA-only and
+HMS batches are unaffected. Sheets outside the list keep their relative position at the end.

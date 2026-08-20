@@ -21,3 +21,6 @@ src/input/*.apk
 *.metadata
 src/data/reference/play_metadata_cache.json
 src/data/reference/ohpm_registry_cache.json
+# result archives
+*.rar
+*.zip
