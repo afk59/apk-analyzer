@@ -31,6 +31,10 @@ const API = (() => {
     health:  ()      => call('/api/health'),
     pick:    (kind)  => post('/api/pick', { kind }),
     open:    (path)  => post('/api/open', { path }),
-    results: ()      => call('/api/results'),
+    results:   ()    => call('/api/results'),
+    startRun:  (input, target, skipExisting) =>
+                       post('/api/runs', { input, target, skip_existing: skipExisting }),
+    runState:  (id)  => call('/api/runs/' + id),
+    cancelRun: (id)  => post('/api/runs/' + id + '/cancel', {}),
   };
 })();

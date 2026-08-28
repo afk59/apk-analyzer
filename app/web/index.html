@@ -19,10 +19,11 @@
 <div class="shell">
   <nav class="side">
     <button data-panel="analyze" aria-current="page">Analyze</button>
+    <button data-panel="run" hidden id="nav-run">Progress</button>
     <button data-panel="results">Results</button>
     <p class="navnote">
-      Running an analysis lands in&nbsp;M2. Selecting inputs and opening existing
-      reports work now.
+      Reports and workbooks are written by the same engine the CLI uses, into
+      <code>engine/result/</code>.
     </p>
   </nav>
 
@@ -53,10 +54,34 @@
         </div>
       </div>
 
-      <p class="lede" style="margin-top:var(--space-5)">
+      <p class="lede" style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">
         <button class="btn" id="start" disabled>Start analysis</button>
-        &nbsp;<span style="color:var(--text3);font-size:.8rem">enabled in M2</span>
+        <label style="font-size:.82rem;color:var(--text2)">
+          Target
+          <select id="target" style="margin-left:6px;padding:4px 6px">
+            <option value="hmos">HarmonyOS NEXT</option>
+            <option value="hms">HMS Core</option>
+          </select>
+        </label>
+        <span id="start-hint" style="color:var(--text3);font-size:.8rem">pick a file or a folder first</span>
       </p>
+    </section>
+
+    <!-- ----------------------------------------------------------- run -->
+    <section class="panel" id="panel-run" hidden>
+      <h2>Running</h2>
+      <div class="run">
+        <div class="run-head">
+          <span class="file" id="run-file">&mdash;</span>
+          <span class="elapsed" id="run-elapsed">0s</span>
+          <span class="count" id="run-count"></span>
+          <button class="btn ghost" id="run-cancel">Cancel</button>
+        </div>
+        <div class="bar"><i id="run-bar"></i></div>
+        <div class="stages" id="run-stages"></div>
+        <div class="log" id="run-log"></div>
+        <div class="donelist" id="run-done"></div>
+      </div>
     </section>
 
     <!-- ------------------------------------------------------- results -->
@@ -75,5 +100,6 @@
 
 <script src="js/api.js"></script>
 <script src="js/main.js"></script>
+<script src="js/run.js"></script>
 </body>
 </html>
