@@ -1,0 +1,88 @@
+/* Design tokens. Everything else in the UI references these -- no raw hex
+   outside this file.
+
+   The palette is inherited from the HTML report (engine/core/renderer.py) on
+   purpose: a report opened from the app must not look like a different
+   product. Two rules carried over from there, both meaningful:
+
+     * Accent red is reserved for HarmonyOS/Huawei chrome. The OHPM second tier
+       and other third-party surfaces use neutral slate, so "native kit" and
+       "third-party package" never read as the same thing.
+     * Status colours are green / amber / blue for high / medium / low
+       confidence -- Supported / Replaceable / Should Confirm. They are also
+       used for coverage thresholds at 70 and 40.
+
+   Light is defined on bare :root; dark only redefines. Never give a colour its
+   single definition inside a media query. */
+
+:root {
+  --accent:        #c8002a;
+  --accent-soft:   rgba(200, 0, 42, .10);
+  --accent-text:   #ffffff;
+
+  --bg:            #f6f7f9;
+  --surface:       #ffffff;
+  --surface-2:     #f0f2f5;
+  --border:        #dfe3e8;
+
+  --text:          #14181f;
+  --text2:         #5a6472;   /* neutral slate: third-party / secondary chrome */
+  --text3:         #8b95a3;
+
+  --green:         #1f9d4d;
+  --amber:         #c98a00;
+  --blue:          #2563c9;
+  --red:           #dc2626;
+
+  --green-soft:    rgba(31, 157, 77, .12);
+  --amber-soft:    rgba(201, 138, 0, .12);
+  --blue-soft:     rgba(37, 99, 201, .12);
+  --red-soft:      rgba(220, 38, 38, .10);
+
+  --radius:        10px;
+  --radius-sm:     6px;
+  --shadow:        0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.05);
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-5: 24px; --space-6: 32px;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "SF Mono", monospace;
+
+  --dur: .18s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #0f1216;
+    --surface:   #161b22;
+    --surface-2: #1d232c;
+    --border:    #2b333d;
+    --text:      #e6eaf0;
+    --text2:     #9aa5b4;
+    --text3:     #6b7683;
+    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:        #0f1216;
+  --surface:   #161b22;
+  --surface-2: #1d232c;
+  --border:    #2b333d;
+  --text:      #e6eaf0;
+  --text2:     #9aa5b4;
+  --text3:     #6b7683;
+  --shadow:    0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+}
+
+/* Analysis is slow -- 1.8 s for a packed APK, 17 minutes for the heaviest file
+   in the corpus -- so the progress UI animates for a long time. Anyone who
+   needs motion reduced needs it here most. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
