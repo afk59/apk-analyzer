@@ -115,3 +115,68 @@ gelir — `.gitignore` kazara eklemeyi engeller, merge'ü engellemez. O commit't
 **Geçmiş:** blob'lar pack'te duruyor (~15 MB), yani tam klon onları yine indiriyor; sadece
 checkout yazmıyor. Temizlemek history rewrite ister ve `v2` o commit'lerden dallandığı için onu
 bozar — değmez. İsteyen `git clone --depth 1` kullanır.
+
+---
+
+## 2026-08-29 (gece) — M1'den M4'e: uygulama çalışır durumda
+
+`python -m app` artık pencere açıyor, dosya/klasör seçtiriyor, analiz ediyor, ilerlemeyi canlı
+gösteriyor, sonuçları listeliyor ve paket adından APK indiriyor. Dört milestone, dört commit.
+
+### M1 — kabuk
+pywebview penceresi + arka planda uvicorn. Native picker'lar **ayrı bir süreçte** çalışıyor:
+hem tkinter hem pywebview GUI ana thread'ini istiyor, bizimki zaten pencerede; kendi ana
+thread'ine sahip bir süreç bu sorunu tamamen ortadan kaldırıyor ve tarayıcı fallback'inde de
+çalışıyor. `/api/open` **korumalı** — yol çözümlenip `engine/result/` içinde olduğu doğrulanıyor
+(dışarısı ve `result/../../../Windows/...` ikisi de 403).
+
+### M2 — analiz + gerçek ilerleme
+Worker motoru **import ediyor**, `analyzer.py`'yi kabuk üzerinden çağırmıyor. Böylece hem CLI'ın
+kendi bootstrap'i (bağımlılık kurulumu, loguru susturma, UTF-8) çalışıyor, hem de sonuç dict'i
+elimizde kalıyor. En önemlisi: `print_info` motor modülleri onu bağlamadan **önce** patch'lendiği
+için aşamalar motorun kendi faz çağrılarından geliyor — renkli konsol metnini regex'lemiyoruz.
+
+**Bir aşamanın içinde yüzde YOK, bilerek.** androguard ilerleme sinyali vermiyor; süreye dayalı
+bir çubuk tam da uzun dosyalarda yanlış olurdu (bu korpus 1,8 sn ile 1039 sn arasında değişiyor).
+
+**Kabul kriteri karşılandı:** çıktılar v1 CLI ile birebir. HTML ve agent JSON hash'i aynı; XLSX
+yalnızca iki yerde farklı, ikisi de zaman damgası.
+
+**Toplu workbook'lar da eklendi** — yoksa klasör koşusu `--batch` ile eşdeğer olmuyordu.
+`app/aggregate.py` side-car'lardan aggregation'ı tekrarlayıp **gerçek** exporter'ları çağırıyor.
+v1'in kendi `run_batch`'iyle hücre hücre karşılaştırıldı: **6 sheet + 2 sheet, hepsi aynı.**
+
+### M3 — sonuç kütüphanesi
+Koşuya göre gruplanmış liste, SQLite indeks. "DB'yi sil, yeniden tara, kütüphane aynı" iddiasını
+gerçekten doğru kılmak iki şey gerektirdi: koşu gruplaması diskte hiçbir yerde yok, bu yüzden
+biten koşu `engine/result/.runs/` altına manifest yazıyor; ve coverage kaybolacaktı, çünkü agent
+JSON namespace sayılarını taşımıyor — raporun kendi gömülü `report_data`'sından okunup **motorun**
+`coverage_status()`'una veriliyor. Şema değişikliği ALTER değil **yeniden inşa** (her sütun zaten
+diskten türetilebilir).
+
+### M4 — paket adıyla indirme
+`d.apkpure.com` doğrudan uç noktası. HTML ayrıştırmıyoruz, olmayan paket temiz 404 veriyor.
+
+**Test sırasında iki şey ortaya çıktı ve tasarımı değiştirdi:**
+
+1. **`/b/APK/` her zaman tek APK vermiyor.** `com.foodgulu` o yoldan 143,9 MB'lık bir App Bundle
+   döndü. App Bundle artık Play'in varsayılanı olduğu için bunu reddetmek modern uygulamaların
+   büyük kısmında indirmeyi başarısız kılardı — bu yüzden bundle açılıp `base.apk` analiz
+   ediliyor ve config split'lerinin düştüğü **söyleniyor**. Bu bir bozulma değil: korpusun
+   43 uygulamasından 27'si zaten base split. Ama native kütüphaneler gerçekten eksik kalıyor.
+2. **Doğrulama boş bir formalite değil.** İndirilen dosyanın manifest paket adı istenenle
+   eşleşmek zorunda. v1 korpusundaki iki yanlış dosya (Aptoide, Uptodown) tam olarak bu hatanın
+   sonucuydu ve otomatik indirme bu riski **artırır**, azaltmaz. Test edildi: gerçek bir APK
+   başka bir paket adıyla doğrulatıldığında reddediliyor.
+
+**İki hata bulundu ve düzeltildi:**
+- `file_count` fazladan sayıyordu (indirilen paket `paths`'e ekleniyor ama `packages`'ta kalıyor).
+- **Yarış koşulu:** `run.status = "done"` manifest yazımından ve `run_finished` olayından ÖNCE
+  atanıyordu. SSE'deki `finished` bu duruma bakıyor, yani o birkaç yüz milisaniyelik pencerede
+  uyanan okuyucu akışı `run_finished` hiç gitmeden kapatıyordu — arayüzdeki "Start" butonu
+  sonsuza kadar kapalı kalırdı. Artık status **en son** atanıyor.
+
+### Sıradaki
+M5 — `docs-ref` ile mapping yeniden temellendirme. İlk maddesi hazır: v1'in kendi istediği
+`@kit.RemoteCommunicationKit` revizyonu. **Mapping satırları senin onayın olmadan yazılmayacak**;
+öneri dokümanı çıkarılıp sunulacak.
