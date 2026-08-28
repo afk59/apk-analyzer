@@ -85,3 +85,33 @@ hatasını yeni bir biçimde tekrarlamak olur.
 1. M1 — pencere açılsın, native picker çalışsın, mevcut bir rapor tıklamayla açılsın.
 2. M2 — worker + gerçek progress. Kabul kriteri: çıktılar v1 CLI ile bayt bayt aynı.
 3. M5'in ilk maddesi (rcp revizyonu) M1/M2'den bağımsız, istenirse paralel yürür.
+
+---
+
+## 2026-08-28 (ek) — `docs-ref` `main`'den çıkarıldı, iki iddia düzeltildi
+
+Bakım yapan kişinin notu üzerine: `docs-ref` sadece mapping yazmak için var, şirkete giden
+ürünün parçası değil. `main`'den silindi, `v2`'de duruyor.
+
+**Ölçülen sonuç:** `main`'de 8.529 → **34** dosya, en uzun yol 212 → **54** karakter. Windows
+uzun-yol tuzağı bir workaround olarak belgelenmek yerine tamamen ortadan kalktı; `core.longpaths`
+artık `main` için hiç gerekmiyor. Klasör yolu için boşluk 47 → ~205 karakter.
+
+**Bu arada iki iddiam yanlış çıktı, ikisi de düzeltildi.** `main`'e dosya eklerken hangi
+dosyanın gerçekten çalışma zamanında okunduğunu varsaymışım; grep'leyince:
+
+| Dosya | Gerçek durum |
+|---|---|
+| `ohpm_registry_cache.json` | `ohpm_fetch.py`'yi **hiçbir şey import etmiyor** — standalone builder. Cache mapping zamanı işine yarıyor, analize değil. |
+| `hmos_api.xlsx` | Sadece `api_index.py` okuyor, o da tek seferlik index üreteci. Mapping zamanı. |
+
+İkisi de repoda kaldı (4.2 MB, mapping işini mümkün kılıyor) ama artık ne oldukları yazıyor.
+Analiz sırasında gerçekten okunan tek referans dosyası `hmos_api_index.json`, batch'te bir de
+`play_metadata_cache.json`.
+
+**Merge uyarısı:** `v2`'de `docs-ref` takipli. `v2` ileride `main`'e merge edilirse dosyalar geri
+gelir — `.gitignore` kazara eklemeyi engeller, merge'ü engellemez. O commit'te tekrar silinmeli.
+
+**Geçmiş:** blob'lar pack'te duruyor (~15 MB), yani tam klon onları yine indiriyor; sadece
+checkout yazmıyor. Temizlemek history rewrite ister ve `v2` o commit'lerden dallandığı için onu
+bozar — değmez. İsteyen `git clone --depth 1` kullanır.
