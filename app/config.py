@@ -37,6 +37,19 @@ def ensure_dirs() -> None:
         d.mkdir(parents=True, exist_ok=True)
 
 
+def rel_to_root(path) -> str:
+    """A repo-root-relative, forward-slashed path.
+
+    Everything the UI and the index store is written this way, so a moved or
+    shared checkout still resolves. Falls back to the absolute path when the
+    target genuinely lives outside the repo.
+    """
+    try:
+        return str(Path(path).resolve().relative_to(ROOT)).replace("\\", "/")
+    except ValueError:
+        return str(path)
+
+
 def is_inside_result(path: Path) -> bool:
     """Guard for POST /api/open.
 

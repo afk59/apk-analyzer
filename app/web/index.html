@@ -5,53 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Migration Analyzer</title>
 <link rel="stylesheet" href="css/tokens.css">
-<style>
-  /* Shell only. Panels bring their own stylesheets as they are built (M1). */
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; font-family: var(--font);
-    background: var(--bg); color: var(--text);
-    display: grid; grid-template-rows: auto 1fr; min-height: 100vh;
-  }
-  header {
-    background: var(--accent); color: var(--accent-text);
-    padding: var(--space-3) var(--space-5);
-    display: flex; align-items: baseline; gap: var(--space-3);
-  }
-  header h1 { font-size: 1rem; font-weight: 700; margin: 0; letter-spacing: .01em; }
-  header span { font-size: .8rem; opacity: .85; }
-  main { padding: var(--space-6); display: grid; place-items: center; }
-  .placeholder {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow);
-    padding: var(--space-6); max-width: 46rem;
-  }
-  .placeholder h2 { margin: 0 0 var(--space-3); font-size: 1.05rem; }
-  .placeholder p  { color: var(--text2); line-height: 1.6; margin: 0 0 var(--space-3); }
-  code {
-    font-family: var(--mono); font-size: .85em;
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: .1em .4em;
-  }
-</style>
+<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-<header>
+
+<div class="topbar">
   <h1>Migration Analyzer</h1>
-  <span>v2 &middot; Android / Windows / iOS &rarr; HarmonyOS NEXT</span>
-</header>
-<main>
-  <div class="placeholder">
-    <h2>Shell not built yet</h2>
-    <p>
-      This page is the frontend entry point and the design tokens are in place, but the
-      panels land in&nbsp;M1. See <code>docs/ROADMAP.md</code>.
+  <span class="sub">Android / Windows / iOS &rarr; HarmonyOS NEXT</span>
+  <span class="spacer"></span>
+  <span class="status" id="status">connecting&hellip;</span>
+</div>
+
+<div class="shell">
+  <nav class="side">
+    <button data-panel="analyze" aria-current="page">Analyze</button>
+    <button data-panel="results">Results</button>
+    <p class="navnote">
+      Running an analysis lands in&nbsp;M2. Selecting inputs and opening existing
+      reports work now.
     </p>
-    <p>
-      The v1 CLI is fully working in the meantime:
-      <code>python engine/analyzer.py &lt;file.apk&gt;</code>
-    </p>
-  </div>
-</main>
+  </nav>
+
+  <main>
+    <!-- ------------------------------------------------------- analyze -->
+    <section class="panel" id="panel-analyze">
+      <h2>Analyze</h2>
+      <p class="lede">
+        Pick a single file, or a folder to analyse every supported file inside it.
+        The picker is a native dialog, so what comes back is a real path the engine
+        can read.
+      </p>
+
+      <div class="choices">
+        <div class="card">
+          <h3>Single file</h3>
+          <p>One APK, EXE, DLL or IPA. Produces an HTML report and an agent JSON.</p>
+          <button class="btn" id="pick-file">Choose file&hellip;</button>
+          <div class="picked" id="picked-file" hidden></div>
+        </div>
+
+        <div class="card">
+          <h3>Batch folder</h3>
+          <p>Every supported file in one folder, analysed one after another, plus the
+             two summary workbooks.</p>
+          <button class="btn" id="pick-folder">Choose folder&hellip;</button>
+          <div class="picked" id="picked-folder" hidden></div>
+        </div>
+      </div>
+
+      <p class="lede" style="margin-top:var(--space-5)">
+        <button class="btn" id="start" disabled>Start analysis</button>
+        &nbsp;<span style="color:var(--text3);font-size:.8rem">enabled in M2</span>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------- results -->
+    <section class="panel" id="panel-results" hidden>
+      <h2>Results</h2>
+      <p class="lede">
+        Everything already in <code>engine/result/</code>, newest first. Click a row to
+        open its report; the button opens the Excel export when one exists.
+      </p>
+      <div class="results" id="results"></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
