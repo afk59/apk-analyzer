@@ -1,0 +1,22 @@
+# Analysis engine — inherited from v1. These four are what engine/analyzer.py
+# hard-requires; a failure to install any of them is fatal and always was.
+androguard
+openpyxl
+pefile
+macholib
+
+# v2 shell.
+fastapi
+uvicorn
+pywebview          # Edge WebView2 on Windows 11 — no extra runtime to install
+
+# ---------------------------------------------------------------- optional
+# Deliberately NOT listed as hard requirements. Each backs one additive feature
+# and its install failing is a NORMAL offline outcome, so it must never abort a
+# run. v1 learned this the hard way: _ensure_deps() calls sys.exit(1), which is
+# right for the four above and wrong for anything optional.
+#
+#   google-play-scraper   App Info sheet (unofficial HTML scraper, see 0006)
+#   httpx                 downloader, if urllib proves insufficient
+#
+# Install them with the soft pattern in engine/analyzer.py::_ensure_play_scraper.

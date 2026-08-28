@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migration Analyzer</title>
+<link rel="stylesheet" href="css/tokens.css">
+<style>
+  /* Shell only. Panels bring their own stylesheets as they are built (M1). */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--font);
+    background: var(--bg); color: var(--text);
+    display: grid; grid-template-rows: auto 1fr; min-height: 100vh;
+  }
+  header {
+    background: var(--accent); color: var(--accent-text);
+    padding: var(--space-3) var(--space-5);
+    display: flex; align-items: baseline; gap: var(--space-3);
+  }
+  header h1 { font-size: 1rem; font-weight: 700; margin: 0; letter-spacing: .01em; }
+  header span { font-size: .8rem; opacity: .85; }
+  main { padding: var(--space-6); display: grid; place-items: center; }
+  .placeholder {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: var(--space-6); max-width: 46rem;
+  }
+  .placeholder h2 { margin: 0 0 var(--space-3); font-size: 1.05rem; }
+  .placeholder p  { color: var(--text2); line-height: 1.6; margin: 0 0 var(--space-3); }
+  code {
+    font-family: var(--mono); font-size: .85em;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: .1em .4em;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Migration Analyzer</h1>
+  <span>v2 &middot; Android / Windows / iOS &rarr; HarmonyOS NEXT</span>
+</header>
+<main>
+  <div class="placeholder">
+    <h2>Shell not built yet</h2>
+    <p>
+      This page is the frontend entry point and the design tokens are in place, but the
+      panels land in&nbsp;M1. See <code>docs/ROADMAP.md</code>.
+    </p>
+    <p>
+      The v1 CLI is fully working in the meantime:
+      <code>python engine/analyzer.py &lt;file.apk&gt;</code>
+    </p>
+  </div>
+</main>
+</body>
+</html>
