@@ -1660,10 +1660,10 @@ mPaaS 2 · Unknown (packed) 2 · Capacitor 1 · Cordova 1.
 ## Known gaps / warts (as of 2026-08-07)
 
 - **`device_matrix` is always `{}`** — `build_agent_json:2592` unconditionally emits `result.get("device_matrix", {})`, but no engine ever sets the key. Every agent JSON in every mode carries an empty dict.
-- **No CLI flag for `exe_folder`** — `--mode` is `choices=["apk","exe","ipa"]`. The `mode == "exe_folder"` branch at `analyzer.py:318` is reachable only through the interactive TUI, so the mode cannot be scripted or automated.
+- ~~**No CLI flag for `exe_folder`**~~ — **FIXED 2026-08-28.** `--mode` accepts `exe_folder` and a directory argument infers it. See the housekeeping round below.
 - **No `export_excel_exe_folder`** — folder mode has no Python Excel export. Only the in-browser XLSX.js button produces a spreadsheet, and it needs a CDN fetch.
-- **`.apkm` files are not batched** — `run_batch` globs `*.apk`, `*.exe`, `*.dll`, `*.ipa`. There is at least one `.apkm` in `src/input/` that is silently skipped. Split-APK bundles are not handled at all.
-- **`hmos_api.xlsx` is untracked while its generated index is tracked** — `.gitignore` has `*.xlsx`, so `src/data/reference/hmos_api.xlsx` is not in git, but `hmos_api_index.json` (3.9 MB) is. Re-running `python src/core/api_index.py` on a fresh clone fails; the source-of-truth spreadsheet must be obtained out-of-band.
+- **`.apkm` files are still not ANALYSED, but they are no longer silent** — `run_batch` globs `*.apk`, `*.exe`, `*.dll`, `*.ipa`; as of 2026-08-28 it also globs `*.apkm` / `*.xapk` purely to list them as skipped. Actually handling a split bundle would mean extracting `base.apk` first, which is not implemented.
+- ~~**`hmos_api.xlsx` is untracked while its generated index is tracked**~~ — **FIXED 2026-08-28.** `.gitignore` now carries `!src/data/reference/hmos_api.xlsx` after the blanket `*.xlsx`, so `python src/core/api_index.py` works on a fresh clone.
 - **`src/data/permissions/*.txt` and `src/data/reference/package_names.txt` are unreferenced** — grep across all `.py` returns zero hits. They are inert reference material. If they were meant to drive `grant_level` assignment or the private-lib heuristic, that wiring was never built.
 - **APK stat card 1 counts namespaces, not kits** — the label reads "Number of Libraries Mapped" and the value is `len(flat_ns_rows)`. It is NOT `len(kit_matches)`, which is what the TUI summary and agent JSON report. The two numbers will differ, usually substantially.
 - **`api-ms-win-*` / `ext-ms-win-*` beyond the 11 CRT stubs vanish silently** — they match no mapping entry and are then filtered out of `unmapped_dlls`, so they appear in neither the kit table nor the unmapped list.
@@ -2085,3 +2085,114 @@ That order is the narrative: what the portfolio *is*, then per-app results, then
 (native first, then the OHPM second tier), then what did **not**. It uses the public
 `wb.move_sheet` / `wb.index` API and skips any sheet that was not created, so EXE/IPA-only and
 HMS batches are unaffected. Sheets outside the list keep their relative position at the end.
+
+
+---
+
+## Housekeeping round — 2026-08-28
+
+Four standing defects closed before a new feature round. **None of them changes analysis
+output**: a full `com.mtr.mobile` run before and after produces a byte-identical report and
+agent JSON once the analysis-time string is scrubbed (SHA-256 of the scrubbed HTML and JSON
+match exactly).
+
+### 1. UTF-8 stdio, and the batch summary now prints last
+
+Two halves of one failure, both in `analyzer.py`.
+
+`sys.stdout` inherited the locale codepage, so redirecting output to a pipe or a file dropped
+Python to **cp1254** on this machine and the first CJK app name raised `UnicodeEncodeError`.
+In `run_batch` that print sat *between* the HTML write and `rows.append()`, so the exception
+was swallowed by the per-file `except` and the app was recorded as **ERROR** — losing its batch
+row, its agent JSON and its contribution to every aggregate sheet, while its HTML report was
+already on disk. One run lost **11 of 26** apps this way. It is why every batch since has had
+to be launched with `PYTHONIOENCODING=utf-8`.
+
+- `_force_utf8_stdio()` reconfigures `stdout`/`stderr` to UTF-8 with `errors="replace"` before
+  anything can print. `errors="replace"` deliberately: an exotic glyph should degrade to `?`,
+  never take a run down.
+- The console summary moved to the **end** of the `try` block, after `rows.append()`,
+  `write_agent_json()` and `agent_files.append()`. Each branch now assigns `_summary` and the
+  single call happens once at the bottom.
+
+Either change alone fixes the observed bug; both are kept, because the ordering is right
+regardless of encoding — a summary reports work that is already persisted. `PYTHONIOENCODING`
+is no longer required, though setting it costs nothing.
+
+> Verified by contrast, not assertion: with no `PYTHONIOENCODING` and stdout on a pipe,
+> `python -c "import analyzer; print('...CJK...')"` succeeds and reports
+> `sys.stdout.encoding == "utf-8"`; the identical `print` **without** the import still raises
+> `UnicodeEncodeError` from `cp1254.py`.
+
+### 2. A split-APK bundle is no longer reported as "Native"
+
+An APKM/XAPK renamed to `.apk` passes the extension check but holds `base.apk` +
+`split_config.*.apk` and **no dex of its own**. `framework_detect` scored zero signatures
+against it and fell through to the *"no cross-platform signature found"* branch — asserting
+**"Native (Java/Kotlin)", medium confidence** about a file whose classes it never read. That is
+an inference from absence where the absence is an artefact of the container, which is exactly
+the reasoning the packed-DEX branch already rejects two functions further down.
+
+`_detect` now returns `Unknown` with the inner `.apk` names as evidence and a note naming
+`base.apk` as the thing to analyse, using the same test `apk_engine._warn_if_split_bundle`
+already applies (`classes.dex` and `AndroidManifest.xml` both absent, an inner `.apk` present).
+
+> **The note must not contain the word "packed".** `_packed_dex_banner()` and
+> `coverage_status()` both key on `"packed" in note.lower()`, so a bundle note phrased with that
+> word would render the red packed-DEX banner and suppress coverage for the wrong reason. The
+> wording is "split-APK bundle (APKM/XAPK) … extract it and analyze base.apk instead".
+
+`run_batch` was silent about these files as well — the glob covers only
+`*.apk/*.exe/*.dll/*.ipa`, so an `.apkm` in `input/` never appeared in any output at all. It
+now globs `*.apkm` / `*.xapk` **purely to list them as skipped**; nothing analyses them.
+
+> Verified: a synthetic 3-inner-`.apk` bundle → `Unknown` with the inner names as evidence; a
+> bare `classes.dex` + `AndroidManifest.xml` zip → still `Native (Java/Kotlin)`;
+> `com.fairwood.app` → still `React Native` / Hermes with the embedded-Capacitor note intact.
+
+### 3. `exe_folder` is reachable from the CLI
+
+`--mode` was `choices=["apk","exe","ipa"]`, so the `mode == "exe_folder"` dispatch in `main()`
+could only ever be entered through the interactive TUI — the branch, the engine
+(`analyze_exe_folder`) and the renderer (`render_html_exe_folder`) were all already there and
+simply could not be scripted.
+
+`--mode` now accepts `exe_folder`, **and a directory argument infers it**, so
+`python analyzer.py input/pc/myapp` works rather than falling through to `"apk"` and failing
+inside androguard. `--mode exe_folder` against a file exits with a message instead of crashing
+later. `exe_folder` joins `exe`/`ipa` in the set of modes that force `target=hmos`, matching
+what `run_exe_folder` already hard-codes in its header.
+
+> Verified on a two-file folder (`notepad.exe` + `version.dll`): auto-detected and explicit
+> `--mode` both produce the report and agent JSON; `--mode exe_folder` on an `.apk` exits with
+> the message.
+
+**Still open:** there is no `export_excel_exe_folder`. Folder mode has no Python Excel export —
+only the in-browser XLSX.js button, which needs a CDN fetch.
+
+### 4. `hmos_api.xlsx` is tracked
+
+`.gitignore`'s blanket `*.xlsx` hid the API source-of-truth spreadsheet while its **generated**
+product, `hmos_api_index.json` (3.9 MB), was tracked — so `python src/core/api_index.py` could
+not be re-run on a fresh clone at all, and the file every mapping round is grounded against had
+to be fetched out of band. The negation `!src/data/reference/hmos_api.xlsx` is scoped to that
+one path, so `*.xlsx` still covers every report and workbook the tool produces. 2.3 MB, smaller
+than the index already in the repo.
+
+### Deliberately NOT done in this round
+
+- **`device_matrix` is still emitted as `{}`.** Removing an always-empty key changes the agent
+  JSON schema for any consumer doing `d["device_matrix"]`, which is a product decision, not a
+  bug fix.
+- **The 50 legacy `-V5` `KIT_DOC_URLS`** are still unaudited. `developer.huawei.com` is an SPA
+  that returns an identical 1824-byte HTTP 200 shell for *any* slug, so nothing will 404 to warn
+  you; verification has to go through the docs search index, which is its own pass.
+- **No test harness.** There is still zero automated coverage across ~7,100 lines; every
+  verification in this project, including the ones above, is a manual run. This is the largest
+  standing risk before a round of radical changes.
+- **The per-process batch runner is still not in the repo** (`worker.py` / `drive.py` /
+  `aggregate.py` and friends). `run_batch` in a single process does not survive this corpus, so
+  "re-measure against the 43 apps" currently requires rebuilding that tooling from the procedure
+  in `OTURUM_2026-08-20.txt` §1 and §16.
+- **The two wrong corpus files** (`com.macauwynn.android.apk` is Aptoide,
+  `hk.edu.cityu.mobile.apk` is Uptodown) are untouched, per the maintainer's decision.
