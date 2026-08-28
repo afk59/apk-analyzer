@@ -7,6 +7,10 @@ __pycache__/
 *.exe
 *.html
 *.xlsx
+# ...except the API source-of-truth spreadsheet. Its generated index
+# (hmos_api_index.json) IS tracked, so without this a fresh clone cannot
+# re-run src/core/api_index.py at all.
+!src/data/reference/hmos_api.xlsx
 *.pyc
 *.pyo
 *.pyd
