@@ -8,7 +8,7 @@ it exactly. Nothing may be shown to a user that exists only in this file.
 import sqlite3
 from pathlib import Path
 
-from app.config import DB_PATH, ROOT
+from app.config import DB_PATH, rel_to_root
 
 SCHEMA_VERSION = 1
 
@@ -99,9 +99,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.commit()
 
 
-def rel(path: Path) -> str:
-    """Store paths relative to the repo root; absolute ones do not travel."""
-    try:
-        return str(Path(path).resolve().relative_to(ROOT)).replace("\\", "/")
-    except ValueError:
-        return str(path)
+# Store paths relative to the repo root; absolute ones do not travel. One
+# implementation, in config, so the index and the API can never disagree about
+# what a stored path means.
+rel = rel_to_root
