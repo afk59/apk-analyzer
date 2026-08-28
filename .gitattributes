@@ -1,0 +1,9 @@
+# The reference corpus is stored byte-for-byte. It is read-only material that is
+# never edited in-repo, and it contains UTF-16 tree listings that end-of-line
+# conversion would corrupt.
+docs-ref/** -text
+
+# Generated data. Diffing them is noise and normalising them would rewrite files
+# the tool reads back verbatim.
+src/data/reference/*.json -text -diff
+src/data/reference/*.xlsx binary

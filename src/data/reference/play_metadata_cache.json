@@ -1,0 +1,552 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-18T23:57:24",
+  "apps": {
+    "app.hkbus": {
+      "fetched_at": "2026-08-11T09:09:50",
+      "region": "hk",
+      "data": {
+        "app_name": "巴士到站預報 - hkbus.app",
+        "category": "Maps & Navigation",
+        "installs": "100,000+",
+        "rating": 4.51,
+        "rating_count": 1957,
+        "developer": "Organizers",
+        "last_updated": "Jul 12, 2026",
+        "version": "2.10.6"
+      }
+    },
+    "com.asw.moneyback": {
+      "fetched_at": "2026-08-11T09:09:50",
+      "region": "hk",
+      "data": {
+        "app_name": "MoneyBack",
+        "category": "Lifestyle",
+        "installs": "1,000,000+",
+        "rating": 3.85,
+        "rating_count": 10481,
+        "developer": "AS Watson & Company, Limited",
+        "last_updated": "Aug 6, 2026",
+        "version": "4.13.0"
+      }
+    },
+    "com.bochk.app.aos": {
+      "fetched_at": "2026-08-11T09:09:51",
+      "region": "hk",
+      "data": {
+        "app_name": "BOCHK中銀香港",
+        "category": "Finance",
+        "installs": "1,000,000+",
+        "rating": 4.62,
+        "rating_count": 132478,
+        "developer": "Bank of China (Hong Kong) Limited",
+        "last_updated": "Jul 9, 2026",
+        "version": "7.5.2"
+      }
+    },
+    "com.ctm": {
+      "fetched_at": "2026-08-11T09:09:51",
+      "region": "hk",
+      "data": {
+        "app_name": "CTM Buddy",
+        "category": "Tools",
+        "installs": "100,000+",
+        "rating": 2.99,
+        "rating_count": 2074,
+        "developer": "MACAU TELECOMUNICATIONS COMPANY LIMITED",
+        "last_updated": "Jul 14, 2026",
+        "version": "6.4.57"
+      }
+    },
+    "com.fairwood.app": {
+      "fetched_at": "2026-08-11T09:09:52",
+      "region": "hk",
+      "data": {
+        "app_name": "Fairwood",
+        "category": "Food & Drink",
+        "installs": "500,000+",
+        "rating": 3.23,
+        "rating_count": 1761,
+        "developer": "Fairwood Fast Food Limited",
+        "last_updated": "Dec 19, 2025",
+        "version": "2.3.0"
+      }
+    },
+    "com.foodgulu": {
+      "fetched_at": "2026-08-11T09:09:52",
+      "region": "hk",
+      "data": {
+        "app_name": "THE GULU",
+        "category": "Lifestyle",
+        "installs": "1,000,000+",
+        "rating": 4.6,
+        "rating_count": 37403,
+        "developer": "Gorilla Group Limited",
+        "last_updated": "Jul 20, 2026",
+        "version": "4.5.18"
+      }
+    },
+    "com.hkairlines.b2c.app": {
+      "fetched_at": "2026-08-11T09:09:53",
+      "region": "hk",
+      "data": {
+        "app_name": "香港航空",
+        "category": "Business",
+        "installs": "100,000+",
+        "rating": 1.55,
+        "rating_count": 126,
+        "developer": "Hong Kong Airlines Ltd.",
+        "last_updated": "Jul 14, 2026",
+        "version": "10.1.11"
+      }
+    },
+    "com.hopetrip.gzhkbus": {
+      "fetched_at": "2026-08-11T09:09:53",
+      "region": "hk",
+      "data": {
+        "app_name": "中港直通巴士-粤港澳跨境巴士預訂",
+        "category": "Auto & Vehicles",
+        "installs": "10,000+",
+        "rating": 4.1,
+        "rating_count": 30,
+        "developer": "HOPETRIP (HK) LIMITED",
+        "last_updated": "Jul 16, 2026",
+        "version": "3.4.4"
+      }
+    },
+    "com.house730.app": {
+      "fetched_at": "2026-08-11T09:09:54",
+      "region": "hk",
+      "data": {
+        "app_name": "House730 - Find Your Own House",
+        "category": "House & Home",
+        "installs": "100,000+",
+        "rating": 4.43,
+        "rating_count": 2276,
+        "developer": "House730 Limited",
+        "last_updated": "Aug 4, 2026",
+        "version": "1.7.92"
+      }
+    },
+    "com.hph.odt.stacks": {
+      "fetched_at": "2026-08-11T09:09:54",
+      "region": "hk",
+      "data": {
+        "app_name": "Hutchison Ports ubi",
+        "category": "Business",
+        "installs": "50,000+",
+        "rating": "N/A",
+        "rating_count": "N/A",
+        "developer": "Hutchison Ports nGen Services Limited",
+        "last_updated": "Jul 22, 2026",
+        "version": "3.5.0"
+      }
+    },
+    "com.hse28.hse28_2": {
+      "fetched_at": "2026-08-11T09:09:55",
+      "region": "hk",
+      "data": {
+        "app_name": "28Hse 香港屋網 - HK Property",
+        "category": "House & Home",
+        "installs": "1,000,000+",
+        "rating": 4.61,
+        "rating_count": 11485,
+        "developer": "28Hse.com 香港屋網",
+        "last_updated": "Jul 31, 2026",
+        "version": "3.15.8"
+      }
+    },
+    "com.midland.mrinfo": {
+      "fetched_at": "2026-08-11T09:09:58",
+      "region": "hk",
+      "data": {
+        "app_name": "Midland Realty 美聯筍盤",
+        "category": "Finance",
+        "installs": "500,000+",
+        "rating": 3.48,
+        "rating_count": 1810,
+        "developer": "Midland Realty",
+        "last_updated": "Jul 29, 2026",
+        "version": "11.1.4"
+      }
+    },
+    "com.mpsaps.cmoffice": {
+      "fetched_at": "2026-08-11T09:09:58",
+      "region": "hk",
+      "data": {
+        "app_name": "CM Office MP",
+        "category": "Productivity",
+        "installs": "1,000+",
+        "rating": "N/A",
+        "rating_count": "N/A",
+        "developer": "Center of Excellence, MAP_IT",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "com.oocl.ooclapp": {
+      "fetched_at": "2026-08-11T09:10:00",
+      "region": "hk",
+      "data": {
+        "app_name": "OOCL",
+        "category": "Business",
+        "installs": "5,000+",
+        "rating": "N/A",
+        "rating_count": "N/A",
+        "developer": "OOCL",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "com.polyulife": {
+      "fetched_at": "2026-08-11T09:10:01",
+      "region": "hk",
+      "data": {
+        "app_name": "PolyULife",
+        "category": "Education",
+        "installs": "10,000+",
+        "rating": 3.25,
+        "rating_count": 20,
+        "developer": "The Hong Kong Polytechnic University",
+        "last_updated": "Sep 3, 2025",
+        "version": "3.0.0"
+      }
+    },
+    "com.proan.bestmart360": {
+      "fetched_at": "2026-08-11T09:10:01",
+      "region": "hk",
+      "data": {
+        "app_name": "優品360",
+        "category": "Lifestyle",
+        "installs": "500,000+",
+        "rating": 3.07,
+        "rating_count": 1642,
+        "developer": "CIAO International Limited",
+        "last_updated": "Aug 7, 2026",
+        "version": "2.2.103"
+      }
+    },
+    "com.ricacorp.ricacorp": {
+      "fetched_at": "2026-08-11T09:10:01",
+      "region": "hk",
+      "data": {
+        "app_name": "Ricacorp Real Listing",
+        "category": "Finance",
+        "installs": "100,000+",
+        "rating": 3.73,
+        "rating_count": 604,
+        "developer": "Ricacorp Properties Limited (Legacy)",
+        "last_updated": "Jul 30, 2026",
+        "version": "6.1.28"
+      }
+    },
+    "com.secmenu.chineselearning": {
+      "fetched_at": "2026-08-11T09:10:02",
+      "region": "hk",
+      "data": {
+        "app_name": "HK Chinese Lexical List",
+        "category": "Education",
+        "installs": "100,000+",
+        "rating": 3.96,
+        "rating_count": 1084,
+        "developer": "Secmenu Technology Limited",
+        "last_updated": "Jul 25, 2026",
+        "version": "Varies with device"
+      }
+    },
+    "com.storellet": {
+      "fetched_at": "2026-08-11T09:10:02",
+      "region": "hk",
+      "data": {
+        "app_name": "Storellet: Membership & Reward",
+        "category": "Food & Drink",
+        "installs": "500,000+",
+        "rating": 2.55,
+        "rating_count": 1795,
+        "developer": "Storellet",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "com.tamjai.android": {
+      "fetched_at": "2026-08-11T09:10:03",
+      "region": "hk",
+      "data": {
+        "app_name": "譚仔雲南米線  TamJai Yunnan Mixian",
+        "category": "Food & Drink",
+        "installs": "500,000+",
+        "rating": 2.5,
+        "rating_count": 1067,
+        "developer": "Tam Jai International Co Ltd.",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "com.tamjaisamgor.hk": {
+      "fetched_at": "2026-08-11T09:10:03",
+      "region": "hk",
+      "data": {
+        "app_name": "譚仔三哥米線",
+        "category": "Food & Drink",
+        "installs": "100,000+",
+        "rating": 2.75,
+        "rating_count": 1131,
+        "developer": "Tam Jai International Co Ltd.",
+        "last_updated": "Jul 27, 2026",
+        "version": "10.0.14"
+      }
+    },
+    "com.wayfind": {
+      "fetched_at": "2026-08-11T09:10:04",
+      "region": "hk",
+      "data": {
+        "app_name": "POLY:U:WAY",
+        "category": "Education",
+        "installs": "1,000+",
+        "rating": 4.43,
+        "rating_count": 7,
+        "developer": "The Hong Kong Polytechnic University",
+        "last_updated": "May 18, 2026",
+        "version": "1.10.0"
+      }
+    },
+    "com.wlb.android": {
+      "fetched_at": "2026-08-11T09:10:04",
+      "region": "hk",
+      "data": {
+        "app_name": "CMB WING LUNG BANK",
+        "category": "Finance",
+        "installs": "100,000+",
+        "rating": 1.92,
+        "rating_count": 1265,
+        "developer": "CMB Wing Lung Bank Ltd.",
+        "last_updated": "Jul 1, 2026",
+        "version": "7.10.0"
+      }
+    },
+    "hk.edu.polyu.polyumobile": {
+      "fetched_at": "2026-08-11T09:10:06",
+      "region": "hk",
+      "data": {
+        "app_name": "iPolyU",
+        "category": "Education",
+        "installs": "5,000+",
+        "rating": 4.5,
+        "rating_count": 8,
+        "developer": "The Hong Kong Polytechnic University",
+        "last_updated": "May 25, 2026",
+        "version": "1.6.1"
+      }
+    },
+    "hk.edu.polyu.polyustaffmobile": {
+      "fetched_at": "2026-08-11T09:10:06",
+      "region": "hk",
+      "data": {
+        "app_name": "PolyU Staff Mobile App",
+        "category": "Education",
+        "installs": "1,000+",
+        "rating": 3.33,
+        "rating_count": 6,
+        "developer": "The Hong Kong Polytechnic University",
+        "last_updated": "Feb 23, 2026",
+        "version": "2.0.1"
+      }
+    },
+    "hk.gov.ogcio.iamsmart": {
+      "fetched_at": "2026-08-11T09:10:07",
+      "region": "hk",
+      "data": {
+        "app_name": "智方便 iAM Smart",
+        "category": "Tools",
+        "installs": "1,000,000+",
+        "rating": 2.69,
+        "rating_count": 9736,
+        "developer": "Digital Policy Office, HKSARG",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "hk.org.ha.hago": {
+      "fetched_at": "2026-08-11T09:10:07",
+      "region": "hk",
+      "data": {
+        "app_name": "HA Go",
+        "category": "Medical",
+        "installs": "1,000,000+",
+        "rating": 4.66,
+        "rating_count": 19368,
+        "developer": "Hospital Authority",
+        "last_updated": "Jul 22, 2026",
+        "version": "2.41.0"
+      }
+    },
+    "hk.ust.alum": {
+      "fetched_at": "2026-08-11T09:10:08",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST Alumni",
+        "category": "Education",
+        "installs": "10,000+",
+        "rating": 1.61,
+        "rating_count": 94,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "hk.ust.itsc.pathadvisor": {
+      "fetched_at": "2026-08-11T09:10:08",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST Path Advisor",
+        "category": "Maps & Navigation",
+        "installs": "5,000+",
+        "rating": 4.83,
+        "rating_count": 7,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "Aug 4, 2025",
+        "version": "1.0.2"
+      }
+    },
+    "hk.ust.itsc.tt.iLearn": {
+      "fetched_at": "2026-08-11T09:10:09",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST iLearn",
+        "category": "Education",
+        "installs": "10,000+",
+        "rating": 1.6,
+        "rating_count": 75,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "Sep 11, 2025",
+        "version": "1.9"
+      }
+    },
+    "hk.ust.researchapp": {
+      "fetched_at": "2026-08-11T09:10:09",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST Research",
+        "category": "Education",
+        "installs": "500+",
+        "rating": "N/A",
+        "rating_count": "N/A",
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "N/A",
+        "version": "Varies with device"
+      }
+    },
+    "hk.ust.staffapp": {
+      "fetched_at": "2026-08-11T09:10:09",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST Staff",
+        "category": "Business",
+        "installs": "1,000+",
+        "rating": 3.25,
+        "rating_count": 13,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "May 24, 2026",
+        "version": "Varies with device"
+      }
+    },
+    "hk.ust.student": {
+      "fetched_at": "2026-08-11T09:10:10",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST Student",
+        "category": "Education",
+        "installs": "10,000+",
+        "rating": 1.88,
+        "rating_count": 102,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "Jan 7, 2026",
+        "version": "2.54"
+      }
+    },
+    "mo.gov.safp.portal": {
+      "fetched_at": "2026-08-11T09:10:11",
+      "region": "hk",
+      "data": {
+        "app_name": "澳門公共服務一戶通",
+        "category": "Tools",
+        "installs": "100,000+",
+        "rating": 3.97,
+        "rating_count": 2153,
+        "developer": "Public Administration and Civil Service Bureau",
+        "last_updated": "Jun 29, 2026",
+        "version": "5.12.0"
+      }
+    },
+    "mo.org.kwh.kwapp": {
+      "fetched_at": "2026-08-11T09:10:11",
+      "region": "hk",
+      "data": {
+        "app_name": "鏡湖通",
+        "category": "Medical",
+        "installs": "50,000+",
+        "rating": 2.6,
+        "rating_count": 112,
+        "developer": "鏡湖醫院",
+        "last_updated": "Jul 22, 2026",
+        "version": "3.2.15"
+      }
+    },
+    "scameter.hk.cyberdefender": {
+      "fetched_at": "2026-08-11T09:10:12",
+      "region": "hk",
+      "data": {
+        "app_name": "Scameter+",
+        "category": "Tools",
+        "installs": "500,000+",
+        "rating": 4.08,
+        "rating_count": 1851,
+        "developer": "Hong Kong Police Force",
+        "last_updated": "Jul 31, 2026",
+        "version": "2.1.24"
+      }
+    },
+    "hk.com.hsbc.hsbchkmobilebanking": {
+      "fetched_at": "2026-08-18T12:28:26",
+      "region": "hk",
+      "data": {
+        "app_name": "HSBC HK Mobile Banking",
+        "category": "Finance",
+        "installs": "1,000,000+",
+        "rating": 4.63,
+        "rating_count": 162789,
+        "developer": "The Hongkong and Shanghai Banking Corporation Ltd",
+        "last_updated": "Aug 12, 2026",
+        "version": "3.73.5"
+      }
+    },
+    "hk.ust.ei": {
+      "fetched_at": "2026-08-18T12:29:27",
+      "region": "hk",
+      "data": {
+        "app_name": "HKUST QR Code",
+        "category": "Education",
+        "installs": "5,000+",
+        "rating": 2.5,
+        "rating_count": 6,
+        "developer": "The Hong Kong University of Science and Technology",
+        "last_updated": "Aug 25, 2025",
+        "version": "1.2.0"
+      }
+    },
+    "com.octopuscards.nfc_reader": {
+      "fetched_at": "2026-08-18T23:57:24",
+      "region": "hk",
+      "data": {
+        "app_name": "Octopus",
+        "category": "Finance",
+        "installs": "5,000,000+",
+        "rating": 4.53,
+        "rating_count": 210296,
+        "developer": "Octopus Cards Limited",
+        "last_updated": "Aug 4, 2026",
+        "version": "12.45.0"
+      }
+    }
+  }
+}

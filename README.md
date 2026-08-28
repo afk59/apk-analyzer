@@ -2,6 +2,24 @@
 
 Scans Android APKs, Windows EXE/DLLs, and iOS IPAs, and matches what they use against HarmonyOS NEXT / HMS Core kits. Gives you an HTML report showing what maps directly, what needs work, and what has no equivalent yet.
 
+## What a clone needs
+
+Everything required to **run** an analysis is in this repository. Nothing has to be
+fetched out of band:
+
+| File | Why it is tracked |
+|---|---|
+| `src/data/mappings/*.json` | The mapping rules themselves — Android/iOS/Windows namespace → HarmonyOS kit, plus the OHPM second tier. |
+| `src/data/reference/hmos_api_index.json` | The generated HarmonyOS API index the matcher reads at runtime. |
+| `src/data/reference/hmos_api.xlsx` | Its source spreadsheet, so `python src/core/api_index.py` can regenerate the index. |
+| `src/data/reference/ohpm_registry_cache.json` | The full OHPM registry sweep (3,499 packages). Rebuilding it needs internet and a working session against Huawei's WAF. |
+| `src/data/reference/play_metadata_cache.json` | Cached Google Play metadata. Without it an offline batch shows "No internet connection" instead of real data. |
+| `docs-ref/` | The HarmonyOS documentation and ArkTS API corpus used to ground every mapping decision. Read-only reference, not used at runtime. |
+
+Only two things are deliberately **not** in the repository, and neither is needed to run
+the tool: the APK/EXE/IPA test corpus (large binaries, not ours to redistribute) and
+generated output (`src/result/`, reports, workbooks).
+
 ## Requirements
 
 Before using this tool, make sure **Python** is installed on your computer.
