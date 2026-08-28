@@ -180,3 +180,42 @@ diskten türetilebilir).
 M5 — `docs-ref` ile mapping yeniden temellendirme. İlk maddesi hazır: v1'in kendi istediği
 `@kit.RemoteCommunicationKit` revizyonu. **Mapping satırları senin onayın olmadan yazılmayacak**;
 öneri dokümanı çıkarılıp sunulacak.
+
+---
+
+## 2026-08-29 (gece, devam) — M5 ilk geçiş: v1'in altı boşluğu yeniden test edildi
+
+**`mapping.json`'a hiçbir şey yazılmadı.** Hâlâ v1.10.0 / 279 satır. Bulgular
+`docs/MAPPING_CANDIDATES_2026-08-29.md` içinde, satır satır onayın için.
+
+| v1'in boşluğu | Sonuç |
+|---|---|
+| `android.credentials` | **Karşılık bulundu** — `@kit.OnlineAuthenticationKit` (FIDO/FIDO2/IIFAA/SOTER passwordless). Passkey 47, FIDO 48 dosya. |
+| `com.scottyab.rootbeer` | **Karşılık bulundu** — `@kit.DeviceSecurityKit` / SafetyDetect: *"cihaz jailbreak'li mi veya gerçek cihaz değil mi kontrol eder"*. v1'in "native attestation API yok" gerekçesi yanlıştı. |
+| `org.reactnative.facedetector` | **Karşılık bulundu** — `@kit.CoreVisionKit` (`faceDetector` + `faceComparator`, 40 attestasyon). v1 `@kit.VisionKit`'e bakmıştı; kendi notunda "core-vision-kit farklı bir kittir" yazmasına rağmen. |
+| `net.openid.appauth` | **Boşluk DOĞRULANDI** — OAuth/OIDC 51/55/30 dosyada geçiyor ama hepsi Huawei'nin kendi yetkilendirme sunucusu (Account Kit REST). Genel sağlayıcı desteği yok. |
+| `org.altbeacon` | **Boşluk DOĞRULANDI** — beacon 5 dosya, iBeacon 1, **Eddystone 0**. |
+| `com.google.android.odml` | Değişmedi — katman uyuşmazlığı, doküman bunu çözmez. |
+
+### `rcp` sorusu: gerçek, ama **dokunmamayı öneriyorum**
+
+v1 "rcp gerçekse bu satırlar gözden geçirilmeli" demişti. Gerçek:
+`rcp.createSession()` / `session.get()` / `session.post()` doğrulandı. **13 satırı** ilgilendiriyor
+(8 değil). Ama:
+
+1. Huawei kendi dokümanında *"ihtiyacına en uygun kiti seçebilirsin"* diyor — mevcut satırlar
+   **yanlış değil**. Bu projenin kuralı "yanlış satır boşluktan kötüdür", "savunulabilir bir satırı
+   başka bir savunulabilir satırla değiştir" değil.
+2. `mapping.json` **append-only**. 13 satırı bir tercih için yeniden yazmak, bu kuralın ilk
+   istisnası olurdu.
+3. Avantaj kısmi: `rcp` oturum tabanlı (OkHttp şekli), ama `NetworkKit`'te de
+   `http.HttpInterceptorChain` var ve socket/websocket yarısı zaten NetworkKit'te.
+
+**Alternatif öneri:** bulguyu mapping dosyasına 13 kez yazmak yerine rapora **bir kez** koymak —
+`@kit.NetworkKit` satırının altına tek cümle. Bu bir renderer değişikliği, senin kararın.
+
+### Yöntem açısından en önemli çıkarım
+
+Yukarıda bulunan **üç kitin de `kits/` altında `.d.ts`'i YOK**. Yani ".d.ts'te yoksa yoktur"
+kuralı, v1'in `hmos_api_index.json` hatasını yeni bir biçimde tekrarlardı. Doğru yöntem:
+korpusta **yeteneğe göre** ara, sonra çıkan yolun hangi kite ait olduğunu oku.

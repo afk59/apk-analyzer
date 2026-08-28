@@ -116,7 +116,7 @@ Two things the testing changed:
 
 ---
 
-## M5 — Mapping re-grounding against `docs-ref` `todo`
+## M5 — Mapping re-grounding against `docs-ref` `wip`
 
 The reason v2 exists at all, alongside the UI. See `MAPPING_DISCIPLINE.md` and `DOCS_REF_GUIDE.md`.
 
@@ -131,6 +131,18 @@ The reason v2 exists at all, alongside the UI. See `MAPPING_DISCIPLINE.md` and `
 
 **Acceptance:** each new row cites a `.d.ts` path or a doc path; absorption predicted before the
 run and confirmed after; shadowing measured and zero.
+
+**First pass done, awaiting review — `docs/MAPPING_CANDIDATES_2026-08-29.md`.** The six recorded
+gaps were re-tested: three have a documented counterpart (`@kit.OnlineAuthenticationKit`,
+`@kit.DeviceSecurityKit`, `@kit.CoreVisionKit`), two are confirmed as real gaps, one unchanged.
+`rcp` is real but the recommendation is to change nothing — Huawei documents both kits as valid
+for HTTP, and `mapping.json` is append-only. **Nothing has been written to `mapping.json`.**
+
+The finding that shapes the rest of M5: all three kits found above have **no `.d.ts` in `kits/`**,
+so a `.d.ts`-only rule would have reproduced v1's index mistake in a new form.
+
+Still to do: re-rank the 1,771-row `Common Unmapped` pool, the kit↔module table, the `-V5` URL
+audit.
 
 ---
 
