@@ -7,6 +7,25 @@ import webbrowser
 from pathlib import Path
 
 
+def _force_utf8_stdio():
+    """Console output is UTF-8 regardless of the locale codepage.
+
+    Without this, redirecting output to a pipe or a file drops Python to the
+    locale encoding (cp1254 on this machine) and the first CJK app name raises
+    UnicodeEncodeError. In run_batch that killed the whole app, not just the
+    line: 11 of 26 apps were lost to the except handler in one run. errors=
+    "replace" so an exotic glyph degrades to "?" instead of taking a run down.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+_force_utf8_stdio()
+
+
 _src_dir = Path(__file__).parent
 if str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
@@ -179,7 +198,12 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     namespaces=list(result.get("detected_namespaces", {}).keys()))
                 html   = render_html_apk(result, apk_mapping)
                 output_html.write_text(html, encoding="utf-8")
-                print_summary_apk(result)
+                # Summary is printed at the END of the try block, after the row
+                # and the agent JSON exist. Printing here meant any failure in
+                # print_summary_apk -- historically a UnicodeEncodeError on a CJK
+                # app name -- dropped the whole app into the except handler and
+                # out of both workbooks, even though its HTML was already written.
+                _summary = print_summary_apk
                 rows.append({
                     "file_name":        file_path.name,
                     "app_name":         result.get("app_name") or "",
@@ -233,7 +257,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 result = analyze_ipa(str(file_path), ipa_mapping)
                 html   = render_html_ipa(result)
                 output_html.write_text(html, encoding="utf-8")
-                print_summary_ipa(result)
+                _summary = print_summary_ipa
                 rows.append({
                     "file_name":        file_path.name,
                     "app_name":         result.get("app_name") or "",
@@ -249,7 +273,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 result = analyze_exe(str(file_path), exe_mapping)
                 html   = render_html_exe(result)
                 output_html.write_text(html, encoding="utf-8")
-                print_summary_exe(result)
+                _summary = print_summary_exe
                 rows.append({
                     "file_name":        file_path.name,
                     "app_name":         result.get("file_name", file_path.name),
@@ -274,6 +298,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
             # only on the machine that produced it.
             agent_files.append({"source_file": file_path.name, "agent_json": agent_path.name,
                                  **build_agent_json(result)})
+            _summary(result)
         except Exception as exc:
             print_warn(f"Failed: {file_path.name} — {exc}")
             rows.append({
