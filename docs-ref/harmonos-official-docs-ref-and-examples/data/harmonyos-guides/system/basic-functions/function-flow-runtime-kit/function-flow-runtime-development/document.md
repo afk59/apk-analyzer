@@ -1,0 +1,604 @@
+# Function Flow Runtime Development
+
+#### Overview
+
+Function Flow Runtime (FFRT) is a task-based and data-driven concurrent programming model that allows you to develop an application by creating tasks and describing their dependencies.
+
+Specifically, FFRT automatically and concurrently schedules and executes tasks of the application based on the task dependency status and available resources, so that you can focus on feature development.
+
+This document provides guidance for you to implement concurrent programming based on the FFRT programming model.
+
+#### Maintenance and Test
+
+## Timeout Monitoring
+
+FFRT provides a queue-level and task-level timeout maintenance and test mechanism to monitor the end-to-end time for scheduling queues and tasks that carry important responsibilities in user services.
+
+-   When a task in the queue times out, the FFRT prints alarm logs and notifies the service through the callback.
+-   When a task times out, the FFRT prints alarm logs and calls the process-level callback function.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/87/v3/xr2f_utURhi0RPHxbcxC6A/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062022Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=653DEB1E72236E10DEC861C9B53437C4BD14ACC661B0113E5FF2C6ECC7F2BCEB)
+
+The callback function executed when a task times out must be unique in the process and should be configured in the FFRT by the service party before the task is submitted. The callback function cannot be configured during task submission or task timeout detection.
+
+The APIs are as follows:
+
+| C++ API | C API | Description |
+| :-- | :-- | :-- |
+| [queue\_attr::timeout](https://gitcode.com/openharmony/resourceschedule_ffrt/blob/master/docs/ffrt-api-guideline-cpp.md#set-queue-timeout) | [ffrt\_queue\_attr\_set\_timeout](../function-flow-runtime-c-apis/document.md#ffrt_queue_attr_t) | Sets the queue timeout. |
+| [queue\_attr::callback](https://gitcode.com/openharmony/resourceschedule_ffrt/blob/master/docs/ffrt-api-guideline-cpp.md#set-queue-callback) | [ffrt\_queue\_attr\_set\_callback](../function-flow-runtime-c-apis/document.md#ffrt_queue_attr_t) | Sets the queue timeout callback. |
+
+## Long-Time Task Monitoring
+
+**Mechanism**
+
+-   When the task execution reaches one second, stack printing is triggered. The stack printing interval is then changed to one minute. After 10 prints, the interval is changed to 10 minutes. After another 10 prints, the interval is changed to and fixed at 30 minutes.
+-   The GetBacktraceStringByTid API of DFX is called for stack printing. This API sends stack capture signals to the blocked thread to trigger interrupts and capture the call stack return.
+
+**Example**
+
+Search for the keyword **RecordSymbolAndBacktrace** in the corresponding process log. The following is an example of the corresponding log:
+
+W C01719/ffrt: 60500:RecordSymbolAndBacktrace:159 Tid\[16579\] function occupies worker for more than \[1\]s.
+W C01719/ffrt: 60501:RecordSymbolAndBacktrace:164 Backtrace:
+W C01719/ffrt: #00 pc 00000000000075f0 /system/lib64/module/file/libhash.z.so
+W C01719/ffrt: #01 pc 0000000000008758 /system/lib64/module/file/libhash.z.so
+W C01719/ffrt: #02 pc 0000000000012b98 /system/lib64/module/file/libhash.z.so
+W C01719/ffrt: #03 pc 000000000002aaa0 /system/lib64/platformsdk/libfilemgmt\_libn.z.so
+W C01719/ffrt: #04 pc 0000000000054b2c /system/lib64/platformsdk/libace\_napi.z.so
+W C01719/ffrt: #05 pc 00000000000133a8 /system/lib64/platformsdk/libuv.so
+W C01719/ffrt: #06 pc 00000000000461a0 /system/lib64/chipset-sdk/libffrt.so
+W C01719/ffrt: #07 pc 0000000000046d44 /system/lib64/chipset-sdk/libffrt.so
+W C01719/ffrt: #08 pc 0000000000046a6c /system/lib64/chipset-sdk/libffrt.so
+W C01719/ffrt: #09 pc 00000000000467b0 /system/lib64/chipset-sdk/libffrt.so
+
+The log prints the task stack, Worker thread ID, and execution time of the long-time task. Find the corresponding component based on the stack to determine the blocking cause.
+
+**Precautions**
+
+N/A
+
+## Running Information Dump
+
+**Mechanism**
+
+FFRT provides an external interface API ffrt\_dump to dump the internal information about the running of the FFRT subsystem, including:
+
+1.  FFRT statistics: number of submitted tasks, number of running tasks, number of coroutine switching times, and number of completed tasks;
+2.  Worker thread information: number of Worker threads in each QoS, Worker ID, ID of the running task, task name, and task type.
+3.  Common task information: common tasks that are not released in the current process, dump task name and ID, and call stack information of each task.
+4.  Queue task information: queue tasks that are not released in the current process, dump task name and ID, and call stack information of each task.
+
+When the current process is frozen, the DFX module proactively calls the ffrt\_dump API to dump the FFRT information to the freeze file and store the file in the /data/log/faultlog/faultlogger/ directory. You can directly use the task call stack information in the file to locate the frame freezing of the corresponding task.
+
+**Example**
+
+ready task ptr: qos 0 readptr 79 writeptr 79
+ready task ptr: qos 1 readptr 360 writeptr 360
+ready task ptr: qos 2 readptr 19 writeptr 19
+ready task ptr: qos 3 readptr 0 writeptr 0
+ready task ptr: qos 4 readptr 0 writeptr 0
+ready task ptr: qos 5 readptr 65 writeptr 65
+ready task ptr: qos 6 readptr 0 writeptr 0
+ready task ptr: qos 7 readptr 0 writeptr 0
+submit queue: readptr 24 writeptr 24
+intr wake: status 255
+proc status: taskCnt 23 vercnt 0sigCnt0
+    |-> worker count
+        qos 0: worker num:1 tid:31676
+        qos 2: worker num:3 tid:51349, 28769, 28565
+        qos 5: worker num:1 tid:30605
+    |-> worker status
+        qos 0: worker tid 31676 is running nothing
+        qos 2: worker tid 51349 is running nothing
+        qos 2: worker tid 28769 is running, task id 24591 name sq\_CesSrvMain\_12\_PublishCommonEventDetailed\_24591 fromTid 43928 createTime 2024-11-27 02:52:27.325248 executeTime 2024-11-27 02:52:27.326150
+        qos 2: worker tid 28565 is running, task id 24611 name sq\_dfx\_freeze\_task\_queue\_16\_NotifyAppFaultTask\_24611 fromTid 43833 createTime 2024-11-27 02:52:38.114787 executeTime 2024-11-27 02:52:38.115424
+        qos 5: worker tid 30605 is running, task id 24595 name sq\_AbilityManagerService\_19\_SubmitTaskInner\_24595 fromTid 43610 createTime 2024-11-27 02:52:27.844237 executeTime 2024-11-27 02:52:27.844573
+    |-> ready queue status
+    |-> blocked by task dependence
+        <1/1>stack: task id 3,qos 2,name AgingTask fromTid 43417 createTime 2024-11-27 01:21:39.641673 executeTime 2024-11-27 01:21:39.642290
+#00 pc 0000000000065c5c /system/lib64/ndk/libffrt.so(CoYield()+560)(22be57f01a789a03813d26a19c3a4042)
+#01 pc 00000000000a3268 /system/lib64/ndk/libffrt.so(ffrt::this\_task::SleepUntilImpl(std::\_\_h::chrono::time\_point<std::\_\_h::chrono::steady\_clock, std::\_\_h::chrono::duration<long long, std::\_\_h::ratio<1l, 1000000000l>>> const&)+356)(22be57f01a789a03813d26a19c3a4042)
+#02 pc 00000000000a39b4 /system/lib64/ndk/libffrt.so(ffrt\_usleep+60)(22be57f01a789a03813d26a19c3a4042)
+#03 pc 0000000000420de0 /system/lib64/libbms.z.so(2eb52bd03af1b9a31e14ffe60bfc39da)
+#04 pc 00000000000a6a2c /system/lib64/ndk/libffrt.so(ffrt::CPUEUTask::Execute()+300)(22be57f01a789a03813d26a19c3a4042)
+#05 pc 0000000000066d18 /system/lib64/ndk/libffrt.so(22be57f01a789a03813d26a19c3a4042)
+
+**Precautions**
+
+The DFX module has requirements on the processing time during freeze. There is a low probability that the information collected by ffrt\_dump is incomplete and the freeze processing time expires. In this case, the information flushed to the disk is missing.
+
+## Blackbox Logs
+
+**Mechanism**
+
+When a process crashes, the FFRT module receives signals (SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSTKFLT, SIGSTOP, SIGSYS, and SIGTRAP) and saves important running information to the faultlog, including the running task, running information and call stack information of the current Worker thread, common task information, and queue task information. You can use the information to locate the crashes.
+
+**Example**
+
+C01719/CameraDaemon/ffrt: 9986:operator():254 <<<=== ffrt black box(BBOX) start ===>>>
+C01719/CameraDaemon/ffrt: 9987:SaveCurrent:63 <<<=== current status ===>>>
+C01719/CameraDaemon/ffrt: 9988:SaveCurrent:68 signal SIGABRT triggered: source tid 5962, task id 17, qos 2, name SvrWatchdog
+C01719/CameraDaemon/ffrt: 9989:SaveWorkerStatus:94 <<<=== worker status ===>>>
+C01719/CameraDaemon/ffrt: 9990:SaveWorkerStatus:100 qos 0: worker tid 6410 is running nothing
+C01719/CameraDaemon/ffrt: 9991:SaveWorkerStatus:100 qos 2: worker tid 5968 is running nothing
+C01719/CameraDaemon/ffrt: 9992:SaveWorkerStatus:100 qos 2: worker tid 5964 is running nothing
+C01719/CameraDaemon/ffrt: 9993:SaveWorkerStatus:100 qos 2: worker tid 5963 is running nothing
+C01719/CameraDaemon/ffrt: 9994:SaveWorkerStatus:105 qos 2: worker tid 5962 is running task id 17 name SvrWatchdog
+C01719/CameraDaemon/ffrt: 9995:SaveWorkerStatus:100 qos 2: worker tid 5967 is running nothing
+C01719/CameraDaemon/ffrt: 9996:SaveWorkerStatus:100 qos 2: worker tid 5965 is running nothing
+C01719/CameraDaemon/ffrt: 9997:SaveWorkerStatus:100 qos 2: worker tid 5961 is running nothing
+C01719/CameraDaemon/ffrt: 9998:SaveWorkerStatus:100 qos 2: worker tid 1146 is running nothing
+C01719/CameraDaemon/ffrt: 9999:SaveWorkerStatus:100 qos 2: worker tid 1145 is running nothing
+C01719/CameraDaemon/ffrt: 10000:SaveWorkerStatus:100 qos 2: worker tid 5966 is running nothing
+
+**Precautions**
+
+N/A
+
+## Tracing
+
+**Mechanism**
+
+During FFRT task scheduling and execution, the system traces the task status in the FFRT framework in real time. You can use the trace graphical tool to analyze whether the task behavior meets the expectation.
+
+**Example**
+
+1.  Starting trace capture
+    
+    hdc shell "hitrace -t 10 -b 20480 -o /data/local/tmp/in\_systrace.ftrace sched freq idle ffrt"
+    # -t: specifies the trace collection duration, during which all trace records are flushed to the disk.
+    # -b: specifies the size of the trace record cache. If the buffer is insufficient, some records may be overwritten and not flushed to disks.
+    # -o: specifies the path for storing trace files.
+    
+2.  Using a graphical tool
+    
+    Obtain the trace file from the device and use a graphical tool, for example, [Perfetto](https://perfetto.dev/), to analyze the file.
+    
+
+**Precautions**
+
+You can also add traces to your service code to locate the fault. Note that in the high-frequency call process, adding traces will cause system overhead and affect service performance.
+
+## Debug Logs
+
+**Mechanism**
+
+-   By default, debug logs are disabled for the FFRT, but can be enabled by using commands to obtain more maintenance and test information for fault locating in the development.
+    
+-   Enable the FFRT debug log function:
+    
+    hdc shell hilog -b DEBUG -D 0xD001719
+    
+-   Restore the default FFRT INFO log level.
+    
+    hdc shell hilog -b INFO -D 0xD001719
+    
+
+**Example**
+
+4190  5631 D C01719/neboard:EngineServiceAbility:1/ffrt: 275337:Detach:147 qos 3 thread not joinable
+3257  6075 D C01719/com.ohos.sceneboard/ffrt: 513070:SetDefaultThreadAttr:148 qos apply tid\[6075\] level\[3\]
+
+**Precautions**
+
+The FFRT is the system base and supports the running of a large number of upper-layer services and frameworks. If the debug log function is enabled globally, the number of logs will exceed the threshold, which affects the log output of other modules.
+
+#### How to Develop
+
+The following describes how to use the native APIs provided by FFRT to create parallel tasks and serial queue tasks and destroy corresponding resources.
+
+1.  Add a dynamic link library to the CMakeLists.txt project.
+    
+    libffrt.z.so
+    
+2.  Include the following header files in the project.
+    
+    #include "ffrt/task.h"
+    #include "ffrt/mutex.h"
+    #include "ffrt/shared\_mutex.h"
+    #include "ffrt/condition\_variable.h"
+    #include "ffrt/sleep.h"
+    #include "ffrt/queue.h"
+    #include "ffrt/loop.h"
+    #include "ffrt/timer.h"
+    
+3.  Encapsulate the function to be executed.
+    
+    // Method 1: Use the template. C++ is supported.
+    template<class T>
+    struct function {
+        ffrt\_function\_header\_t header;
+        T closure;
+    };
+    
+    template<class T>
+    void exec\_function\_wrapper(void\* t)
+    {
+        auto f = reinterpret\_cast<function<std::decay\_t<T>>\*>(t);
+        f->closure();
+    }
+    
+    template<class T>
+    void destroy\_function\_wrapper(void\* t)
+    {
+        auto f = reinterpret\_cast<function<std::decay\_t<T>>\*>(t);
+        f->closure = nullptr;
+    }
+    
+    template<class T>
+    inline ffrt\_function\_header\_t\* create\_function\_wrapper(T&& func,
+        ffrt\_function\_kind\_t kind = ffrt\_function\_kind\_general)
+    {
+        using function\_type = function<std::decay\_t<T>>;
+        static\_assert(sizeof(function\_type) <= ffrt\_auto\_managed\_function\_storage\_size,
+            "size of function must be less than ffrt\_auto\_managed\_function\_storage\_size");
+    
+        auto p = ffrt\_alloc\_auto\_managed\_function\_storage\_base(kind);
+        auto f = new (p)function\_type;
+        f->header.exec = exec\_function\_wrapper<T>;
+        f->header.destroy = destroy\_function\_wrapper<T>;
+        f->closure = std::forward<T>(func);
+        return reinterpret\_cast<ffrt\_function\_header\_t\*>(f);
+    }
+    
+    // Method 2
+    typedef struct {
+        ffrt\_function\_header\_t header;
+        ffrt\_function\_t func;
+        ffrt\_function\_t after\_func;
+        void\* arg;
+    } ffrt\_function\_wrapper\_t;
+    
+    static inline void ffrt\_exec\_function\_wrapper(void\* t)
+    {
+       ffrt\_function\_wrapper\_t\* f = (ffrt\_function\_wrapper\_t \*)t;
+       if (f->func) {
+           f->func(f->arg);
+       }
+    }
+    
+    static inline void ffrt\_destroy\_function\_wrapper(void\* t)
+    {
+        ffrt\_function\_wrapper\_t\* f = (ffrt\_function\_wrapper\_t \*)t;
+        if (f->after\_func) {
+            f->after\_func(f->arg);
+        }
+    }
+    
+    #define FFRT\_STATIC\_ASSERT(cond, msg) int x(int static\_assertion\_##msg\[(cond) ? 1 : -1\])
+    static inline ffrt\_function\_header\_t \*ffrt\_create\_function\_wrapper(ffrt\_function\_t func,
+        ffrt\_function\_t after\_func, void\* arg, ffrt\_function\_kind\_t kind)
+    {
+        FFRT\_STATIC\_ASSERT(sizeof(ffrt\_function\_wrapper\_t) <= ffrt\_auto\_managed\_function\_storage\_size,
+            size\_of\_function\_must\_be\_less\_than\_ffrt\_auto\_managed\_function\_storage\_size);
+    
+        ffrt\_function\_wrapper\_t\* f = (ffrt\_function\_wrapper\_t \*)ffrt\_alloc\_auto\_managed\_function\_storage\_base(kind);
+        f->header.exec = ffrt\_exec\_function\_wrapper;
+        f->header.destroy = ffrt\_destroy\_function\_wrapper;
+        f->func = func;
+        f->after\_func = after\_func;
+        f->arg = arg;
+        return (ffrt\_function\_header\_t \*)f;
+    }
+    
+    // Example: function to be submitted for execution.
+    void OnePlusForTest(void\* arg)
+    {
+        (\*static\_cast<int\*>(arg)) += 1;
+    }
+    
+4.  Set task attributes, including the QoS level and task name.
+    
+    // \*\*\*\*\*\*Initialize the attributes of the parallel task\*\*\*\*\*\*
+    ffrt\_task\_attr\_t attr;
+    ffrt\_task\_attr\_init(&attr);
+    
+    // \*\*\*\*\*\*Create a serial queue\*\*\*\*\*\*
+    
+    // Create the attributes of the serial queue.
+    ffrt\_queue\_attr\_t queue\_attr;
+    // Create the handle to the serial queue.
+    ffrt\_queue\_t queue\_handle;
+    
+    // Initialize the queue attribute.
+    (void)ffrt\_queue\_attr\_init(&queue\_attr);
+    
+    // Set the QoS if necessary.
+    ffrt\_queue\_attr\_set\_qos(&queue\_attr, static\_cast<ffrt\_qos\_t>(ffrt\_qos\_inherit));
+    // Set the timeout period (ms) if necessary.
+    ffrt\_queue\_attr\_set\_timeout(&queue\_attr, 10000);
+    // Set the timeout callback if necessary.
+    int x = 0;
+    ffrt\_queue\_attr\_set\_callback(&queue\_attr, ffrt\_create\_function\_wrapper(OnePlusForTest, NULL, &x,
+        ffrt\_function\_kind\_queue));
+    
+    // Initialize the queue based on the attributes.
+    queue\_handle = ffrt\_queue\_create(ffrt\_queue\_serial, "test\_queue", &queue\_attr);
+    
+5.  Submit the task.
+    
+    int a = 0;
+    // \*\*\*\*\*\*Parallel task\*\*\*\*\*\*
+    // Submit the parallel task without obtaining a handle.
+    ffrt\_submit\_base(
+        ffrt\_create\_function\_wrapper(OnePlusForTest, NULL, &a, ffrt\_function\_kind\_general), NULL, NULL, &attr);
+    // Submit the parallel task and obtain a handle.
+    ffrt\_task\_handle\_t task = ffrt\_submit\_h\_base(
+        ffrt\_create\_function\_wrapper(OnePlusForTest, NULL, &a, ffrt\_function\_kind\_general), NULL, NULL, &attr);
+    
+    // \*\*\*\*\*\*Serial queue task\*\*\*\*\*\*
+    // Submit the serial queue task without obtaining a handle.
+    ffrt\_queue\_submit(queue\_handle,
+        ffrt\_create\_function\_wrapper(OnePlusForTest, NULL, &a, ffrt\_function\_kind\_queue), NULL);
+    // Submit the serial queue task and obtain a handle.
+    ffrt\_task\_handle\_t handle = ffrt\_queue\_submit\_h(queue\_handle,
+        ffrt\_create\_function\_wrapper(OnePlusForTest, NULL, &a, ffrt\_function\_kind\_queue), NULL);
+    
+    // Call wait if you need to wait for the execution result.
+    const std::vector<ffrt\_dependence\_t> wait\_deps = {{ffrt\_dependence\_task, task}};
+    ffrt\_deps\_t wait{static\_cast<uint32\_t>(wait\_deps.size()), wait\_deps.data()};
+    ffrt\_wait\_deps(&wait);
+    
+    ffrt\_queue\_wait(handle);
+    
+6.  (Optional) If a task does not need to be destroyed, you can submit the task through a simplified API.
+    
+    int a = 0;
+    // If the after\_func function pointer in step 3 is NULL, you can use the simplified API to submit a task to avoid redundant task structure encapsulation.
+    // \*\*\*\*\*\*Parallel task\*\*\*\*\*\*
+    // Submit a parallel task without a handle through a simplified API.
+    ffrt\_submit\_f(OnePlusForTest, &a, NULL, NULL, &attr);
+    // Submit a parallel task with a handle through a simplified API.
+    ffrt\_task\_handle\_t task = ffrt\_submit\_h\_f(OnePlusForTest, &a, NULL, NULL, &attr);
+    
+    // \*\*\*\*\*\*Serial queue task\*\*\*\*\*\*
+    // Submit a serial queue task that does not return a handle through a simplified API.
+    ffrt\_queue\_submit\_f(queue\_handle, OnePlusForTest, &a, NULL);
+    // Submit a serial queue task with a handle through a simplified API.
+    ffrt\_task\_handle\_t handle = ffrt\_queue\_submit\_h\_f(queue\_handle, OnePlusForTest, &a, NULL);
+    
+    // Call wait if you need to wait for the execution result.
+    const std::vector<ffrt\_dependence\_t> wait\_deps = {{ffrt\_dependence\_task, task}};
+    ffrt\_deps\_t wait{static\_cast<uint32\_t>(wait\_deps.size()), wait\_deps.data()};
+    ffrt\_wait\_deps(&wait);
+    
+    ffrt\_queue\_wait(handle);
+    
+7.  Destroy the resources after the task is submitted.
+    
+    // \*\*\*\*\*\*Destroy the parallel task\*\*\*\*\*\*
+    ffrt\_task\_attr\_destroy(&attr);
+    ffrt\_task\_handle\_destroy(task);
+    
+    // \*\*\*\*\*\*Destroy the serial queue task\*\*\*\*\*\*
+    // Destroy the task handle and then the queue.
+    ffrt\_queue\_attr\_destroy(&queue\_attr);
+    ffrt\_task\_handle\_destroy(handle);
+    ffrt\_queue\_destroy(queue\_handle);
+    
+
+#### Suggestions
+
+## Suggestion 1: Functional Programming
+
+-   Use pure functions and encapsulate them to express each step of the process.
+-   There is no global data access.
+-   There is no internal state reserved.
+-   Call the ffrt\_submit\_base() or ffrt\_submit\_f() API to submit a function in asynchronous mode.
+-   Use in\_deps and out\_deps of ffrt\_submit\_base() to specify the data objects to be accessed by the function and the access mode.
+-   Programmers use the in\_deps and out\_deps parameters to express task dependencies to ensure the correctness of program execution.
+
+Using pure functions helps you maximize the parallelism and avoid data races and lock abuse.
+
+In practice, you may not use pure functions in certain scenarios, with the following prerequisites:
+
+-   in\_deps and out\_deps can ensure the correctness of program execution.
+-   The lock mechanism provided by FFRT is used to protect access to global variables.
+
+## Suggestion 2: Using FFRT APIs
+
+-   Do not use the APIs of the system thread library to create threads in FFRT tasks. Instead, use submit to submit tasks.
+-   Use the lock, condition variable, sleep, and I/O APIs provided by FFRT to replace the APIs of the system thread library.
+    -   Using the APIs of the system thread library may block worker threads and result in extra performance overhead.
+
+## Suggestion 3: Deadline Mechanism
+
+-   Use FFRT APIs in processing flows that feature periodic/repeated execution.
+-   Use FFRT APIs in processing flows with clear time constraints and is performance critical.
+-   Use FFRT APIs in relatively large-granularity processing flows, such as the frame processing flow with the 16.6 ms time constraint.
+
+## Suggestion 4: Migration from the Thread Model
+
+-   Create a thread instead of creating an FFRT task.
+    -   A thread is logically similar to a task without in\_deps.
+-   Identify the dependency between threads and express the dependencies in in\_deps and out\_deps of the task.
+-   Decompose an intra-thread computing process into asynchronous tasks for invoking.
+-   Use the task dependency and lock mechanism to avoid data races of concurrent tasks.
+
+## Suggestion 5: C++ APIs Recommended
+
+-   The FFRT C++ APIs are implemented based on the C APIs. Before using the APIs, you can manually add the C++ header file.
+
+#### Constraints
+
+## Thread Local Variables
+
+Risks exist when thread local variables are used in FFRT tasks. The details are as follows:
+
+-   Thread local variables include the variables defined by thread\_local provided by C/C++ and the variables created by using pthread\_key\_create.
+-   FFRT supports task scheduling. The thread to which a task is scheduled is random. Therefore, there are risks to use thread local variables, which is consistent with all other frameworks that support concurrent task scheduling.
+-   By default, an FFRT task runs in coroutine mode. During task execution, the coroutine may exit. When the task is resumed, the thread that executes the task may change.
+
+## Thread Binding
+
+-   FFRT supports task scheduling. The thread to which a task is scheduled is random. Thread-bound behaviors, such as thread\_idx, thread priority, and thread affinity, cannot be used in tasks.
+
+## Synchronization Primitives in the Standard Library
+
+Using the standard library's recursive mutex in FFRT tasks may lead to deadlocks. It is necessary to replace it with the recursive mutex provided by FFRT. The details are as follows:
+
+-   When lock() is successfully executed, the recursive mutex records the execution stack of the caller as the lock owner. If the caller is the current execution stack, a success message is returned to support nested lock acquisition within the same execution stack. In the standard library, the execution stack is identified by the thread ID.
+-   When using the standard library's recursive mutex in FFRT tasks, if a task (coroutine) exits between the outer and inner lock() calls and resumes execution on a different FFRT Worker thread than the one where lock() was initially called, the current thread will not be recognized as the owner. This causes the lock() to fail, suspends the FFRT Worker thread, and prevents the subsequent unlock() from executing, leading to a deadlock.
+
+## Synchronization Primitives in FFRT
+
+-   std::runtime\_error cannot be handled across threads. Therefore, when using **try-catch** in an FFRT task, it is advisable not to use FFRT synchronization primitives in the catch block. Otherwise, exceptions may fail to be caught, leading to crashes.
+
+## Support for Process fork()
+
+-   Create a child process in a process that does not use FFRT. FFRT can be used in the child process.
+-   Create a child process using fork() in a process that uses FFRT. FFRT cannot be used in the child process.
+-   Create a child process using fork() and exec() in a process that uses FFRT. FFRT can be used in the child process.
+
+## Dynamic FFRT Deployment
+
+-   Static library deployment may cause multi-instance problems. For example, when multiple .so files loaded by the same process use FFRT in static library mode, FFRT is instantiated into multiple copies, and their behavior is unknown.
+
+## Limited Number of Input and Output Dependencies
+
+-   For ffrt\_submit\_base, the total number of input dependencies and output dependencies of each task cannot exceed 8.
+-   For ffrt\_submit\_h\_base, the total number of input dependencies and output dependencies of each task cannot exceed 7.
+-   When a parameter is used as both an input dependency and an output dependency, it is counted as one dependency. For example, if the input dependency is {&x} and the output dependency is also {&x}, then the number of dependencies is 1.
+
+## Restrictions on Process or Thread Exit
+
+-   When a process exits, the shared resources in the process, such as the thread pool in the FFRT, have been released. **submit()** should not be called.
+-   When a thread exits, the thread local resources in the FFRT have been released. **submit()** should not be called for the thread that is exiting.
+
+#### Common Anti-Patterns
+
+## Responsibility for Nulling and Destroying FFRT Objects After Initialization in the C API
+
+-   To ensure high performance, the C APIs of FFRT do not use a flag to indicate the object destruction status. You need to release resources properly. Repeatedly destroying an object will cause undefined behavior.
+    
+-   Noncompliant example 1: Repeated calling of destroy() may cause unpredictable data damage.
+    
+    #include <stdio.h>
+    #include "ffrt/cpp/task.h"
+    
+    void abnormal\_case\_1()
+    {
+        ffrt\_task\_handle\_t h = ffrt\_submit\_h\_base(
+            ffrt::create\_function\_wrapper(std::function<void()>(\[\](){ printf("Test task running...\\n"); })),
+            NULL, NULL, NULL);
+        // ...
+        ffrt\_task\_handle\_destroy(h);
+        ffrt\_task\_handle\_destroy(h); // Repeated release
+    }
+    
+-   Noncompliant example 2: No calling of destroy() may cause memory leak.
+    
+    #include <stdio.h>
+    #include "ffrt/cpp/task.h"
+    
+    void abnormal\_case\_2()
+    {
+        ffrt\_task\_handle\_t h = ffrt\_submit\_h\_base(
+            ffrt::create\_function\_wrapper(std::function<void()>(\[\](){ printf("Test task running...\\n"); })),
+            NULL, NULL, NULL);
+        // ...
+        // Memory leak
+    }
+    
+-   Recommended example: Call **destroy()** only once. You can leave it empty if necessary.
+    
+    #include <stdio.h>
+    #include "ffrt/cpp/task.h"
+    
+    void normal\_case()
+    {
+        ffrt\_task\_handle\_t h = ffrt\_submit\_h\_base(
+            ffrt::create\_function\_wrapper(std::function<void()>(\[\](){ printf("Test task running...\\n"); })),
+            NULL, NULL, NULL);
+        // ...
+        ffrt\_task\_handle\_destroy(h);
+        h = nullptr; // Set the task handle variable to null if necessary.
+    }
+    
+
+## Incorrect Variable Lifecycle
+
+-   When submitting an FFRT task, pay attention to the misuse of objects or resources during their lifecycle. These misuses may cause program breakdown, data damage, or difficult debugging.
+    
+-   Noncompliant example 1: Ended variable lifecycle causes a UAF problem.
+    
+    #include <unistd.h>
+    #include "ffrt/cpp/task.h"
+    
+    void abnormal\_case\_3()
+    {
+        int x = 0;
+        ffrt::submit(\[&\] {
+            usleep(1000); // Simulate the service processing logic.
+            x++;          // The variable lifecycle may have ended, and a UAF problem may occur when the variable is accessed.
+        });
+    }
+    
+-   Noncompliant example 2: Ended mutex lifecycle causes function exceptions.
+    
+    #include <unistd.h>
+    #include "ffrt/cpp/mutex.h"
+    #include "ffrt/cpp/task.h"
+    
+    void abnormal\_case\_4()
+    {
+        ffrt::mutex lock;
+        ffrt::submit(\[&\] {
+            lock.lock();   // When performing operations on the FFRT lock, ensure that the lifecycle of the FFRT lock is valid.
+            usleep(1000);  // Simulate the service processing logic.
+            lock.unlock(); // When performing operations on the FFRT lock, ensure that the lifecycle of the FFRT lock is valid.
+        });
+    }
+    
+
+#### Using FFRT in DevEco Studio
+
+## Using FFRT C API
+
+Native Development Kit (NDK) is a toolset provided by the system. It offers native APIs that allow you to implement key application functions using C or C++ code.
+
+The FFRT C APIs have been integrated into the NDK. You can directly use the corresponding API in DevEco Studio.
+
+#include "ffrt/task.h"
+#include "ffrt/mutex.h"
+#include "ffrt/shared\_mutex.h"
+#include "ffrt/condition\_variable.h"
+#include "ffrt/sleep.h"
+#include "ffrt/queue.h"
+#include "ffrt/loop.h"
+#include "ffrt/timer.h"
+#include "ffrt/type\_def.h"
+
+## Using FFRT C++ API
+
+The FFRT deployment depends on the FFRT dynamic library libffrt.so and a group of header files. The dynamic library exports only C APIs, and C++ APIs call C APIs. In addition, C++ elements in APIs are compiled into the dynamic library based on the header files, ensuring ABI compatibility.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/c/v3/Rr6HwFhrTpSF2XCrAvJRAA/en-us_image_0000002568764829.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062022Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=63BCFAF8C368DE77C2273F01F7F77AC0E15211692FB311CE2DD0EEB7EB665F80)
+
+To use FFRT C++ APIs, you need to use the third-party library [@ppd/ffrt](https://ohpm.openharmony.cn/#/en/detail/@ppd%2Fffrt), which is officially maintained by FFRT.
+
+Run the following command in the module directory to install the third-party library:
+
+ohpm install @ppd/ffrt
+
+You can also configure the dependencies in the oh-package.json5 file so that the third-party library can be automatically downloaded and installed through DevEco Studio.
+
+Add the header file search path and link dependency to the CMakeLists.txt file.
+
+\# ${MODULES\_PATH} indicates the installation path of the third-party library. You need to define the path or replace it with an absolute or relative path.
+include\_directories(${MODULES\_PATH}/@ppd/ffrt/include)
+target\_link\_libraries(${TARGET\_NAME} PUBLIC libffrt.z.so)
+
+Use the FFRT C++ API in the code.
+
+// include all C or C++ header files
+#include "ffrt/ffrt.h"
+
+// include specified header files
+#include "ffrt/cpp/task.h"
+#include "ffrt/cpp/mutex.h"
+#include "ffrt/cpp/shared\_mutex.h"
+#include "ffrt/cpp/condition\_variable.h"
+#include "ffrt/cpp/sleep.h"
+#include "ffrt/cpp/queue.h"

@@ -1,0 +1,86 @@
+# ArrayBuffer Object
+
+An ArrayBuffer consists of two components: the underlying native memory area that stores data, and the JS object wrapper that encapsulates operations. This JS object wrapper is allocated on the virtual machine's local heap. When passed across threads, the JS object wrapper needs to be serialized and deserialized for pass-by-copy, whereas the native memory area can be transferred in two ways: pass-by-copy and pass-by-transfer.
+
+When pass-by-copy (recursive traversal) is used for the native memory area, both threads can independently access the ArrayBuffer object after the transmission. This method requires rebuilding the JS object wrapper and copying the native memory area, which is inefficient. The following figure shows the communication process.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/a3/v3/Tby63aBxQBiXxQKLMFXsqw/en-us_image_0000002568764105.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T061923Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=E7869B1D1140950AA836D03E00F01DDC4757CB87FF3F38ED676EEACB5FCA91CD)
+
+If pass-by-transfer is used for the native memory area, the original thread can no longer use the ArrayBuffer object. During inter-thread communication, only the JS object wrapper needs to be reconstructed, and the native memory does not need to be copied, resulting in higher efficiency. The following figure shows the communication process.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/84/v3/4RP85Gt9RPWWFpU0qRO2Gg/en-us_image_0000002537764380.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T061923Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=CF008456B815B103CBDE09CA4B8293E80FB30ED0F9D0D0ECA7EBE445C6BBBCA2)
+
+ArrayBuffer objects can be used to represent resources such as images. In application development, processing images (such as adjusting brightness, saturation, and size) can be time-consuming. To avoid blocking the UI main thread for extended periods, images can be passed to a child thread for processing. Passing ArrayBuffer objects by transfer results in higher transmission performance, but the original thread can no longer access the ArrayBuffer objects. If both threads need to access the objects, pass-by-copy is the only option. Otherwise, pass-by-transfer is recommended to enhance performance.
+
+The following sections describe how to transfer images across ArkTS threads using both methods.
+
+#### Pass-by-Copy
+
+In ArkTS, TaskPool passes ArrayBuffer data by transfer by default. You can call **setTransferList()** to specify which parts of data should be passed by transfer, while the rest can be switched to pass-by-copy.
+
+// Index.ets
+import { taskpool } from '@kit.ArkTS';
+import { BusinessError } from '@kit.BasicServicesKit';
+
+// Processing function executed by the task, which is used to process ArrayBuffer data.
+@Concurrent
+function adjustImageValue(arrayBuffer: ArrayBuffer): ArrayBuffer {
+  // Perform operations on the ArrayBuffer. The return value is transferred by default.
+  return arrayBuffer;
+}
+
+/\*
+ \* Create a task to pass the ArrayBuffer to the task for execution.
+ \* isParamsByTransfer is used to control whether the ArrayBuffer is passed by copy or transfer.
+ \*/
+function createImageTask(arrayBuffer: ArrayBuffer, isParamsByTransfer: boolean): taskpool.Task {
+  let task: taskpool.Task = new taskpool.Task(adjustImageValue, arrayBuffer);
+  if (!isParamsByTransfer) {
+    // Pass an empty array \[\] to indicate that all ArrayBuffer parameters should be passed by copy.
+    task.setTransferList(\[\]);
+  }
+  return task;
+}
+
+@Entry
+@Component
+struct Index {
+  @State message: string = 'Hello World';
+
+  build() {
+    RelativeContainer() {
+      Text(this.message)
+        .id('HelloWorld')
+        .fontSize(50)
+        .fontWeight(FontWeight.Bold)
+        .alignRules({
+          center: { anchor: '\_\_container\_\_', align: VerticalAlign.Center },
+          middle: { anchor: '\_\_container\_\_', align: HorizontalAlign.Center }
+        })
+        .onClick(() => {
+          // Create the ArrayBuffer object to be processed and split it according to the value of taskNum.
+          let taskNum = 4;
+          let arrayBuffer = new ArrayBuffer(1024 \* 1024);
+          let taskPoolGroup = new taskpool.TaskGroup();
+          // Create taskNum tasks.
+          for (let i: number = 0; i < taskNum; i++) {
+            let arrayBufferSlice: ArrayBuffer = arrayBuffer.slice(arrayBuffer.byteLength / taskNum \* i, arrayBuffer.byteLength / taskNum \* (i + 1));
+            // To pass the ArrayBuffer object by copy, set isParamsByTransfer to false.
+            taskPoolGroup.addTask(createImageTask(arrayBufferSlice, false));
+          }
+          // Execute the tasks. The UI main thread receives the results after processing.
+          taskpool.execute(taskPoolGroup).then((data) => {
+            // Concatenate the ArrayBuffer data returned by each task.
+          }).catch((e: BusinessError) => {
+            console.error(e.message);
+          })
+        })
+    }
+    .height('100%')
+    .width('100%')
+  }
+}
+
+#### Pass-by-Transfer
+
+TaskPool defaults to passing ArrayBuffer data by transfer, and the original thread can no longer use the ArrayBuffer passed to the child thread. To achieve this, simply remove the **task.setTransferList** interface call in the preceding code, meaning the second parameter of **createImageTask** should be **true**.

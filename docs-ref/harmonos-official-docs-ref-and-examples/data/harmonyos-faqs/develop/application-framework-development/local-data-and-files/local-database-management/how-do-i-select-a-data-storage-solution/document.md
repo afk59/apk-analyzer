@@ -1,0 +1,21 @@
+# How do I select a data storage solution?
+
+**Question**
+
+The OpenHarmony standard system provides data storage forms, including user preferences (**Preferences**), key-value databases (**KV-Store**), and relational databases (**RelationalStore**).
+
+If I want to share state data at the application level or across pages, I need to apply application-level state management. ArkTS provides the following UI state management capabilities based on different features:
+
+**LocalStorage**: page-level UI state storage
+
+**AppStorage**: application-wide UI state storage
+
+**PersistentStorage**: persistent UI state storage
+
+How do I select an appropriate data storage solution based on the following factors: data type, access mode, performance requirements, cost budget, and scalability requirements?
+
+**Answer**
+
+You can select an appropriate data storage solution based on the data type, access mode, and features of each storage solution. Based on data characteristics and use cases, the following storage solutions are available:
+
+<table><tbody><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-localstorage" target="_blank">LocalStorage: Storing UI State</a></p><p></p></td><td class="cellrowborder" valign="top" width="50%"><p>Page-level UI state storage used for sharing state data within a UIAbility or between pages.</p></td></tr><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-appstorage" target="_blank">AppStorage: Storing Application-wide UI State</a></p></td><td class="cellrowborder" valign="top" width="50%"><p>Singleton <strong>LocalStorage</strong> object within an application, which is created by the UI framework at application startup and provides the central storage for application UI state attributes.</p></td></tr><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-persiststorage" target="_blank">PersistentStorage: Persisting Application State</a></p></td><td class="cellrowborder" valign="top" width="50%"><p>Persistent storage of UI state data. It is used with <strong>AppStorage</strong> to persist selected <strong>AppStorage</strong> attributes to disk so that their values remain available after the application is closed or restarted.</p></td></tr><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-data-preferences" target="_blank">@ohos.data.preferences (User Preferences)</a></p></td><td class="cellrowborder" valign="top" width="50%"><p>Used for storing lightweight application configuration. Data is stored in a text file on a device. The application loads all data from the text file to the memory, which allows fast and efficient data access. It is not suitable for storing a large amount of data.</p></td></tr><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-distributedkvstore" target="_blank">@ohos.data.distributedKVStore (Distributed KV Store)</a></p></td><td class="cellrowborder" valign="top" width="50%"><p>Used to store data in the form of key-value (KV) pairs. The key is a unique identifier of a value. It is ideal for storing service data with few data and service relationships. It has been widely used because it poses fewer database version compatibility issues in distributed scenarios and simplifies conflict handling in data sync. Compared with an RDB store, a KV store stands out with higher cross-device and cross-version compatibility.</p></td></tr><tr><td class="cellrowborder" valign="top" width="50%"><p><a href="https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-data-relationalstore" target="_blank">@ohos.data.relationalStore (RDB Store)</a></p></td><td class="cellrowborder" valign="top" width="50%"><p>Used to store data in rows and columns. It is generally used to process relational data in an application. APIs are provided for adding, deleting, modifying, and querying data. You can also define and use SQL statements for complex service scenarios.</p></td></tr></tbody></table>

@@ -1,0 +1,326 @@
+# Using AudioCapturer for Audio Recording (ArkTs)
+
+The AudioCapturer is used to record Pulse Code Modulation (PCM) audio data. It is suitable if you have extensive audio development experience and want to implement more flexible recording features.
+
+#### Development Guidelines
+
+The full recording process involves creating an AudioCapturer instance, configuring audio recording parameters, starting and stopping recording, and releasing the instance. In this topic, you will learn how to use the AudioCapturer to record audio data. Before the development, you are advised to read [AudioCapturer](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer) for the API reference.
+
+The figure below shows the state changes of the AudioCapturer. After an AudioCapturer instance is created, different APIs can be called to switch the AudioCapturer to different states and trigger the required behavior. If an API is called when the AudioCapturer is not in the given state, the system may throw an exception or generate other undefined behavior. Therefore, you are advised to check the AudioCapturer state before triggering state transition.
+
+**Figure 1** AudioCapturer state transition
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/bb/v3/sMLWf-WBSnOMec_C9wqZoQ/en-us_image_0000002568684869.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062034Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=9897620C847959D61E9098FA20571BF85EF1E2CFA82FF7CE86BDFD12A1C18156)
+
+The [on('stateChange')](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#onstatechange8) method can be used to listen for the state change of AudioCapturer. For details about the value and description of each state, see [AudioState](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-e#audiostate8).
+
+## How to Develop
+
+1.  Set audio recording parameters and create an AudioCapturer instance. For details about the parameters, see [AudioCapturerOptions](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-i#audiocaptureroptions8).
+    
+    ![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/ae/v3/PT7dj7PRQVqtwKOFRfYW8A/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062034Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=4ECF2784677CC6586DEC4C7A3712BF4C435F52E93BB65DB0F151536A8551C6B7)
+    
+    When the microphone audio source is set ([SourceType](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-e#sourcetype8) is set to **SOURCE\_TYPE\_MIC**, **SOURCE\_TYPE\_VOICE\_RECOGNITION**, **SOURCE\_TYPE\_VOICE\_COMMUNICATION**, **SOURCE\_TYPE\_VOICE\_MESSAGE**, or **SOURCE\_TYPE\_LIVE**), the permission ohos.permission.MICROPHONE is required. Note that **SOURCE\_TYPE\_LIVE** is supported since API version 20. For details about how to apply for the permission, see [Requesting User Authorization](../../../../system/security/application-access-control/application-permission-management/requesting-application-permissions/requesting-user-authorization/document.md).
+    
+    import { audio } from '@kit.AudioKit';
+    
+    let audioStreamInfo: audio.AudioStreamInfo = {
+      samplingRate: audio.AudioSamplingRate.SAMPLE\_RATE\_48000, // Sampling rate.
+      channels: audio.AudioChannel.CHANNEL\_2, // Channel.
+      sampleFormat: audio.AudioSampleFormat.SAMPLE\_FORMAT\_S16LE, // Sampling format.
+      encodingType: audio.AudioEncodingType.ENCODING\_TYPE\_RAW // Encoding format.
+    };
+    
+    let audioCapturerInfo: audio.AudioCapturerInfo = {
+      source: audio.SourceType.SOURCE\_TYPE\_MIC, // Audio source type: microphone. Set this parameter based on the service scenario.
+      capturerFlags: 0 // Flag indicating an AudioCapturer.
+    };
+    
+    let audioCapturerOptions: audio.AudioCapturerOptions = {
+      streamInfo: audioStreamInfo,
+      capturerInfo: audioCapturerInfo
+    };
+    
+    audio.createAudioCapturer(audioCapturerOptions, (err, data) => {
+      if (err) {
+        console.error(\`Invoke createAudioCapturer failed, code is ${err.code}, message is ${err.message}\`);
+      } else {
+        console.info('Invoke createAudioCapturer succeeded.');
+        let audioCapturer = data;
+      }
+    });
+    
+2.  Call [on('readData')](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#onreaddata11) to subscribe to the audio data read callback.
+    
+    ![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/c8/v3/xBCtIV-vQMSwGAQTzjqaMg/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062034Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=F8D1962AD1CFF36230225D6680E04629A65D5299C03266BD74750B850B9AF12B)
+    
+    -   **Thread management**: You are advised not to use multiple threads for data reading. If multithreading is necessary for data reading, ensure proper thread management.
+    -   **Thread performance**: Do not execute time-consuming tasks in the thread where the **readData** API resides. Failing to do so may delay the data processing thread's response to callbacks, potentially causing issues like missing audio data, lag, and noise.
+    -   **Callback registration**: You should avoid registering callbacks on the main thread, as this may cause delayed callback responses and freezes due to blocking by other service processes. You are advised to use an independent asynchronous thread pool to handle callbacks.
+    
+    import { BusinessError } from '@kit.BasicServicesKit';
+    import { fileIo as fs } from '@kit.CoreFileKit';
+    import { common } from '@kit.AbilityKit';
+    
+    class Options {
+      offset?: number;
+      length?: number;
+    }
+    
+    let bufferSize: number = 0;
+    // Obtain the context from the component and ensure that the return value of this.getUIContext().getHostContext() is UIAbilityContext.
+    let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    let path = context.cacheDir;
+    let filePath = path + '/StarWars10s-2C-48000-4SW.pcm';
+    let file: fs.File = fs.openSync(filePath, fs.OpenMode.READ\_WRITE | fs.OpenMode.CREATE);
+    let readDataCallback = (buffer: ArrayBuffer) => {
+      let options: Options = {
+        offset: bufferSize,
+        length: buffer.byteLength
+      }
+      fs.writeSync(file.fd, buffer, options);
+      bufferSize += buffer.byteLength;
+    };
+    
+    audioCapturer.on('readData', readDataCallback);
+    
+3.  Call the [start](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#start8) method to enter the running state and start audio recording.
+    
+    import { BusinessError } from '@kit.BasicServicesKit';
+    
+    audioCapturer.start((err: BusinessError) => {
+      if (err) {
+        console.error(\`Capturer start failed, code is ${err.code}, message is ${err.message}\`);
+      } else {
+        console.info('Capturer start success.');
+      }
+    });
+    
+4.  Call the [stop](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#stop8) method to stop recording.
+    
+    import { BusinessError } from '@kit.BasicServicesKit';
+    
+    audioCapturer.stop((err: BusinessError) => {
+      if (err) {
+        console.error(\`Capturer stop failed, code is ${err.code}, message is ${err.message}\`);
+      } else {
+        console.info('Capturer stopped.');
+      }
+    });
+    
+5.  Call the [release](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#release8) method to destroy the instance and release resources.
+    
+    import { BusinessError } from '@kit.BasicServicesKit';
+    
+    audioCapturer.release((err: BusinessError) => {
+      if (err) {
+        console.error(\`capturer release failed, code is ${err.code}, message is ${err.message}\`);
+      } else {
+        console.info('capturer released.');
+      }
+    });
+    
+
+## Complete Sample Code
+
+Refer to the sample code below to record audio using AudioCapturer.
+
+import { audio } from '@kit.AudioKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
+
+const TAG = 'AudioCapturerDemo';
+
+class Options {
+  offset?: number;
+  length?: number;
+}
+
+let audioCapturer: audio.AudioCapturer | undefined = undefined;
+let audioStreamInfo: audio.AudioStreamInfo = {
+  samplingRate: audio.AudioSamplingRate.SAMPLE\_RATE\_48000, // Sampling rate.
+  channels: audio.AudioChannel.CHANNEL\_2, // Channel.
+  sampleFormat: audio.AudioSampleFormat.SAMPLE\_FORMAT\_S16LE, // Sampling format.
+  encodingType: audio.AudioEncodingType.ENCODING\_TYPE\_RAW // Encoding format.
+};
+let audioCapturerInfo: audio.AudioCapturerInfo = {
+  source: audio.SourceType.SOURCE\_TYPE\_MIC, // Audio source type: microphone. Set this parameter based on the service scenario.
+  capturerFlags: 0 // Flag indicating an AudioCapturer.
+};
+let audioCapturerOptions: audio.AudioCapturerOptions = {
+  streamInfo: audioStreamInfo,
+  capturerInfo: audioCapturerInfo
+};
+let file: fs.File;
+let readDataCallback: Callback<ArrayBuffer>;
+
+async function initArguments(context: common.UIAbilityContext) {
+  let bufferSize: number = 0;
+  let path = context.cacheDir;
+  let filePath = path + '/StarWars10s-2C-48000-4SW.pcm';
+  file = fs.openSync(filePath, fs.OpenMode.READ\_WRITE | fs.OpenMode.CREATE);
+  readDataCallback = (buffer: ArrayBuffer) => {
+    let options: Options = {
+      offset: bufferSize,
+      length: buffer.byteLength
+    }
+    fs.writeSync(file.fd, buffer, options);
+    bufferSize += buffer.byteLength;
+  };
+}
+
+// Create an AudioCapturer instance, and set the events to listen for.
+async function init() {
+  audio.createAudioCapturer(audioCapturerOptions, (err, capturer) => { // Create an AudioCapturer instance.
+    if (err) {
+      console.error(\`Invoke createAudioCapturer failed, code is ${err.code}, message is ${err.message}\`);
+      return;
+    }
+    console.info(\`${TAG}: create AudioCapturer success\`);
+    audioCapturer = capturer;
+    if (audioCapturer !== undefined) {
+      audioCapturer.on('readData', readDataCallback);
+    }
+  });
+}
+
+// Start audio recording.
+async function start() {
+  if (audioCapturer !== undefined) {
+    let stateGroup = \[audio.AudioState.STATE\_PREPARED, audio.AudioState.STATE\_PAUSED, audio.AudioState.STATE\_STOPPED\];
+    if (stateGroup.indexOf(audioCapturer.state.valueOf()) === -1) { // Recording can be started only when the AudioCapturer is in the STATE\_PREPARED, STATE\_PAUSED, or STATE\_STOPPED state.
+      console.error(\`${TAG}: start failed\`);
+      return;
+    }
+
+    // Start recording.
+    audioCapturer.start((err: BusinessError) => {
+      if (err) {
+        console.error('Capturer start failed.');
+      } else {
+        console.info('Capturer start success.');
+      }
+    });
+  }
+}
+
+// Stop recording.
+async function stop() {
+  if (audioCapturer !== undefined) {
+    // The AudioCapturer can be stopped only when it is in the STATE\_RUNNING or STATE\_PAUSED state.
+    if (audioCapturer.state.valueOf() !== audio.AudioState.STATE\_RUNNING && audioCapturer.state.valueOf() !== audio.AudioState.STATE\_PAUSED) {
+      console.info('Capturer is not running or paused');
+      return;
+    }
+
+    // Stop recording.
+    audioCapturer.stop((err: BusinessError) => {
+      if (err) {
+        console.error('Capturer stop failed.');
+      } else {
+        console.info('Capturer stop success.');
+      }
+    });
+  }
+}
+
+// Release the instance.
+async function release() {
+  if (audioCapturer !== undefined) {
+    // The AudioCapturer can be released only when it is not in the STATE\_RELEASED or STATE\_NEW state.
+    if (audioCapturer.state.valueOf() === audio.AudioState.STATE\_RELEASED || audioCapturer.state.valueOf() === audio.AudioState.STATE\_NEW) {
+      console.info('Capturer already released');
+      return;
+    }
+
+    // Release the resources.
+    audioCapturer.release((err: BusinessError) => {
+      if (err) {
+        console.error('Capturer release failed.');
+      } else {
+        fs.closeSync(file);
+        console.info('Capturer release success.');
+      }
+    });
+  }
+}
+
+@Entry
+@Component
+struct Index {
+  build() {
+    Scroll() {
+      Column() {
+        Row() {
+          Column() {
+            Text('Initialize').fontColor(Color.Black).fontSize(16).margin({ top: 12 });
+          }
+          .backgroundColor(Color.White)
+          .borderRadius(30)
+          .width('45%')
+          .height('25%')
+          .margin({ right: 12, bottom: 12 })
+          .onClick(async () => {
+            let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+            initArguments(context);
+            init();
+          });
+
+          Column() {
+            Text('Start recording').fontColor(Color.Black).fontSize(16).margin({ top: 12 });
+          }
+          .backgroundColor(Color.White)
+          .borderRadius(30)
+          .width('45%')
+          .height('25%')
+          .margin({ bottom: 12 })
+          .onClick(async () => {
+            start();
+          });
+        }
+
+        Row() {
+          Column() {
+            Text('Stop recording').fontSize(16).margin({ top: 12 });
+          }
+          .id('audio\_effect\_manager\_card')
+          .backgroundColor(Color.White)
+          .borderRadius(30)
+          .width('45%')
+          .height('25%')
+          .margin({ right: 12, bottom: 12 })
+          .onClick(async () => {
+            stop();
+          });
+
+          Column() {
+            Text('Release resources').fontColor(Color.Black).fontSize(16).margin({ top: 12 });
+          }
+          .backgroundColor(Color.White)
+          .borderRadius(30)
+          .width('45%')
+          .height('25%')
+          .margin({ bottom: 12 })
+          .onClick(async () => {
+            release();
+          });
+        }
+        .padding(12)
+      }
+      .height('100%')
+      .width('100%')
+      .backgroundColor('#F1F3F5');
+    }
+  }
+}
+
+## Setting the Mute Interruption Mode
+
+To ensure that the recording is not interrupted by the system's focus concurrency rules, a feature is introduced to change the interruption strategy from stopping the recording to simply muting it. You can control this behavior by calling [setWillMuteWhenInterrupted](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiocapturer#setwillmutewheninterrupted20) when creating an AudioCapturer instance. By default, this mode is disabled, and the audio focus strategy manages the order of concurrent audio streams. When enabled, if the recording is interrupted by another application, it will go into a muted state instead of stopping or pausing. In this state, the audio captured is silent.
+
+## Echo Cancellation
+
+Echo cancellation effectively eliminates echo interference during recording on supported devices, thereby improving audio capture quality. You can enable this feature by specifying particular microphone audio [source types](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-e#sourcetype8) (**SOURCE\_TYPE\_VOICE\_COMMUNICATION** or **SOURCE\_TYPE\_LIVE**). Once enabled, the system automatically processes the captured audio signal to cancel echoes.
+
+Before enabling this feature, you are advised to call [isAcousticEchoCancelerSupported](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-audiostreammanager#isacousticechocancelersupported20) to check whether the device supports echo cancellation for the audio input [source type](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-audio-e#sourcetype8). (This API is available since API version 20.) If supported, you can activate the echo cancellation processing by setting the corresponding microphone audio source when creating the audio capturer.

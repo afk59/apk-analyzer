@@ -1,0 +1,3 @@
+# What Should I Do If the App Launched by Celia Exits Unexpectedly When I Use the Intents Kit Debug Assistant Agent for Joint Debugging?
+
+If this issue occurs, first check whether the code for integrating Intents Kit is obfuscated. The code files for integrating Intents Kit cannot be obfuscated. For details about obfuscation, please refer to [Application Code Obfuscation](https://developer.huawei.com/consumer/en/doc/best-practices/bpta-app-code-ob#section13780943192313). If obfuscation is ruled out and the issue persists, check your app's logic for any other exceptions that may cause the crash.

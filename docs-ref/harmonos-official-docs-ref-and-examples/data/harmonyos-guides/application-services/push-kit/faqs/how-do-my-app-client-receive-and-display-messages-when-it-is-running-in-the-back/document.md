@@ -1,0 +1,8 @@
+# How Do My App Client Receive and Display Messages When It Is Running in the Background?
+
+An app client can receive and display messages only in the following scenarios when it is running in the background:
+
+-   Your app server requests to push **text-to-speech messages** (with [push-type](https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-intro#section201311114111413) set to **2**) to implement capabilities such as voice broadcast. For details about how in-app call messages are received on the client side in this scenario, please refer to the [API call example](https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-remote-notification-extension-ability#section455013322919) of **RemoteNotificationExtensionAbility**.
+-   Your app server requests to push **in-app call messages** (with **push-type** set to **10**) to implement the VoIP call capability. For details about how in-app messages are received on the client side in this scenario, please refer to the [API call example](https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-voip-ability#section183891636596) of **VoIPExtensionAbility**.
+
+If your app content updates are not frequent, your app server can push **background messages** (with **push-type** set to **6**). These messages operate discreetly, without the usual notifications, ringtones, or app badge number changes. If [proxyData](https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-request-param#section056120245274) is set to **ENABLE** when you push such messages, Push Kit will write them to the database and your app process will not be started.

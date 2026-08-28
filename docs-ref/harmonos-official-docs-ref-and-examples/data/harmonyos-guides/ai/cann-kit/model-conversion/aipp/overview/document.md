@@ -1,0 +1,3 @@
+# Overview
+
+AI Pre-Process (AIPP) is a module that pre-processes input data for the purpose of AI inference. Model inference in CANN Kit generally depends on standardized input data formats. However, in common model inference scenarios, the input data can be an image in various formats. With AIPP, images in different formats can be converted to the standard format for NPUs. For a trained model, you do not need to retrain it if its input data formats are not supported by the inference and computing platform. Instead, you can complete the adaptation simply by setting AIPP parameters, or calling AIPP APIs in your app. As AIPP is dedicated to hardware, it helps improve the inference performance.

@@ -1,0 +1,3 @@
+# How do I listen for the Navigation page lifecycle?
+
+[Navigation](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-navigation-navigation), as a router container, hosts its lifecycle within the [NavDestination](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-basic-components-navdestination) component and exposes lifecycle events as component events. You can listen for the lifecycle of the **NavDestination** component through [Class (UIObserver)](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-uicontext-uiobserver). For details, see [Page Listening and Query](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-navigation-navigation#page-listening-and-query).
