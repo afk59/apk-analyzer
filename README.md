@@ -37,12 +37,21 @@ wlanaccess, run once, then reconnect.
 
 ## What a clone needs
 
-Everything required to **run** an analysis is in this repository — mappings, the API index and
-its source spreadsheet, the OHPM registry sweep and the Play metadata cache. Nothing has to be
-fetched out of band.
+Everything required to **run** an analysis is here. Two files are read during an analysis —
+`engine/data/mappings/*.json` and `engine/data/reference/hmos_api_index.json`, plus
+`play_metadata_cache.json` in batch mode. Nothing has to be fetched out of band.
 
-Only two things are deliberately absent, and neither is needed to run the tool: the APK/EXE/IPA
-test corpus (large binaries, not ours to redistribute) and generated output.
+Three further things are tracked but **not** read at runtime, and are here for mapping work:
+`hmos_api.xlsx` (regenerates the API index), `ohpm_registry_cache.json` (answers OHPM
+package-existence queries without a fresh 3,499-package sweep) and `docs-ref/`.
+
+> **`docs-ref/` exists on this branch only.** It is 110 MB of HarmonyOS SDK declarations and
+> crawled documentation, used to ground mappings — see `docs/DOCS_REF_GUIDE.md`. `main` is the
+> product branch and deliberately does not carry it, which is also what keeps `main` free of the
+> Windows long-path problem below.
+
+Deliberately absent, and not needed to run the tool: the APK/EXE/IPA test corpus (large
+binaries, not ours to redistribute) and generated output.
 
 > **Windows: enable long paths before cloning.** The deepest path in `docs-ref/` is 212
 > characters against a 260-character limit that includes wherever you cloned it. Run this once,
