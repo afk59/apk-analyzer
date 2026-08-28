@@ -674,3 +674,89 @@ KORPUSU YENIDEN CALISTIRMA PROSEDURU (degismedi, bkz. bolum 1)
     aggregate.py / html_audit2.py / find_ns.py / ground.py / predict2.py
     Kalici olmalari gerekiyorsa repoya alinmalari lazim - SU AN DEGILLER.
 ================================================================================
+
+
+================================================================================
+EK TUR - 2026-08-28: TEMIZLIK (yeni feature turundan once)
+================================================================================
+
+Bolum 9 ve bolum 16'daki "gelince bakman gerekenler" listesinden dort madde
+kapatildi. HICBIRI ANALIZ CIKTISINI DEGISTIRMIYOR: com.mtr.mobile once ve sonra
+calistirildi, analiz suresi ayiklandiktan sonra HTML ve agent JSON'un SHA-256
+hash'leri BIREBIR AYNI cikti.
+
+1) ENCODING TUZAGI                                                [KAPANDI]
+   Bolum 1 ve 16-madde-3'teki bug. Iki parcasi da duzeltildi:
+     a) analyzer.py basinda _force_utf8_stdio() - stdout/stderr UTF-8'e
+        sabitleniyor, errors="replace" ile (garip bir karakter "?" olsun,
+        kosuyu dusurmesin).
+     b) run_batch'te konsol ozeti artik try blogunun SONUNDA basiliyor;
+        rows.append(), write_agent_json() ve agent_files.append() ondan once.
+   Ikisinden biri tek basina yeterdi; ikisi de duruyor cunku sira zaten dogru
+   olan sira - ozet, diske yazilmis isin raporudur.
+   ARTIK PYTHONIOENCODING=utf-8 GEREKMIYOR (zarari da yok, isterseniz kalsin).
+   DOGRULAMA: PYTHONIOENCODING olmadan, stdout pipe'a bagliyken CJK basmak
+   calisiyor (sys.stdout.encoding == "utf-8"); ayni print modul import
+   EDILMEDEN hala cp1254 hatasi veriyor. Yani fix'in etkisi kanitli.
+
+2) SPLIT-APK BUNDLE ARTIK "NATIVE" DEMIYOR                        [KAPANDI]
+   Bolum 5 ve 16-madde-4. .apk diye adlandirilmis bir APKM/XAPK'in icinde
+   base.apk + split_config.*.apk var, kendi dex'i YOK. framework_detect hicbir
+   imza bulamayip "Native (Java/Kotlin), medium" diyordu - yani hic okumadigi
+   siniflar hakkinda hukum veriyordu. Bu, paketlenmis DEX dalinin zaten
+   reddettigi mantigin aynisi.
+   Artik Unknown donuyor, kanit olarak icerideki .apk isimleri ve "base.apk'yi
+   cikar ve onu analiz et" notu ile.
+   DIKKAT: notta "packed" kelimesi BILEREK GECMIYOR - _packed_dex_banner() ve
+   coverage_status() o kelimeye bakiyor, gecseydi yanlis sebeple kirmizi
+   packed banner'i basardi.
+   Ayrica run_batch bu dosyalar hakkinda tamamen sessizdi (glob'da yoklar).
+   Artik *.apkm / *.xapk sadece "atlandi" diye LISTELENIYOR - analiz edilmiyor.
+   DOGRULAMA: 3 ic-apk'li sentetik bundle -> Unknown; sade classes.dex +
+   AndroidManifest.xml zip -> hala Native; com.fairwood.app -> hala React
+   Native/Hermes, gomulu Capacitor notu yerinde.
+
+3) EXE FOLDER ARTIK CLI'DAN CALISIYOR                             [KAPANDI]
+   --mode listesi ["apk","exe","ipa"] oldugu icin exe_folder dali SADECE TUI'den
+   girilebiliyordu; motor ve renderer zaten hazirdi, sadece scriptlenemiyordu.
+   Simdi --mode exe_folder var VE klasor verilirse otomatik anlasiliyor:
+       python analyzer.py input/pc/myapp
+       python analyzer.py input/pc/myapp --mode exe_folder --no-open
+   Dosyaya --mode exe_folder verilirse mesajla cikiyor, sonradan patlamiyor.
+   HALA ACIK: export_excel_exe_folder yok; klasor modunun Python Excel export'u
+   yok, sadece tarayici icindeki XLSX butonu var (CDN gerektiriyor).
+
+4) hmos_api.xlsx ARTIK REPODA                                     [KAPANDI]
+   .gitignore'daki *.xlsx kaynak tabloyu gizliyordu ama ONDAN URETILEN index
+   (hmos_api_index.json, 3.9 MB) repodaydi. Yani temiz bir clone'da
+   api_index.py hic calistirilamiyordu. Tek satirlik negatif kural eklendi
+   (!src/data/reference/hmos_api.xlsx); *.xlsx hala aracin urettigi tum rapor
+   ve workbook'lari kapsiyor. Dosya 2.3 MB, repodaki index'ten kucuk.
+
+BU TURDA BILEREK YAPILMAYANLAR
+--------------------------------------------------------------------------------
+- device_matrix hala {} olarak yaziliyor. Her zaman bos olan bir alani silmek
+  agent JSON semasini degistirir - bu bir urun karari, bug fix'i degil.
+- KIT_DOC_URLS'teki 50 eski -V5 URL hala denetlenmedi (bolum 5, 16-madde-5).
+  Huawei SPA her slug'a ayni 200 kabugunu donduruyor, curl bir sey kanitlamiyor;
+  arama indeksi uzerinden ayri bir pass gerekiyor.
+- TEST YOK. ~7.100 satirda sifir otomatik test. Yukaridaki dogrulamalar dahil
+  her sey elle kosuldu. RADIKAL DEGISIKLIK ONCESI EN BUYUK RISK BUDUR.
+- Per-process batch runner hala repoda degil (worker.py / drive.py /
+  aggregate.py ...). run_batch tek surecte bu korpusu tasiyamiyor, yani
+  "43 uygulamada tekrar olc" demek su an o araclari sifirdan yazmak demek.
+  Prosedur bolum 1 ve 16'da yazili.
+- Yanlis iki korpus dosyasina (Aptoide / Uptodown) dokunulmadi - senin kararin.
+
+DAL DURUMU
+--------------------------------------------------------------------------------
+Hepsi fix/report-noise-filters uzerinde, ayri commit'ler halinde:
+  fix(cli)      UTF-8 stdio + batch ozetinin sona alinmasi
+  fix(analysis) split-APK bundle durustlugu (framework_detect + run_batch)
+  feat(cli)     --mode exe_folder
+  chore(data)   hmos_api.xlsx repoya alindi
+  docs          CLAUDE.md "Housekeeping round - 2026-08-28" + bu bolum
+
+main HALA 10 COMMIT GERIDE. Butun is bu dalda duruyor, merge edilmedi -
+radikal degisikliklere baslamadan once merge edilecek mi, karar senin.
+================================================================================
