@@ -1,0 +1,5 @@
+# Does the Tabs component support lazy loading?
+
+If the SDK version is API 18 or earlier, the **Tabs** component does not support lazy loading. You can implement page lazy loading and resource release by using a custom **TabBar** with the **Swiper** component and **LazyForEach**. For details, see [Implementing Lazy Loading and Resource Release of Pages](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-container-tabs#example-13-implementing-lazy-loading-and-resource-release-of-pages).
+
+Since API version 19, the [cachedMaxCount](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-container-tabs#cachedmaxcount19) attribute is added to the Tabs component to set the maximum number of child components to cache and the caching mode. Child components outside the caching range will be released. For details, see [Releasing the Tabs Child components](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-container-tabs#example-18-releasing-the-tabs-child-components).

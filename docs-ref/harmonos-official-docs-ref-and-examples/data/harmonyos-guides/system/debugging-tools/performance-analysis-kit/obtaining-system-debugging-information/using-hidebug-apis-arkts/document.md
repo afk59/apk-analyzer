@@ -1,0 +1,46 @@
+# Using HiDebug APIs (ArkTS)
+
+The HiDebug ArkTS APIs are independent. You can call them to obtain debugging information. For details, see the examples in [@ohos.hidebug](https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-hidebug).
+
+#### How to Develop
+
+This topic describes how to call the HiDebug ArkTS API to obtain the system CPU usage.
+
+1.  Use DevEco Studio to create a project and select **Empty Ability**.
+    
+2.  In the **Project** window, click **entry** > **src** > **main** > **ets** > **pages** to open the **Index.ets** file.
+    
+    Import the required dependencies.
+    
+    import { BusinessError } from '@kit.BasicServicesKit';
+    import { hidebug, hilog } from '@kit.PerformanceAnalysisKit';
+    
+    Define the test method.
+    
+    function testHiDebugArk () { // Implement the API as required.
+      try {
+        hilog.info(0x0000, 'testTag', \`getSystemCpuUsage: ${hidebug.getSystemCpuUsage()}\`);
+      } catch (error) {
+        hilog.info(0x0000, 'testTag', \`error code: ${(error as BusinessError).code},
+          error msg: ${(error as BusinessError).message}\`);
+      }
+    }
+    
+    Add a button to trigger the API call.
+    
+    Button('testHiDebugArk')
+      .type(ButtonType.Capsule)
+      .margin({
+        top: 20
+      })
+      .backgroundColor('#0D9FFB')
+      .width('60%')
+      .height('5%')
+      // Add a click event.
+      .onClick(testHiDebugArk);
+    
+3.  Click **Run**, and then click the **testHiDebugArk** button on the device to trigger API calling.
+    
+4.  At the bottom of DevEco Studio, switch to the **Log** tab and set the filter criteria to **testTag** to view related logs.
+    
+    10-22 15:46:04.587   19261-19261   A00000/com.sam...gtool/testTag  com.sampl...ebugtool  I     getSystemCpuUsage: 0.2878989952876323

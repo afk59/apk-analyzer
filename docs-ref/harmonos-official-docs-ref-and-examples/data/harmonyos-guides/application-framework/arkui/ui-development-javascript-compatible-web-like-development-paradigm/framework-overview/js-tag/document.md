@@ -1,0 +1,110 @@
+# "js" Tag
+
+The "js" tag contains the instance name, window style, and page route information.
+
+| Tag | Data Type | Default Value | Mandatory | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| name | string | default | Yes | Name of the JavaScript instance. |
+| pages | Array | \- | Yes | Route information. For details, see ["pages"](#pages). |
+| window | Object | \- | No | Window information. For details, see ["window"](#window). |
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/e9/v3/0lnkmSopTDirjCuw_YocJQ/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T061941Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=48B80408EE839A6CCE39EC19B02BE406216C1BF06225232BE83306FA16AD6FB0)
+
+The **"name"**, **"window"**, and **"pages"** tags are configured in the **"js"** tag of the **config.json** file.
+
+#### "pages"
+
+"pages" defines the route information of each page. Each page consists of the page path and page name. The following is an example:
+
+{
+    // ...
+    "pages": \[
+        "pages/index/index",
+        "pages/detail/detail"
+    \]
+    // ...
+}
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/92/v3/YxQZtVSrTXeOvpdcvvTDug/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T061941Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=C37C2F33A99CEC97F17FE5FAF103BD8A60A2D521BC129A82786434456662F881)
+
+-   The first page in the **pages** list is the homepage, also referred to as the entry, of the application.
+    
+-   The page name should not be a component name, for example, **text.hml** or **button.hml**.
+    
+
+#### window
+
+**"window"** defines window-related configurations. You can configure screen adaptation in either of the following ways:
+
+-   Specify **designWidth**, which is the logical screen width. All size styles, such as **width** and **font-size**, are scaled at the ratio of **designWidth** to the physical screen width. For example, when **designWidth** is 720 px and if you set **width** to 100 px, the actual display width is scaled to 200 physical px on the screen whose physical width is 1440 px.
+    
+-   Set **autoDesignWidth** to **true**. Under this setting, the **designWidth** field will be ignored, and the component and layout will be scaled automatically based on the screen density. The logical screen width is automatically calculated based on the physical screen width and screen density. The logical screen width may vary depending on the device. Use the relative layout to adapt to different devices. For example, on a device with a resolution of 466 x 466 and 320 DPI (a screen density of 2x, with 160 DPI as the base), 1 px is equivalent to 2 physical px.
+    
+    ![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/65/v3/h7b310HbRuiEUZmbqdew3A/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T061941Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=4F11E122E4F0DA34280614A1945CECEDE9BFABEF15AA108C2B3E5E7A2185C795)
+    
+    1.  The default **<length>** value in style attributes is calculated based on the screen density. For example, if the screen density is x2 (with 160 DPI as the baseline) and the default **<length>** value is 1 px, the actual length rendered on the device is 2 physical pixels.
+        
+    2.  Values of **autoDesignWidth** and **designWidth** do not affect how the default **<length>** value is calculated and the final effect.
+        
+    
+
+| Attribute | Type | Mandatory | Default Value | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| designWidth | number | No | 
+720
+
+ | Logical screen width, which is a reference value for page design. The actual display width is scaled at the ratio of the value to the device width. |
+| autoDesignWidth | boolean | No | false | 
+
+Whether to automatically calculate the baseline width for page design.
+
+The value **true** means to automatically calculate the baseline width for page design, and **false** means the opposite.
+
+If it is set to **true**, the **designWidth** attribute becomes invalid. The baseline width is calculated based on the device width and screen density.
+
+ |
+
+The following is an example.
+
+{
+    // ...
+    "window": {
+        "designWidth": 720,
+        "autoDesignWidth": false
+    }
+    // ...
+}
+
+#### Example
+
+{
+  "app": {
+    "bundleName": "com.example.player",
+    "version": {
+        "code": 1,
+        "name": "1.0"
+    },
+    "vendor": "example"
+  },
+  "module": {
+      // ...
+      "js": \[
+      {
+          "name": "default",
+          "pages": \[
+              "pages/index/index",
+              "pages/detail/detail"
+          \],
+          "window": {
+              "designWidth": 720,
+              "autoDesignWidth": false
+          }
+      }
+      \],
+      "abilities": \[
+      {
+          // ...
+      }
+    \]
+  }
+}

@@ -1,0 +1,322 @@
+# Text Box Component Common APIs
+
+Provides capabilities for [TextInput](../textinput/document.md) and [TextArea](../textarea/document.md) components to obtain text and cursor information, insert and delete text, set character counters, and configure text decoration lines.
+
+Provides capabilities for the [Search](../search/document.md) component to obtain text and cursor information, insert and delete text, and configure text decoration lines.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/dc/v3/OQ1mt1JnQ9OoQy3m7UqXIw/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062243Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=2C9284A8F6E42D53D6FD5AFCA4DD928D07E284A83B623BB58FF3168E2626AA63)
+
+The initial APIs of this module are supported since API version 10. Updates will be marked with a superscript to indicate their earliest API version.
+
+#### TextContentControllerBase
+
+Represents the base controller for **TextInput**, **TextArea**, and **Search** components.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+#### \[h2\]getTextContentRect
+
+getTextContentRect(): RectResult
+
+Obtains the position of the edited text area relative to the component and its size. The unit of the return value is pixel.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| [RectResult](../../universal-events/event-dispatch-control/custom-event-dispatch/document.md#rectresult) | 
+Position of the edited text area relative to the component and its size.
+
+If no component is bound to the controller or the component bound to the controller is released, **undefined** is returned.
+
+ |
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/47/v3/XNYQIoRuSvSsf5hOjw9p4g/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062243Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=F57B5FB62CB0EF586DD745C70711B1B193FF69A776CE3AC94E191F250384E8B8)
+
+-   If no text is entered, the return value contains the position information, but the size is 0.
+-   The position information is the offset of the first character relative to the editable area.
+-   For the **Search** component, the returned position information is the offset of the first character relative to the search icon in the component.
+-   If there is input, the width in the return value is the fixed width of the editable area.
+
+#### \[h2\]getTextContentLineCount
+
+getTextContentLineCount(): number
+
+Obtains the number of lines of the edited text.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| number | 
+Number of lines of the edited text.
+
+If no component is bound to the controller or the component bound to the controller is released, **undefined** is returned.
+
+ |
+
+#### \[h2\]getCaretOffset11+
+
+getCaretOffset(): CaretOffset
+
+Obtains the position information of the caret.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/38/v3/ExZgeIptTjiQbs6sUf2Acg/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062243Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=B391A88A4F73849F0FF8A16A43D4041E547FE2F9D011A306453777A2C431CE3C)
+
+-   If this API is called when the caret position is updated in the current frame, it will not take effect.
+-   For the **Search** component, the returned position information is the offset of the first character relative to the search icon in the component.
+-   If no text is entered in the **Search** component, the return value contains the position information relative to the component.
+-   The location information in the return value is the location of the caret relative to the editable component.
+-   If the caret position cannot be obtained (for example, when the [TextInputController](../textinput/document.md#textinputcontroller8) is not bound to the [TextInput](../textinput/document.md) component), **null** is returned.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| [CaretOffset](#caretoffset11) | 
+Position of the caret relative to the text box.
+
+If no component is bound to the controller or the component bound to the controller is released, **undefined** is returned.
+
+ |
+
+#### \[h2\]addText15+
+
+addText(text: string, textOperationOptions?: TextContentControllerOptions): number
+
+Inserts text at a specified position in the editable content. If no position is specified, the text is appended to the end of the existing content.
+
+This API does not work when the text is being dragged.
+
+**addText** only affects the UI performance within the application and has no effect on the internal logic of the input method application. Therefore, avoid calling this API for the preview text.
+
+**Atomic service API**: This API can be used in atomic services since API version 15.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| text | string | Yes | Text to insert. |
+| textOperationOptions | [TextContentControllerOptions](#textcontentcontrolleroptions15) | No | Configuration option for inserting text. If this parameter is not provided, the text is appended to the end. |
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| number | New cursor position after insertion. |
+
+#### \[h2\]setStyledPlaceholder22+
+
+setStyledPlaceholder(styledString: StyledString): void
+
+Binds or updates the styled placeholder string.
+
+**Atomic service API**: This API can be used in atomic services since API version 22.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| styledString | [StyledString](../styled-string/document.md#styledstring) | Yes | 
+Styled string for the placeholder. This takes precedence over the plain text **placeholder** attribute.
+
+The placeholder does not support gesture events or hyperlink navigation within styled strings.
+
+ |
+
+#### \[h2\]deleteText15+
+
+deleteText(range?: TextRange): void
+
+Deletes text within a specified range in the editable content.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/6/v3/C6HjzxaiRAKwmuNMMsiMhg/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062243Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=9FD8ECF6CDAA4C900003C00BB2DA44984D0578752BEDF27B23D06A413321CDEA)
+
+-   This API does not work when the text is being dragged.
+-   **deleteText** only affects the UI performance within the application and has no effect on the internal logic of the input method application. Therefore, avoid calling this API for the preview text.
+
+**Atomic service API**: This API can be used in atomic services since API version 15.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| range | [TextRange](../text-component-common-apis/document.md#textrange12) | No | 
+Range of the text to be deleted, including the start and end positions.
+
+If the range is not specified, the entire text is deleted. If the start position is not specified, deletion starts from index 0. If the end position is not specified, deletion ends at the end of the text.
+
+ |
+
+#### \[h2\]getSelection15+
+
+getSelection(): TextRange
+
+Obtains the current text selection range.
+
+**Atomic service API**: This API can be used in atomic services since API version 15.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| [TextRange](../text-component-common-apis/document.md#textrange12) | 
+Current text selection range, or cursor position if no text is selected.
+
+If no component is bound to the controller or the component bound to the controller is released, **undefined** is returned.
+
+ |
+
+#### \[h2\]clearPreviewText17+
+
+clearPreviewText(): void
+
+Notifies the input method to clear the current preview text.
+
+**Atomic service API**: This API can be used in atomic services since API version 17.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+#### InputCounterOptions11+
+
+Provides configuration options for the character counter.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Type | Read-Only | Optional | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| thresholdPercentage | number | No | Yes | 
+Threshold percentage for displaying the character counter. The character counter is displayed when the number of characters that have been entered is greater than the maximum number of characters multiplied by the threshold percentage value. When displayed, the character counter is in the following format: Number of characters that have been entered/Maximum number of characters allowed. It is visible when the number of characters entered is greater than the character limit multiplied by the threshold percentage value. Value range: \[1, 100\]. If the value is not an integer, it is rounded down to the nearest integer. If the value exceeds the valid value range, the character counter is not displayed. If the value is **undefined**, the character counter is displayed, but this parameter has no effect.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+ |
+| highlightBorder | boolean | No | Yes | 
+
+Whether to highlight the text box border and character counter subscript in red. If **InputCounterOptions** is not set, the text box border and character counter subscript turn red when the number of characters entered reaches the limit. If the character counter is displayed and **thresholdPercentage** is set to a valid value, the text box border and character counter subscript turn red when the number of entered characters exceeds the limit. If this parameter is **true**, the red border is displayed; if **false**, it is not displayed.
+
+Default value: **true**
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+ |
+| counterTextColor22+ | [ColorMetrics](../../../arkts-api/ui/arkui/graphics/document.md#colormetrics12) | No | Yes | 
+
+Text color of the character counter. When the input character count exceeds the maximum limit multiplied by the specified percentage, the counter displays the current count text using this color. If **counterTextColor** is not set, the default gray color is used.
+
+**Atomic service API**: This API can be used in atomic services since API version 22.
+
+ |
+| counterTextOverflowColor22+ | [ColorMetrics](../../../arkts-api/ui/arkui/graphics/document.md#colormetrics12) | No | Yes | 
+
+Text color of the character counter when the maximum limit is exceeded. When the user input exceeds the maximum character count, both the counter text and border switch to this color to indicate overflow. If **counterTextOverflowColor** is not set, the default red color is used.
+
+**NOTE**
+
+The border color is changed only when the **highlightBorder** attribute of [InputCounterOptions](#inputcounteroptions11) is set.
+
+**Atomic service API**: This API can be used in atomic services since API version 22.
+
+ |
+
+#### CaretOffset11+
+
+Describes the position of the caret relative to the text box.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Type | Read-Only | Optional | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| index | number | No | No | Index of the caret position. |
+| x | number | No | No | X coordinate of the cursor relative to the text box, in px. |
+| y | number | No | No | Y coordinate of the cursor relative to the text box, in px. |
+
+#### TextDecorationOptions12+
+
+Provides the text decoration options.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Type | Read-Only | Optional | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| type | [TextDecorationType](../../common-definitions/enums/document.md#textdecorationtype) | No | No | Type of the text decoration. |
+| color | [ResourceColor](../../common-definitions/basic-types/document.md#resourcecolor) | No | Yes | Color of the text decoration. |
+| style | [TextDecorationStyle](../../common-definitions/enums/document.md#textdecorationstyle12) | No | Yes | Style of the text decoration. |
+
+#### SelectionOptions12+
+
+Provides the configuration options for text selection.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Type | Read-Only | Optional | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| menuPolicy | [MenuPolicy](#menupolicy12) | No | Yes | Menu display policy. |
+
+#### MenuPolicy12+
+
+Enumerates menu display policies.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Value | Description |
+| :-- | :-- | :-- |
+| DEFAULT | 0 | Whether the menu is displayed depends on the underlying default logic. |
+| HIDE | 1 | The menu is always hidden. |
+| SHOW | 2 | The menu is always displayed. |
+
+#### SymbolGlyphModifier12+
+
+type SymbolGlyphModifier = SymbolGlyphModifier
+
+Defines custom icon symbol configurations.
+
+**Atomic service API**: This API can be used in atomic services since API version 12.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Type | Description |
+| :-- | :-- |
+| [SymbolGlyphModifier](../../universal-attributes/modifiers-and-custom-property/symbol-glyph-modifier/document.md#symbolglyphmodifier) | Returns the current **SymbolGlyphModifier** instance. |
+
+#### TextContentControllerOptions15+
+
+Provides configuration options for text insertion operations in text input components.
+
+**Atomic service API**: This API can be used in atomic services since API version 15.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+| Name | Type | Read-Only | Optional | Description |
+| :-- | :-- | :-- | :-- | :-- |
+| offset | number | No | Yes | Insertion position for the text. |

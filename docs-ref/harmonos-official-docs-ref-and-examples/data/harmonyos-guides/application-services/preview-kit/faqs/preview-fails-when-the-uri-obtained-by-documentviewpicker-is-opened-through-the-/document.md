@@ -1,0 +1,3 @@
+# Preview Fails When the URI Obtained by DocumentViewPicker Is Opened Through the openPreview API
+
+The file URI obtained by **DocumentViewPicker** has only the temporary permission. This permission cannot be used for preview. As a result, the preview fails. Your app first grants the [permanent permission](../../../../application-framework/core-file-kit/user-files/selecting-and-saving-user-files/persisting-temporary-permissions-arkts/document.md) on the URI and then opens the file using the **openPreview** API. Alternatively, your app copies the file to the app sandbox and passes the sandbox file URI for previewing.

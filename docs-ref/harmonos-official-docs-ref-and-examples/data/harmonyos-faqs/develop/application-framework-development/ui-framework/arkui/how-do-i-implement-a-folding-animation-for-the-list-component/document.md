@@ -1,0 +1,61 @@
+# How do I implement a folding animation for the List component?
+
+You can use explicit animation **animateTo** in combination with conditional rendering **if** to control the expansion and collapse of the content area in **ListItem**. The sample code is as follows:
+
+@Entry
+@Component
+struct ListCollapseExpand {
+  private numberList: number\[\] = \[0, 1, 2, 3, 4, 5, 6\];
+  @State isContentShow: boolean = true;
+  @State selectItem: number = 0;
+
+  build() {
+    Column() {
+      List({ initialIndex: 0 }) {
+        ForEach(this.numberList, (item: number, index: number) => {
+          ListItem() {
+            Column() {
+              Row() {
+                Text(item.toString())
+                Button(this.isContentShow && this.selectItem === item ? 'Collapse' : 'Expand')
+                  .onClick(() => {
+                    this.getUIContext().animateTo({
+                      duration: 300,
+                      onFinish: () => {
+                        console.info('animation end');
+                      }
+                    }, () => {
+                      this.isContentShow = !this.isContentShow;
+                      this.selectItem = item;
+                    })
+                  })
+              }
+              .width('100%')
+              .justifyContent(FlexAlign.SpaceBetween)
+
+              // Display the content area only when the current item is selected and is in an expanded state.
+              if (this.isContentShow && this.selectItem === item) {
+                Text('This is the content area')
+                  .backgroundColor(Color.Gray)
+                  .width('100%')
+                  .height(100)
+              }
+            }
+            .backgroundColor(0xFFFFFF)
+            .width('100%')
+            .padding({
+              top: 12,
+              bottom: 12
+            })
+            .margin({ top: 10 })
+          }
+        }, (item: string) => item.toString())
+      }
+      .scrollBar(BarState.Off)
+      .height('100%')
+      .width('100%')
+    }
+    .backgroundColor(0xF1F3F5)
+    .padding(12)
+  }
+}

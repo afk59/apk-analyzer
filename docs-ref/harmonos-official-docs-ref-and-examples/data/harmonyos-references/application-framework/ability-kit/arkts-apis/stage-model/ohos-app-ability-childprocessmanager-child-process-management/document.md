@@ -1,0 +1,412 @@
+# @ohos.app.ability.childProcessManager (Child Process Management)
+
+The childProcessManager module provides the child process management capability. Currently, it provides APIs to create and start a child process
+
+The created child process will exit when the parent process exits and cannot run independently.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/e4/v3/r-CY0kc4Q_W5VoKT8M1-9A/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062205Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=F49311D83DFA6EDD36815991938C85459FAC97686F3332C1B080B1155D239677)
+
+The initial APIs of this module are supported since API version 11. Newly added APIs will be marked with a superscript to indicate their earliest API version.
+
+The APIs of this module can be used only in the stage model.
+
+#### Constraints
+
+-   The child processes created through the APIs of this module have the following restrictions:
+    
+    -   The created child process does not support the creation of UIs.
+    -   The created child process does not support API calls that depend on the Context module (including the APIs of the Context module and the APIs that use the Context instance as an input parameter).
+    -   The created child process does not support the creation of its own child process.
+-   A maximum of 512 child processes can be started by using the APIs of this module and the APIs defined in [native\_child\_process.h](../../../c-apis/header-files/native-child-process-h/document.md) (as long as system resources are sufficient). The child processes started by [startChildProcess](#childprocessmanagerstartchildprocess) in SELF\_FORK mode are not counted.
+    
+
+#### Modules to Import
+
+import { childProcessManager } from '@kit.AbilityKit';
+
+#### StartMode
+
+Enumerates the child process start modes.
+
+**System capability**: SystemCapability.Ability.AbilityRuntime.Core
+
+| Name | Value | Description |
+| :-- | :-- | :-- |
+| SELF\_FORK | 0 | The child process is forked from the application process. The child process started in this mode inherits the resources of the parent process and cannot use Binder IPC to communicate with other processes. Otherwise, the child process will crash. |
+| APP\_SPAWN\_FORK | 1 | The child process is forked from AppSpawn. The child process started in this mode does not inherit the resources of the parent process and can use Binder IPC to communicate with other processes. |
+
+#### childProcessManager.startChildProcess
+
+startChildProcess(srcEntry: string, startMode: StartMode): Promise<number>
+
+Starts an [ArkTS child process](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/ability-terminology#arkts-child-process). This API uses a promise to return the result.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/ed/v3/4tsSsspoQ1WXknmp-163Qw/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062205Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=F7AD2203368E0171B2AACEFD2F955E698E450CEC1B7307DE9F3C3C96510E1BF7)
+
+If the child process is created successfully, its PID is returned, and its [ChildProcess.onStart](../ohos-app-ability-childprocess-child-process-base-class/document.md#childprocessonstart) function is executed. Once the function is done, the child process is automatically destroyed.
+
+The child process started by calling this API does not support asynchronous ArkTS API calls. It supports only synchronous ArkTS API calls.
+
+**System capability**: SystemCapability.Ability.AbilityRuntime.Core
+
+**Device behavior differences**: This API can be properly called on PCs/2-in-1 devices and tablets. If it is called on other devices, error code 16000061 is returned.
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| srcEntry | string | Yes | 
+Path of the source file of the child process relative to the root directory **src/main**. The source file can be stored only in the module of the entry type. For example, if the source file of a child process is **src/main/ets/process/DemoProcess.ets** in the **entry** module, then **srcEntry** is **./ets/process/DemoProcess.ets**.
+
+In addition, ensure that the source file of the child process is referenced by other files to prevent it from being optimized by the build tool. (For details, see the sample code below.)
+
+ |
+| startMode | [StartMode](#startmode) | Yes | Start mode of the child process. |
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| Promise<number> | Promise used to return the PID of the child process. |
+
+**Error codes**
+
+For details about the error codes, see [Universal Error Codes](../../../../../api-reference-overview/universal-error-codes/document.md) and [Ability Error Codes](../../../error-codes/ability-error-codes/document.md).
+
+| ID | Error Message |
+| :-- | :-- |
+| 401 | Parameter error. Possible causes: 1.Mandatory parameters are left unspecified; 2.Incorrect parameter types; 3.Parameter verification failed. |
+| 16000050 | Internal error. |
+| 16000061 | Operation not supported. |
+| 16000062 | The number of child processes exceeds the upper limit. |
+
+**Example**
+
+// Create the child process class DemoProcess.ets in src/main/ets/process of the entry module.
+// entry/src/main/ets/process/DemoProcess.ets
+import { ChildProcess } from '@kit.AbilityKit';
+
+export default class DemoProcess extends ChildProcess {
+  onStart() {
+    console.info('DemoProcess OnStart() called');
+  }
+}
+
+// Call childProcessManager.startChildProcess to start the child process.
+// entry/src/main/ets/tool/Tool.ets
+import { childProcessManager } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import DemoProcess from '../process/DemoProcess';
+
+try {
+  DemoProcess.toString(); // Call any API of the DemoProcess class to prevent the code from being directly optimized by the compiler because it is not being referenced.
+  childProcessManager.startChildProcess("./ets/process/DemoProcess.ets", childProcessManager.StartMode.SELF\_FORK)
+    .then((data) => {
+      console.info(\`startChildProcess success, pid: ${data}\`);
+    }, (err: BusinessError) => {
+      console.error(\`startChildProcess error, errorCode: ${err.code}\`);
+    })
+} catch (err) {
+  console.error(\`startChildProcess error, errorCode: ${(err as BusinessError).code}, errorMsg: ${(err as BusinessError).message}.\`);
+}
+
+#### childProcessManager.startChildProcess
+
+startChildProcess(srcEntry: string, startMode: StartMode, callback: AsyncCallback<number>): void
+
+Starts an [ArkTS child process](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/ability-terminology#arkts-child-process). This API uses an asynchronous callback to return the result.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/be/v3/0R5SHypIRySWKdv8_ocTtA/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062205Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=7C4E65B3C0C43B0411F25C26E5E1649CC370D1A25BD8C95C5F429B32E7C2FC66)
+
+If the child process is created successfully, its PID is returned, and its [ChildProcess.onStart](../ohos-app-ability-childprocess-child-process-base-class/document.md#childprocessonstart) function is executed. Once the function is done, the child process is automatically destroyed.
+
+The child process started by calling this API does not support asynchronous ArkTS API calls. It supports only synchronous ArkTS API calls.
+
+**System capability**: SystemCapability.Ability.AbilityRuntime.Core
+
+**Device behavior differences**: This API can be properly called on PCs/2-in-1 devices and tablets. If it is called on other devices, error code 16000061 is returned.
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| srcEntry | string | Yes | 
+Path of the source file of the child process relative to the root directory **src/main**. The source file can be stored only in the module of the entry type. For example, if the source file of a child process is **src/main/ets/process/DemoProcess.ets** in the **entry** module, then **srcEntry** is **./ets/process/DemoProcess.ets**.
+
+In addition, ensure that the source file of the child process is referenced by other files to prevent it from being optimized by the build tool. (For details, see the sample code below.)
+
+ |
+| startMode | [StartMode](#startmode) | Yes | Start mode of the child process. |
+| callback | AsyncCallback<number> | Yes | Callback used to return the result. If the subprocess is started, **err** is **undefined** and **data** is the PID of the child process. Otherwise, **data** is an error object. |
+
+**Error codes**
+
+For details about the error codes, see [Universal Error Codes](../../../../../api-reference-overview/universal-error-codes/document.md) and [Ability Error Codes](../../../error-codes/ability-error-codes/document.md).
+
+| ID | Error Message |
+| :-- | :-- |
+| 401 | Parameter error. Possible causes: 1.Mandatory parameters are left unspecified; 2.Incorrect parameter types; 3.Parameter verification failed. |
+| 16000050 | Internal error. |
+| 16000061 | Operation not supported. |
+| 16000062 | The number of child processes exceeds the upper limit. |
+
+**Example**
+
+// Create the child process class DemoProcess.ets in src/main/ets/process of the entry module.
+// entry/src/main/ets/process/DemoProcess.ets
+import { ChildProcess } from '@kit.AbilityKit';
+
+export default class DemoProcess extends ChildProcess {
+  onStart() {
+    console.info('DemoProcess OnStart() called');
+  }
+}
+
+// Call childProcessManager.startChildProcess to start the child process.
+// entry/src/main/ets/tool/Tool.ets
+import { childProcessManager } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import DemoProcess from '../process/DemoProcess';
+
+try {
+  DemoProcess.toString(); // Call any API of the DemoProcess class to prevent the code from being directly optimized by the compiler because it is not being referenced.
+  childProcessManager.startChildProcess("./ets/process/DemoProcess.ets", childProcessManager.StartMode.SELF\_FORK, (err, data) => {
+    if (data) {
+      console.info(\`startChildProcess success, pid: ${data}\`);
+    } else {
+      console.error(\`startChildProcess error, errorCode: ${err.code}\`);
+    }
+  });
+} catch (err) {
+  console.error(\`startChildProcess error, errorCode: ${(err as BusinessError).code}, errorMsg: ${(err as BusinessError).message}.\`);
+}
+
+#### childProcessManager.startArkChildProcess12+
+
+startArkChildProcess(srcEntry: string, args: ChildProcessArgs, options?: ChildProcessOptions): Promise<number>
+
+Starts an [ArkTS child process](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/ability-terminology#arkts-child-process). This API uses a promise to return the result.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/7a/v3/mDcOhhIcQx-kXfHt1Dc7JA/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062205Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=D7D50322F040805B409BB64DFD8042194C0948687F04C124C4D35E016341B32D)
+
+The child process started by calling this API does not inherit the resources of the parent process. If the child process is created successfully, its PID is returned, and its [ChildProcess.onStart](../ohos-app-ability-childprocess-child-process-base-class/document.md#childprocessonstart) function is executed. After the function is done, the child process is not automatically destroyed. Instead, it must be destroyed by calling [process.abort](../../../../arkts/arkts-apis/ohos-process-obtaining-process-information/document.md#processabort). After the process that calls this API is destroyed, the created child process is also destroyed.
+
+**System capability**: SystemCapability.Ability.AbilityRuntime.Core
+
+**Device behavior differences**: This API can be properly called on PCs/2-in-1 devices and tablets. If it is called on other devices, error code 801 is returned.
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| srcEntry | string | Yes | 
+Path of the source file of the child process relative to the root directory **src/main**. The source file cannot be stored in the module of the HAR type. The value consists of a module name, a slash (/), and a file path. For example, if the child process file is **src/main/ets/process/DemoProcess.ets** in **module1**, then **srcEntry** is **module1/ets/process/DemoProcess.ets**.
+
+In addition, ensure that the source file of the child process is referenced by other files to prevent it from being optimized by the build tool. (For details, see the sample code below.)
+
+ |
+| args | [ChildProcessArgs](../ohos-app-ability-childprocessargs-child-process-arguments/document.md) | Yes | Parameters transferred to the child process. |
+| options | [ChildProcessOptions](../ohos-app-ability-childprocessoptions-child-process-startup-options/document.md) | No | Startup configuration of the child process. |
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| Promise<number> | Promise used to return the PID of the child process. |
+
+**Error codes**
+
+For details about the error codes, see [Universal Error Codes](../../../../../api-reference-overview/universal-error-codes/document.md) and [Ability Error Codes](../../../error-codes/ability-error-codes/document.md).
+
+| ID | Error Message |
+| :-- | :-- |
+| 401 | Parameter error. Possible causes: 1.Mandatory parameters are left unspecified; 2.Incorrect parameter types; 3.Parameter verification failed. |
+| 801 | Capability not supported. |
+| 16000050 | Internal error. |
+| 16000061 | Operation not supported. |
+| 16000062 | The number of child processes exceeds the upper limit. |
+
+**Example**
+
+Sample code for the child process:
+
+// Create the child process class DemoProcess.ets in src/main/ets/process of module1.
+// module1/src/main/ets/process/DemoProcess.ets
+import { ChildProcess, ChildProcessArgs } from '@kit.AbilityKit';
+
+export default class DemoProcess extends ChildProcess {
+
+  onStart(args?: ChildProcessArgs) {
+    let entryParams = args?.entryParams;
+    let fd = args?.fds?.key1;
+    // ..
+  }
+}
+
+Sample code for the main process is provided below. For details about how to obtain the context in the example, see [Obtaining the Context of UIAbility](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/uiability-usage#obtaining-the-context-of-uiability).
+
+// Call childProcessManager.startArkChildProcess to start the child process.
+// module1/src/main/ets/tool/Tool.ets
+import { common, ChildProcessArgs, ChildProcessOptions, childProcessManager } from '@kit.AbilityKit';
+import { fileIo } from '@kit.CoreFileKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import DemoProcess from '../process/DemoProcess';
+
+@Entry
+@Component
+struct Index {
+  build() {
+    Row() {
+      Column() {
+        Text('Click')
+          .fontSize(30)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => {
+            try {
+              DemoProcess.toString(); // Call any API of the DemoProcess class to prevent the code from being directly optimized by the compiler because it is not being referenced.
+              let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+              let path = context.filesDir + "/test.txt";
+              let file = fileIo.openSync(path, fileIo.OpenMode.READ\_ONLY | fileIo.OpenMode.CREATE);
+              let args: ChildProcessArgs = {
+                entryParams: "testParam",
+                fds: {
+                  "key1": file.fd
+                }
+              };
+              let options: ChildProcessOptions = {
+                isolationMode: false
+              };
+              childProcessManager.startArkChildProcess("module1/ets/process/DemoProcess.ets", args, options)
+                .then((pid) => {
+                  console.info(\`startChildProcess success, pid: ${pid}\`);
+                })
+                .catch((err: BusinessError) => {
+                  console.error(\`startChildProcess business error, errorCode: ${err.code}, errorMsg:${err.message}\`);
+                })
+            } catch (err) {
+              console.error(\`startChildProcess error, errorCode: ${err.code}, errorMsg:${err.message}\`);
+            }
+          });
+      }
+      .width('100%')
+    }
+    .height('100%')
+  }
+}
+
+#### childProcessManager.startNativeChildProcess13+
+
+startNativeChildProcess(entryPoint: string, args: ChildProcessArgs, options?: ChildProcessOptions): Promise<number>
+
+Starts a [native child process](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/ability-terminology#native-child-process). This API uses a promise to return the result.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/b8/v3/WNid8_OdTEmPuVwHev6hpQ/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062205Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=B91702F0A8D9C591B62C3A51E16FD1A36939FA4C52E454F8D6BBACB43257BF93)
+
+The child process started by calling this API does not inherit the resources of the parent process. After the child process is created, its PID is returned, the dynamic link library file specified in the parameters is loaded, and the entry function of the child process is executed. Once the entry function is done, the child process is automatically destroyed. After the process that calls this API is destroyed, the created child process is also destroyed.
+
+**System capability**: SystemCapability.Ability.AbilityRuntime.Core
+
+**Device behavior differences**: This API can be properly called on PCs/2-in-1 devices and tablets. If it is called on other devices, error code 801 is returned.
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| entryPoint | string | Yes | The symbol and entry function of the dynamic link library called in the child process are separated by a colon (:), for example, **libentry.so:Main**. |
+| args | [ChildProcessArgs](../ohos-app-ability-childprocessargs-child-process-arguments/document.md) | Yes | Parameters transferred to the child process. |
+| options | [ChildProcessOptions](../ohos-app-ability-childprocessoptions-child-process-startup-options/document.md) | No | Startup configuration of the child process. |
+
+**Return value**
+
+| Type | Description |
+| :-- | :-- |
+| Promise<number> | Promise used to return the PID of the child process. |
+
+**Error codes**
+
+For details about the error codes, see [Universal Error Codes](../../../../../api-reference-overview/universal-error-codes/document.md) and [Ability Error Codes](../../../error-codes/ability-error-codes/document.md).
+
+| ID | Error Message |
+| :-- | :-- |
+| 401 | Parameter error. Possible causes: 1.Mandatory parameters are left unspecified; 2.Incorrect parameter types; 3.Parameter verification failed. |
+| 801 | Capability not supported. Failed to call the API due to limited device capabilities. |
+| 16000050 | Internal error. |
+| 16000061 | Operation not supported. |
+| 16000062 | The number of child processes exceeds the upper limit. |
+
+**Example**
+
+Sample code for the child process is provided below. For details, see [Creating/Terminating Native Child Processes (C/C++) - Creating a Native Child Process That Supports Pass-by-Parameter](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/capi-nativechildprocess-development-guideline#creating-a-native-child-process-that-supports-pass-by-parameter).
+
+#include <AbilityKit/native\_child\_process.h>
+
+extern "C" {
+
+/\*\*
+ \* Entry function of a child process, which implements the service logic of the child process.
+ \* The function name can be customized and is specified when the main process calls the OH\_Ability\_StartNativeChildProcess method. In this example, the function name is Main.
+ \* After the function is returned, the child process exits.
+ \*/
+void Main(NativeChildProcess\_Args args)
+{
+    // Obtain the input entryPrams.
+    char \*entryParams = args.entryParams;
+    // Obtain the input FD list, corresponding to args.fds in ChildProcessArgs.
+    NativeChildProcess\_Fd \*current = args.fdList.head;
+    while (current != nullptr) {
+        char \*fdName = current->fdName;
+        int32\_t fd = current->fd;
+        current = current->next;
+        // Service logic
+    }
+}
+} // extern "C"
+
+Sample code for the main process is provided below. For details about how to obtain the context in the example, see [Obtaining the Context of UIAbility](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/uiability-usage#obtaining-the-context-of-uiability).
+
+// Main process:
+// Call childProcessManager.startNativeChildProcess to start the child process.
+import { common, ChildProcessArgs, ChildProcessOptions, childProcessManager } from '@kit.AbilityKit';
+import { fileIo } from '@kit.CoreFileKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+
+@Entry
+@Component
+struct Index {
+  build() {
+    Row() {
+      Column() {
+        Text('Click')
+          .fontSize(30)
+          .fontWeight(FontWeight.Bold)
+          .onClick(() => {
+            try {
+              let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+              let path = context.filesDir + "/test.txt";
+              let file = fileIo.openSync(path, fileIo.OpenMode.READ\_ONLY | fileIo.OpenMode.CREATE);
+              let args: ChildProcessArgs = {
+                entryParams: "testParam",
+                fds: {
+                  "key1": file.fd
+                }
+              };
+              let options: ChildProcessOptions = {
+                isolationMode: false
+              };
+              childProcessManager.startNativeChildProcess("libentry.so:Main", args, options)
+                .then((pid) => {
+                  console.info(\`startChildProcess success, pid: ${pid}\`);
+                })
+                .catch((err: BusinessError) => {
+                  console.error(\`startChildProcess business error, errorCode: ${err.code}, errorMsg:${err.message}\`);
+                })
+            } catch (err) {
+              console.error(\`startChildProcess error, errorCode: ${err.code}, errorMsg:${err.message}\`);
+            }
+          });
+      }
+      .width('100%')
+    }
+    .height('100%')
+  }
+}

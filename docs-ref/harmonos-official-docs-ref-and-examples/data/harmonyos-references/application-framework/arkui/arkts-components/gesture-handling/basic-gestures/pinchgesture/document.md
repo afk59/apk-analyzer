@@ -1,0 +1,294 @@
+# PinchGesture
+
+**PinchGesture** is used to trigger a pinch gesture, which requires two to five fingers with a minimum 5 vp distance between the fingers.
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/b4/v3/xD9KqGSjSaan5iC3gV_zWw/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062237Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=1D705ED69E8BEBD68D8235FE449E173C2CCE5296CC4403D96A7EE6C0FD65B7E4)
+
+This gesture is supported since API version 7. Updates will be marked with a superscript to indicate their earliest API version.
+
+To trigger the pinch gesture again after successful recognition, all fingers must be lifted and then make contact again to satisfy the recognition criteria.
+
+#### APIs
+
+#### \[h2\]PinchGesture
+
+PinchGesture(value?: { fingers?: number; distance?: number })
+
+Sets the parameters for the pinch gesture. Inherits from [GestureInterface<T>](../../gesture-common-apis/document.md#gestureinterfacet11).
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| value | { fingers?: number; distance?: number } | No | 
+Parameters for the pinch gesture.
+
+\- **fingers**: minimum number of fingers to trigger a pinch. The value ranges from 2 to 5.
+
+Default value: **2**
+
+Value range: \[2, 5\]. Values outside this range are automatically adjusted to the default value.
+
+While more fingers than the minimum number can be pressed to trigger the gesture, only the first fingers of the minimum number participate in gesture calculation.
+
+\- **distance**: minimum recognition distance, in vp. This distance refers to the difference between the current average distance from the multiple finger positions to their center point and the average distance when the fingers first made contact. If this difference meets or exceeds the minimum recognition distance, the pinch gesture is recognized.
+
+Default value: **5**
+
+**NOTE**
+
+Value range: \[0, +∞). If the value is less than or equal to 0, it will be converted to the default value.
+
+ |
+
+#### \[h2\]PinchGesture15+
+
+PinchGesture(options?: PinchGestureHandlerOptions)
+
+Sets the parameters for the pinch gesture. Compared with [PinchGesture](#pinchgesture-1), this API adds the **isFingerCountLimited** parameter to **options**, which determines whether to enforce the exact number of fingers touching the screen.
+
+**Atomic service API**: This API can be used in atomic services since API version 15.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| options | [PinchGestureHandlerOptions](../../gesture-binding/gesture-handler/document.md#pinchgesturehandleroptions) | No | Parameters of the pinch gesture handler. |
+
+#### Events
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/2b/v3/ZKQ9wdsTRdKHhtSOOcrpfA/note_3.0-en-us.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062237Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=69819CC00F88EB5F093A53203F220E9F2AB297A7600EC44AA7C61479169F5D3C)
+
+In **fingerList** of [GestureEvent](../../gesture-common-apis/document.md#gestureevent), the index of a finger corresponds to its position, that is, the ID of a finger in **fingerList\[index\]** refers to its index. If a finger is pressed first and does not participate in triggering of the current gesture, its position in **fingerList** is left empty. You are advised to use **fingerInfos**.
+
+#### \[h2\]onActionStart
+
+onActionStart(event: (event: GestureEvent) => void)
+
+Triggered after the pinch gesture is recognized.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| event | (event: [GestureEvent](../../gesture-common-apis/document.md#gestureevent)) => void | Yes | Callback for the pinch event. |
+
+#### \[h2\]onActionUpdate
+
+onActionUpdate(event: (event: GestureEvent) => void)
+
+Triggered when the user moves the finger in the pinch gesture on the screen.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| event | (event: [GestureEvent](../../gesture-common-apis/document.md#gestureevent)) => void | Yes | Callback for the pinch event. |
+
+#### \[h2\]onActionEnd
+
+onActionEnd(event: (event: GestureEvent) => void)
+
+Triggered when all fingers are lifted after successful pinch gesture recognition.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| event | (event: [GestureEvent](../../gesture-common-apis/document.md#gestureevent)) => void | Yes | Callback for the pinch event. |
+
+#### \[h2\]onActionCancel
+
+onActionCancel(event: () => void)
+
+Triggered when a touch cancellation event occurs after successful pinch gesture recognition. No gesture event information is returned.
+
+**Atomic service API**: This API can be used in atomic services since API version 11.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| event | () => void | Yes | Callback for the pinch event. |
+
+#### \[h2\]onActionCancel18+
+
+onActionCancel(event: Callback<GestureEvent>)
+
+Triggered when a touch cancellation event occurs after successful pinch gesture recognition. Compared with [onActionCancel](#onactioncancel), this callback returns gesture event information.
+
+**Atomic service API**: This API can be used in atomic services since API version 18.
+
+**System capability**: SystemCapability.ArkUI.ArkUI.Full
+
+**Parameters**
+
+| Name | Type | Mandatory | Description |
+| :-- | :-- | :-- | :-- |
+| event | Callback<[GestureEvent](../../gesture-common-apis/document.md#gestureevent)\> | Yes | Callback for the pinch event. |
+
+#### Example
+
+## Example 1: Implementing Simple Scaling
+
+This example demonstrates the recognition of a three-finger pinch gesture using **PinchGesture**.
+
+// xxx.ets
+@Entry
+@Component
+struct PinchGestureExample {
+  @State scaleValue: number = 1;
+  @State pinchValue: number = 1;
+  @State pinchX: number = 0;
+  @State pinchY: number = 0;
+
+  build() {
+    Column() {
+      Column() {
+        Text('PinchGesture scale:\\n' + this.scaleValue)
+        Text('PinchGesture center:\\n(' + this.pinchX + ',' + this.pinchY + ')')
+      }
+      .height(200)
+      .width(300)
+      .padding(20)
+      .border({ width: 3 })
+      .margin({ top: 100 })
+      .scale({ x: this.scaleValue, y: this.scaleValue, z: 1 })
+      // The gesture event is triggered by pinching three fingers together.
+      .gesture(
+      PinchGesture({ fingers: 3 }) // Three-finger pinch gesture for zooming in or out.
+        .onActionStart((event: GestureEvent) => {
+          console.info('Pinch start')
+        })
+        .onActionUpdate((event: GestureEvent) => {
+          if (event) {
+            this.scaleValue = this.pinchValue \* event.scale
+            this.pinchX = event.pinchCenterX
+            this.pinchY = event.pinchCenterY
+          }
+        })
+        .onActionEnd((event: GestureEvent) => {
+          this.pinchValue = this.scaleValue
+          console.info('Pinch end')
+        })
+      )
+    }.width('100%')
+  }
+}
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/40/v3/KpSITbjqTXaw40lwVmv5ng/en-us_image_0000002568685207.png?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062237Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=E03D921E7B85566914E04C70CE56ACA025EC6E13653255B50E85EFFE500A5DF1)
+
+## Example 2: Implementing Image Scaling with Finger Tracking
+
+This example demonstrates how to implement image scaling with finger tracking by configuring **PinchGesture**.
+
+// xxx.ets
+import { UIContext, display, matrix4 } from '@kit.ArkUI';
+
+@Entry
+@Component
+struct PinchGestureExample {
+  private uiContext: UIContext = new UIContext();
+  private contentWidth: number = 0;
+  private contentHeight: number = 0;
+  private scaleMin: number = 0.3;
+  private scaleMax: number = 30.0;
+  private screenWidth: number = 0;
+  private screenHeight: number = 0;
+  @State pntX: number = 0;
+  @State pntY: number = 0;
+  @State curScale: number = 1;
+  @State preScale: number = 1;
+  @State offsetX: number = 0;
+  @State offsetY: number = 0;
+  @State matrix: matrix4.Matrix4Transit = matrix4.identity()
+    .translate({ x: this.offsetX, y: this.offsetY })
+    .scale({ x: this.curScale, y: this.curScale });
+
+  public updateMatrix(): void {
+    this.matrix = matrix4.identity()
+      .scale({ x: this.curScale, y: this.curScale })
+      .translate({ x: this.uiContext.vp2px(this.offsetX), y: this.uiContext.vp2px(this.offsetY) });
+  }
+
+  aboutToAppear(): void {
+    this.uiContext = this.getUIContext();
+    let screenSize = display.getDefaultDisplaySync();
+    this.screenWidth = this.uiContext.px2vp(screenSize.width);
+    this.screenHeight = this.uiContext.px2vp(screenSize.height);
+  }
+
+  build() {
+    Column() {
+      // Replace $r('app.media.img') with the image resource file you use.
+      Image($r('app.media.img'))
+        .objectFit(ImageFit.Contain)
+        .draggable(false)
+        .onComplete((event) => {
+          this.contentWidth = this.uiContext.px2vp(event!.contentWidth);
+          this.contentHeight = this.uiContext.px2vp(event!.contentHeight);
+        })
+        .transform(this.matrix)
+    }
+    // The gesture event is triggered by a two-finger pinch.
+    .gesture(
+      PinchGesture({ fingers: 2 }) // Two-finger pinch gesture for zooming in or out.
+        .onActionStart((event: GestureEvent) => {
+          // Displayed size of the image before scaling
+          const displayWidth = this.contentWidth \* this.curScale;
+          const displayHeight = this.contentHeight \* this.curScale;
+          // Upper left corner coordinates before scaling
+          const left = (this.screenWidth - displayWidth) / 2 + this.offsetX;
+          const top = (this.screenHeight - displayHeight) / 2 + this.offsetY;
+          // Pinch center position (as a percentage) relative to the upper left corner of the displayed image
+          this.pntX = (event.pinchCenterX - left) / displayWidth;
+          this.pntY = (event.pinchCenterY - top) / displayHeight;
+          // Scale factor before the current operation
+          this.preScale = this.curScale;
+        })
+        .onActionUpdate((event: GestureEvent) => {
+          // Target scale factor
+          this.curScale = this.preScale \* event.scale;
+          let targetDisplayWidth = this.contentWidth \* this.curScale;
+          let targetDisplayHeight = this.contentHeight \* this.curScale;
+          // Coordinates of the pinch center after scaling
+          const pointX = (this.screenWidth - targetDisplayWidth) / 2 + targetDisplayWidth \* this.pntX;
+          const pointY = (this.screenHeight - targetDisplayHeight) / 2 + targetDisplayHeight \* this.pntY;
+          // Offset required to align the calculated point (pointX, pointY) with the actual pinch center after scaling
+          this.offsetX = event.pinchCenterX - pointX;
+          this.offsetY = event.pinchCenterY - pointY;
+          this.updateMatrix();
+        })
+        .onActionEnd((event: GestureEvent) => {
+          if (this.curScale < this.scaleMin || this.curScale > this.scaleMax) {
+            this.curScale = 1;
+            this.offsetX = 0;
+            this.offsetY = 0;
+            this.updateMatrix();
+          }
+        })
+    )
+  }
+}
+
+![](https://contentcenter-vali-drcn.dbankcdn.cn/pvt_2/DeveloperAlliance_scene_100_1/46/v3/kcDUghynS62WnUTOST9R4w/en-us_image_0000002568765217.gif?HW-CC-KV=V1&amp;HW-CC-Date=20260410T062237Z&amp;HW-CC-Expire=86400&amp;HW-CC-Sign=38578E59E62D1194EFF0699E7EF68D0776995BA121C4C1F1B275AE96322DC490)

@@ -1,0 +1,3 @@
+# Push Message Upper Limit Reached
+
+You are advised to optimize your push notification policy by implementing targeted push notifications to minimize or avoid sending push notifications to all users. If your message content contains service- or communication-related information, you are advised to apply for the message self-classification permission to classify your messages. For details, please refer to [Message Classification Standards and Notification Modes](../../preparations/applying-for-scenario-specific-message-permissions/document.md#section1924971516101). With this permission, you can send up to 3000 messages of this category per device on a daily basis.
