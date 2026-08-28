@@ -52,6 +52,15 @@ async function pick(kind) {
 }
 
 function renderPicked(kind, res) {
+  // The most recent pick wins, so choosing a folder after a file does what it
+  // looks like it does instead of silently keeping the earlier selection.
+  if (kind === 'folder') state.file = null; else state.folder = null;
+  $('#picked-file').hidden   = !state.file;
+  $('#picked-folder').hidden = !state.folder;
+  const input = state.file || state.folder;
+  $('#start').disabled = !input;
+  $('#start-hint').textContent = input ? '' : 'pick a file or a folder first';
+
   const box = kind === 'folder' ? $('#picked-folder') : $('#picked-file');
   let html = `<strong>${escapeHtml(res.name)}</strong><br>${escapeHtml(res.path)}`;
   if (kind === 'folder') {

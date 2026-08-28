@@ -22,12 +22,13 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import config
 from app.services import dialogs
+from app.services.jobs import runner
 
 app = FastAPI(title="Migration Analyzer", docs_url=None, redoc_url=None)
 
@@ -39,6 +40,16 @@ class PickRequest(BaseModel):
 
 class OpenRequest(BaseModel):
     path: str
+
+
+class RunRequest(BaseModel):
+    input: str
+    target: str = "hmos"
+    # Batch runs default to skipping files that already have a report: an
+    # interrupted 40-app run then costs only the file it was on, which is what
+    # made v1's per-process runner usable at all. A single file picked by hand
+    # is an explicit "analyse this now", so it is never skipped.
+    skip_existing: bool | None = None
 
 
 # --------------------------------------------------------------- health
@@ -97,6 +108,92 @@ def open_path(req: OpenRequest):
     except Exception as exc:
         raise HTTPException(500, f"Could not open the file: {exc}")
     return JSONResponse({"opened": str(path)})
+
+
+# --------------------------------------------------------------- runs
+def _inputs_for(target_path: Path):
+    """(files to analyse, human label). A folder expands; a file is itself."""
+    if target_path.is_dir():
+        # A directory of .exe/.dll is one logical application (exe_folder mode),
+        # not a batch of unrelated binaries -- that distinction is the engine's,
+        # and re-deciding it here would produce a different report than the CLI.
+        binaries = [p for p in sorted(target_path.glob("*"))
+                    if p.suffix.lower() in (".exe", ".dll")]
+        others = [p for p in sorted(target_path.glob("*"))
+                  if p.suffix.lower() in (".apk", ".ipa")]
+        if binaries and not others:
+            return [target_path], f"{target_path.name} (folder)"
+        return ([p for p in sorted(target_path.glob("*"))
+                 if p.suffix.lower() in config.SUPPORTED_INPUTS],
+                f"{target_path.name} ({len(others) + len(binaries)} files)")
+    return [target_path], target_path.name
+
+
+@app.post("/api/runs")
+def start_run(req: RunRequest):
+    path = Path(req.input)
+    if not path.exists():
+        raise HTTPException(404, f"Not found: {req.input}")
+    if req.target not in ("hmos", "hms"):
+        raise HTTPException(400, "target must be 'hmos' or 'hms'")
+
+    files, label = _inputs_for(path)
+    if not files:
+        raise HTTPException(400, "Nothing analysable in that folder.")
+
+    skip = req.skip_existing
+    if skip is None:
+        skip = path.is_dir() and len(files) > 1
+    run_id = runner.submit(files, req.target, skip_existing=skip, input_label=label)
+    return {"run_id": run_id, "file_count": len(files), "input": label,
+            "skip_existing": skip}
+
+
+@app.get("/api/runs/{run_id}")
+def run_state(run_id: int):
+    run = runner.get(run_id)
+    if run is None:
+        raise HTTPException(404, "No such run")
+    return run.snapshot()
+
+
+@app.post("/api/runs/{run_id}/cancel")
+def cancel_run(run_id: int):
+    if not runner.cancel(run_id):
+        raise HTTPException(409, "That run is not running.")
+    return {"cancelled": run_id}
+
+
+@app.get("/api/runs/{run_id}/events")
+def run_events(run_id: int, cursor: int = 0):
+    """SSE. Forwards worker events verbatim, plus queue-level ones.
+
+    A keep-alive comment goes out whenever the wait lapses with nothing new: a
+    single file in this corpus can take 17 minutes, and a silent connection for
+    that long is one an intermediary is entitled to drop.
+    """
+    if runner.get(run_id) is None:
+        raise HTTPException(404, "No such run")
+
+    def stream():
+        pos = cursor
+        while True:
+            events, pos, finished = runner.events(run_id, pos, timeout=15.0)
+            if events is None:
+                break
+            for ev in events:
+                payload = json.dumps(ev, ensure_ascii=False, default=str)
+                yield f"data: {payload}\n\n"
+            if finished and not events:
+                yield "event: end\ndata: {}\n\n"
+                break
+            if not events:
+                yield ": keep-alive\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    })
 
 
 # --------------------------------------------------------------- results
