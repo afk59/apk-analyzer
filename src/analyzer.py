@@ -435,10 +435,15 @@ CLI (APK):
 CLI (EXE):
   python analyzer.py myapp.exe --mode exe
   python analyzer.py myapp.exe --mode exe --excel --json
+
+CLI (EXE folder -- every .exe/.dll in one directory as a single app):
+  python analyzer.py input/pc/myapp
+  python analyzer.py input/pc/myapp --mode exe_folder --no-open
         """,
     )
-    parser.add_argument("input",     nargs="?",                           help=".apk, .exe, or .ipa file")
-    parser.add_argument("--mode",    "-M", choices=["apk", "exe", "ipa"], help="Input type: apk, exe, or ipa")
+    parser.add_argument("input",     nargs="?",                           help=".apk/.exe/.ipa file, or a folder for exe_folder mode")
+    parser.add_argument("--mode",    "-M", choices=["apk", "exe", "ipa", "exe_folder"],
+                        help="Input type: apk, exe, ipa, or exe_folder (a directory of .exe/.dll)")
     parser.add_argument("--target",  "-t", choices=["hmos", "hms"],       help="APK target (EXE/IPA always hmos)")
     parser.add_argument("--output",  "-o",                          help="HTML output path")
     parser.add_argument("--json",    "-j", action="store_true",     help="Also produce JSON output")
@@ -471,12 +476,18 @@ CLI (EXE):
             print_warn(f"File not found: {file_path}")
             sys.exit(1)
         sfx = file_path.suffix.lower()
+        # A directory can only be exe_folder mode, so infer it rather than
+        # falling through to "apk" and failing inside androguard.
         mode = args.mode or (
-            "ipa" if sfx == ".ipa"
+            "exe_folder" if file_path.is_dir()
+            else "ipa" if sfx == ".ipa"
             else "exe" if sfx in (".exe", ".dll")
             else "apk"
         )
-        target = "hmos" if mode in ("exe", "ipa") else (args.target or "hmos")
+        if mode == "exe_folder" and not file_path.is_dir():
+            print_warn(f"--mode exe_folder needs a directory of .exe/.dll files: {file_path}")
+            sys.exit(1)
+        target = "hmos" if mode in ("exe", "ipa", "exe_folder") else (args.target or "hmos")
 
 
     if mode == "batch":
