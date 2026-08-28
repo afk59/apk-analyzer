@@ -372,6 +372,22 @@ def _detect(apk_path, names, package_name=None, namespaces=None):
         if names is None:
             names = z.namelist()
         name_set = set(names)
+
+        # An APKM/XAPK renamed to .apk is a ZIP OF APKs, not an APK. It gets past
+        # the extension check, androguard then finds no manifest and no dex, and
+        # the scoring below sees no signature at all -- which would be reported as
+        # "Native (Java/Kotlin)", an assertion drawn from an empty file. Same
+        # test apk_engine._warn_if_split_bundle uses.
+        if "classes.dex" not in name_set and "AndroidManifest.xml" not in name_set:
+            inner = sorted(n for n in names if n.lower().endswith(".apk"))
+            if inner:
+                return {**_UNKNOWN, "framework": "Unknown", "confidence": "none",
+                        "evidence": inner[:6],
+                        "detail": {"note": "split-APK bundle (APKM/XAPK) with "
+                                           f"{len(inner)} inner .apk file(s) and no "
+                                           "dex of its own -- extract it and analyze "
+                                           "base.apk instead"}}
+
         lib_bases = {}
         for n in names:
             m = re.match(r"^lib/[^/]+/(lib.+\.so)$", n)
