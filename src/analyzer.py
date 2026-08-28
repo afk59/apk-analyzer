@@ -135,6 +135,15 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
     ipa_files = sorted(input_dir.glob("*.ipa"))
     all_files = apk_files + exe_files + ipa_files
 
+    # APKM/XAPK are ZIPs of split APKs, not APKs: androguard finds no manifest
+    # and no dex in them, so they are deliberately not globbed. Say so, instead
+    # of leaving a file sitting in input/ that never appears in any output.
+    bundles = sorted(input_dir.glob("*.apkm")) + sorted(input_dir.glob("*.xapk"))
+    if bundles:
+        print_warn(f"Skipping {len(bundles)} split-APK bundle(s) — extract and analyze base.apk:")
+        for b in bundles:
+            print_warn(f"    {b.name}")
+
     if not all_files:
         print_warn("No APK, EXE, DLL, or IPA files found in input/")
         sys.exit(0)
