@@ -37,5 +37,6 @@ const API = (() => {
     runState:  (id)  => call('/api/runs/' + id),
     cancelRun: (id)  => post('/api/runs/' + id + '/cancel', {}),
     rescan:    ()    => post('/api/rescan', {}),
+    download:  (packages, target) => post('/api/downloads', { packages, target }),
   };
 })();

@@ -52,6 +52,16 @@
           <button class="btn" id="pick-folder">Choose folder&hellip;</button>
           <div class="picked" id="picked-folder" hidden></div>
         </div>
+
+        <div class="card">
+          <h3>Download by package name</h3>
+          <p>Fetch the APK from a public mirror and analyse it. One package per line.
+             Each download is checked: it must be a real APK, and its manifest package
+             must be the one you asked for.</p>
+          <textarea id="packages" rows="3" spellcheck="false"
+                    placeholder="com.example.app"></textarea>
+          <button class="btn" id="download" style="margin-top:var(--space-3)">Download &amp; analyse</button>
+        </div>
       </div>
 
       <p class="lede" style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">

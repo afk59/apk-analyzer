@@ -52,9 +52,17 @@ _REAP_GRACE_SEC = 20
 
 
 class Run:
-    def __init__(self, run_id: int, paths, target: str, input_label: str):
+    def __init__(self, run_id: int, paths, target: str, input_label: str, packages=None):
         self.id = run_id
         self.paths = list(paths)
+        # Package names to fetch before analysing. They become entries in
+        # self.paths as they arrive, so everything downstream -- the loop, the
+        # aggregate step, the manifest -- sees ordinary files.
+        self.packages = list(packages or [])
+        # Fixed at construction. A downloaded package is APPENDED to paths while
+        # it stays in packages, so counting both at read time double-counts it
+        # and the progress bar's denominator grows as the run succeeds.
+        self.total = len(self.paths) + len(self.packages)
         self.target = target
         self.input_label = input_label
         self.started_at = datetime.now().isoformat(timespec="seconds")
@@ -81,7 +89,7 @@ class Run:
             "id": self.id, "status": self.status, "target": self.target,
             "input": self.input_label,
             "started_at": self.started_at, "finished_at": self.finished_at,
-            "file_count": len(self.paths),
+            "file_count": self.total,
             "done_count": len(self.results) + len(self.failures),
             "current": self.current,
             "results": self.results, "failures": self.failures,
@@ -96,11 +104,14 @@ class JobRunner:
         self._lock = threading.Lock()
 
     # ----------------------------------------------------------- public
-    def submit(self, paths, target="hmos", skip_existing=False, input_label="") -> int:
+    def submit(self, paths, target="hmos", skip_existing=False, input_label="",
+               packages=None) -> int:
         with self._lock:
             run_id = self._next_id
             self._next_id += 1
-            run = Run(run_id, paths, target, input_label or str(paths[0] if paths else ""))
+            run = Run(run_id, paths, target,
+                      input_label or str(paths[0] if paths else (packages or [""])[0]),
+                      packages=packages)
             self._runs[run_id] = run
         threading.Thread(target=self._drive, args=(run, skip_existing),
                          daemon=True, name=f"run-{run_id}").start()
@@ -144,7 +155,9 @@ class JobRunner:
 
     # ----------------------------------------------------------- internals
     def _drive(self, run: Run, skip_existing: bool):
-        run.push({"stage": "run_started", "file_count": len(run.paths)})
+        run.push({"stage": "run_started", "file_count": run.total})
+        if run.packages:
+            self._fetch_all(run)
         for index, path in enumerate(run.paths):
             if run.cancelled.is_set():
                 break
@@ -161,20 +174,76 @@ class JobRunner:
         if not run.cancelled.is_set():
             self._aggregate(run)
         run.finished_at = datetime.now().isoformat(timespec="seconds")
-        run.status = "cancelled" if run.cancelled.is_set() else "done"
+        final = "cancelled" if run.cancelled.is_set() else "done"
+
         # The manifest is what makes the SQLite index disposable: it is the
         # durable record of which apps belonged to which run, which nothing else
         # on disk carries. See docs/decisions/0002 and app/store/index.py.
         try:
             from app.store import index as store_index
-            store_index.write_manifest(run.snapshot())
+            store_index.write_manifest({**run.snapshot(), "status": final,
+                                        "finished_at": run.finished_at})
             store_index.rescan()
         except Exception as exc:
             run.push({"stage": "log", "level": "warn",
                       "detail": f"Could not update the results index: {exc}"})
-        run.push({"stage": "run_finished", "status": run.status,
+
+        run.push({"stage": "run_finished", "status": final,
                   "ok": len(run.results), "failed": len(run.failures),
                   "workbooks": run.workbooks})
+        # STATUS IS SET LAST, and it must stay that way. `finished` in events()
+        # is derived from it, so the SSE endpoint treats a non-running status
+        # with no pending events as "the stream is over" and closes. Setting it
+        # before the manifest write -- which takes hundreds of milliseconds --
+        # left a window where the reader closed the stream before run_finished
+        # was ever appended, and the UI's Start button stayed disabled forever.
+        run.status = final
+
+    def _fetch_all(self, run: Run):
+        """Download every requested package, then let the normal loop analyse it.
+
+        Downloading happens IN THIS THREAD rather than a worker subprocess: it is
+        network-bound, not memory-bound, so the reason the analysis is isolated
+        (androguard not returning its heap) does not apply. All the network code
+        still lives in one module, which is the rule that actually matters.
+
+        A package that cannot be fetched is recorded as a failure and the run
+        continues -- same per-file isolation as a corrupt APK.
+        """
+        from app.services import downloader
+
+        for package in run.packages:
+            if run.cancelled.is_set():
+                break
+            run.push({"stage": "download_started", "file": package})
+
+            state = {"last": 0.0}
+
+            def progress(got, total, note=None, _pkg=package, _st=state):
+                if note:
+                    run.push({"stage": "log", "level": "warn", "file": _pkg, "detail": note})
+                    return
+                # Throttled: a 124 MB app at 256 KB a chunk is ~500 events, and
+                # every one of them goes down the SSE stream to a progress bar
+                # that cannot show that much detail anyway.
+                now = time.monotonic()
+                if total and (now - _st["last"] > 0.4 or got >= total):
+                    _st["last"] = now
+                    run.push({"stage": "download_progress", "file": _pkg,
+                              "got": got, "total": total})
+
+            result = downloader.fetch(package, config.INPUT_DIR, progress)
+
+            if result.state == "ready":
+                run.paths.append(result.path)
+                run.push({"stage": "download_done", "file": package,
+                          "path": str(result.path), "source": result.source,
+                          "version": result.version, "size": result.size,
+                          "note": result.note})
+            else:
+                run.failures.append({"source_file": package, "error": result.error})
+                run.push({"stage": "download_failed", "file": package,
+                          "error": result.error, "tried": result.tried})
 
     def _aggregate(self, run: Run):
         """The two batch workbooks, for a run that covered more than one file.
