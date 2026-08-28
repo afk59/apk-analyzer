@@ -36,5 +36,6 @@ const API = (() => {
                        post('/api/runs', { input, target, skip_existing: skipExisting }),
     runState:  (id)  => call('/api/runs/' + id),
     cancelRun: (id)  => post('/api/runs/' + id + '/cancel', {}),
+    rescan:    ()    => post('/api/rescan', {}),
   };
 })();

@@ -162,6 +162,16 @@ class JobRunner:
             self._aggregate(run)
         run.finished_at = datetime.now().isoformat(timespec="seconds")
         run.status = "cancelled" if run.cancelled.is_set() else "done"
+        # The manifest is what makes the SQLite index disposable: it is the
+        # durable record of which apps belonged to which run, which nothing else
+        # on disk carries. See docs/decisions/0002 and app/store/index.py.
+        try:
+            from app.store import index as store_index
+            store_index.write_manifest(run.snapshot())
+            store_index.rescan()
+        except Exception as exc:
+            run.push({"stage": "log", "level": "warn",
+                      "detail": f"Could not update the results index: {exc}"})
         run.push({"stage": "run_finished", "status": run.status,
                   "ok": len(run.results), "failed": len(run.failures),
                   "workbooks": run.workbooks})

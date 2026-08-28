@@ -10,7 +10,7 @@ from pathlib import Path
 
 from app.config import DB_PATH, rel_to_root
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -21,7 +21,12 @@ CREATE TABLE IF NOT EXISTS runs (
     target       TEXT NOT NULL,          -- hmos | hms
     status       TEXT NOT NULL,          -- running | done | failed | cancelled
     input_path   TEXT NOT NULL,
-    file_count   INTEGER NOT NULL DEFAULT 0
+    file_count   INTEGER NOT NULL DEFAULT 0,
+    -- Files this run chose not to re-analyse because a report already existed.
+    -- They belong to the run that PRODUCED them, so they are not listed here as
+    -- apps -- but a run that skipped everything would otherwise read as "0 apps"
+    -- and look like it did nothing.
+    skipped_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS apps (
@@ -72,6 +77,9 @@ CREATE INDEX IF NOT EXISTS idx_artifacts_app ON artifacts(app_id);
 """
 
 
+_TABLES = ("artifacts", "apps", "downloads", "runs")   # children first
+
+
 def connect() -> sqlite3.Connection:
     """Open (creating if needed) and bring the schema up to date."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -81,22 +89,35 @@ def connect() -> sqlite3.Connection:
     # WAL so a reader (the UI listing results) never blocks the writer (a worker
     # finishing a file), which is the normal state during a batch.
     conn.execute("PRAGMA journal_mode = WAL")
-    conn.executescript(_SCHEMA)
     _migrate(conn)
+    conn.executescript(_SCHEMA)
     return conn
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    """Forward-only migrations, keyed on PRAGMA user_version.
+    """Schema changes are applied by REBUILDING, not by ALTER.
 
-    The safety net for a wrong migration is that this file is disposable:
-    delete it and rescan. That is only true while the rule in the module
-    docstring holds, so it is worth re-reading before adding a column.
+    This file is an index: every column in it is derivable from an artifact on
+    disk (see the module docstring and docs/decisions/0002), so the correct
+    response to a schema change is to throw the copy away and re-derive it. That
+    is simpler than a migration ladder and it cannot leave a half-migrated
+    database behind.
+
+    It also avoids a trap: `CREATE TABLE IF NOT EXISTS` silently does nothing
+    when the table exists, so adding a column to _SCHEMA without this would
+    leave an old database missing that column and every query against it
+    failing at runtime rather than at upgrade time.
+
+    Callers re-populate by calling store.index.rescan(); /api/results does it
+    automatically when it finds an empty index and reports on disk.
     """
     current = conn.execute("PRAGMA user_version").fetchone()[0]
-    if current < SCHEMA_VERSION:
-        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-        conn.commit()
+    if current == SCHEMA_VERSION:
+        return
+    for table in _TABLES:
+        conn.execute(f"DROP TABLE IF EXISTS {table}")
+    conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    conn.commit()
 
 
 # Store paths relative to the repo root; absolute ones do not travel. One

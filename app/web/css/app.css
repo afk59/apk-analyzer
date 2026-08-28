@@ -179,3 +179,22 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 
 .donelist { margin-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
 .donelist .fail { border-color: var(--red); }
+
+/* ------------------------------------------------------------ library */
+.rungroup { margin-bottom: var(--space-5); }
+.runhead {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: 0 var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border); margin-bottom: var(--space-2);
+}
+.runhead .title { font-weight: 600; flex: 1; min-width: 0; overflow: hidden;
+                  text-overflow: ellipsis; white-space: nowrap; }
+.runhead .when  { font-family: var(--mono); font-size: .74rem; color: var(--text3); }
+
+.workbooks {
+  display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+  margin-bottom: var(--space-5); padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.workbooks .label { font-size: .8rem; color: var(--text2); margin-right: var(--space-2); }
