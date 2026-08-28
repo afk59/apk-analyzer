@@ -80,7 +80,7 @@ than ALTER, since every column is derivable from disk.
 
 ---
 
-## M4 — APK search & download `todo`
+## M4 — APK search & download `done` (2026-08-29)
 
 Enter a package name, fetch the APK, then analyse it.
 
@@ -94,6 +94,22 @@ Enter a package name, fetch the APK, then analyse it.
 
 **Acceptance:** a known package downloads, verifies, and analyses in one flow; a nonexistent one
 fails with a message naming which sources were tried.
+
+**Met.** `d.apkpure.com`'s direct endpoint — no HTML parsing, and a missing package answers a
+clean 404. Verified against the local corpus: the bytes served match the sizes of files already
+on disk.
+
+Two things the testing changed:
+
+* **`/b/APK/` does not always serve a single APK.** `com.foodgulu` came back as a 143.9 MB App
+  Bundle at that path. Since App Bundle is the Play default, rejecting it would have failed for
+  a large share of modern apps, so `fetch()` unwraps it and analyses `base.apk`, reporting that
+  the config splits were dropped. Not a degraded case — 27 of the 43 corpus apps are base
+  splits too — but native libraries are genuinely missing and the log says so.
+* **Two defects fixed:** `file_count` double-counted a downloaded package (it is appended to
+  `paths` while staying in `packages`), and `run.status` was set *before* the manifest write and
+  the `run_finished` event, so an SSE reader waking in that window closed the stream early and
+  the UI's Start button would never re-enable. Status is now set last.
 
 > Scope note: only for apps the team is authorised to analyse. Sources are third-party mirrors
 > with their own terms; treat availability as best-effort and never as a guarantee.
