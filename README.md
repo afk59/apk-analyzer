@@ -20,6 +20,15 @@ Only two things are deliberately **not** in the repository, and neither is neede
 the tool: the APK/EXE/IPA test corpus (large binaries, not ours to redistribute) and
 generated output (`src/result/`, reports, workbooks).
 
+> **Windows: enable long paths before cloning.** The documentation corpus nests deeply —
+> the longest path inside the repo is 212 characters, and Windows' default limit is 260
+> for the *whole* path including where you cloned it. Clone into a short directory and
+> run this once, or the checkout will fail partway with "Filename too long":
+>
+> ```
+> git config --global core.longpaths true
+> ```
+
 ## Requirements
 
 Before using this tool, make sure **Python** is installed on your computer.
