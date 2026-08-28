@@ -196,60 +196,29 @@ def run_events(run_id: int, cursor: int = 0):
     })
 
 
-# --------------------------------------------------------------- results
-def _agent_json_for(report: Path):
-    """The agent JSON that belongs to a report, if it was written.
-
-    Both names are built from the same stem in engine/analyzer.py:
-        <stem>_<mode>_<target>_report.html
-        agent_outputs/<stem>_<mode>_<target>_agent.json
-    """
-    cand = config.AGENT_DIR / (report.name.replace("_report.html", "_agent.json"))
-    return cand if cand.exists() else None
-
-
+# --------------------------------------------------------------- library
 @app.get("/api/results")
 def results():
-    """What is already on disk, newest first.
+    """The library: runs newest first, each with its apps.
 
-    A filesystem scan on purpose: M3 replaces this with the SQLite index, and
-    the index has to be rebuildable from exactly this information (see
-    docs/decisions/0002). Doing it this way first proves that is true.
+    Served from the SQLite index. The index is only ever a copy of what is on
+    disk -- run manifests in engine/result/.runs plus the agent JSON beside each
+    report -- so /api/rescan can rebuild it from nothing (docs/decisions/0002).
+    It self-heals on an empty database, which is what happens on a first run and
+    after someone deletes the file.
     """
-    if not config.RESULT_DIR.exists():
-        return {"items": []}
+    from app.store import index as store_index
+    data = store_index.library()
+    if not data["runs"] and any(config.RESULT_DIR.glob("*_report.html")):
+        store_index.rescan()
+        data = store_index.library()
+    return data
 
-    items = []
-    for report in config.RESULT_DIR.glob("*_report.html"):
-        item = {
-            "name": report.stem.replace("_report", ""),
-            "report": config.rel_to_root(report),
-            "modified": report.stat().st_mtime,
-            "app_name": None, "package": None, "kits": None,
-            "framework": None, "mode": None, "xlsx": None,
-        }
-        xlsx = report.with_suffix(".xlsx")
-        if xlsx.exists():
-            item["xlsx"] = config.rel_to_root(xlsx)
 
-        agent = _agent_json_for(report)
-        if agent:
-            try:
-                doc = json.loads(agent.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
-                doc = {}
-            meta = doc.get("app_metadata") or {}
-            item["mode"]      = doc.get("mode")
-            item["app_name"]  = meta.get("app_name") or meta.get("folder_name") or meta.get("file_name")
-            item["package"]   = meta.get("package_name") or meta.get("bundle_id")
-            item["kits"]      = len(doc.get("kit_list") or [])
-            fw = doc.get("framework") or {}
-            item["framework"] = fw.get("framework")
-            item["packer"]    = (fw.get("detail") or {}).get("packer")
-        items.append(item)
-
-    items.sort(key=lambda i: i["modified"], reverse=True)
-    return {"items": items}
+@app.post("/api/rescan")
+def rescan():
+    from app.store import index as store_index
+    return store_index.rescan()
 
 
 # --------------------------------------------------------------- static

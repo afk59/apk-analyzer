@@ -92,65 +92,130 @@ async function openPath(path) {
   }
 }
 
-function resultRow(item) {
+function coverageBits(a) {
+  // The engine's own honesty rules, carried through unchanged: a packed DEX or
+  // a sample too small to rate gets a reason, never a flattering number.
+  if (a.coverage_status === 'ok')     return a.coverage_pct + '% coverage';
+  if (a.coverage_status === 'packed') return 'coverage not measurable';
+  if (a.coverage_status === 'low')    return 'too few refs to rate';
+  return null;
+}
+
+function appRow(a) {
   const row = document.createElement('div');
-  row.className = 'result';
+  row.className = 'result' + (a.status === 'failed' ? ' fail' : '');
   row.tabIndex = 0;
   row.setAttribute('role', 'button');
 
-  const title = item.app_name || item.name;
   const bits = [];
-  if (item.package) bits.push(item.package);
-  if (item.mode)    bits.push(item.mode.toUpperCase());
-  bits.push(new Date(item.modified * 1000).toLocaleString());
+  if (a.package_name) bits.push(a.package_name);
+  const cov = coverageBits(a);
+  if (cov) bits.push(cov);
+  if (a.version) bits.push('v' + a.version);
 
-  row.innerHTML = `
-    <div class="grow">
-      <div class="name">${escapeHtml(title)}</div>
-      <div class="meta">${escapeHtml(bits.join('  ·  '))}</div>
-    </div>`;
+  row.innerHTML = '<div class="grow"><div class="name">' +
+    escapeHtml(a.app_name || a.source_file) + '</div><div class="meta">' +
+    escapeHtml(a.status === 'failed' ? (a.error || 'failed') : bits.join('  ·  ')) +
+    '</div></div>';
 
-  if (item.packer) {
+  // A failed app gets no chips and nothing to open. The caller appends it --
+  // returning early here must not also append, or the row lands twice.
+  if (a.status === 'failed') return row;
+
+  if (a.packer) {
     row.insertAdjacentHTML('beforeend',
-      `<span class="chip packed">DEX packed &middot; ${escapeHtml(item.packer)}</span>`);
-  } else if (item.framework) {
-    row.insertAdjacentHTML('beforeend', `<span class="chip">${escapeHtml(item.framework)}</span>`);
+      '<span class="chip packed">DEX packed · ' + escapeHtml(a.packer) + '</span>');
+  } else if (a.framework) {
+    row.insertAdjacentHTML('beforeend', '<span class="chip">' + escapeHtml(a.framework) + '</span>');
   }
-  if (item.kits !== null && item.kits !== undefined) {
-    row.insertAdjacentHTML('beforeend', `<span class="chip kits">${item.kits} kits</span>`);
+  if (a.kit_count !== null && a.kit_count !== undefined) {
+    row.insertAdjacentHTML('beforeend', '<span class="chip kits">' + a.kit_count + ' kits</span>');
   }
-  if (item.xlsx) {
+  const art = a.artifacts || {};
+  if (art.xlsx) {
     const btn = document.createElement('button');
     btn.className = 'btn ghost';
     btn.textContent = 'Excel';
-    btn.addEventListener('click', (ev) => { ev.stopPropagation(); openPath(item.xlsx); });
+    btn.addEventListener('click', (ev) => { ev.stopPropagation(); openPath(art.xlsx); });
     row.appendChild(btn);
   }
-
-  const open = () => openPath(item.report);
-  row.addEventListener('click', open);
-  row.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
-  });
+  if (art.html) {
+    const open = () => openPath(art.html);
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
+    });
+  }
   return row;
+}
+
+function runGroup(r) {
+  const wrap = document.createElement('div');
+  wrap.className = 'rungroup';
+
+  const when = r.started_at ? r.started_at.replace('T', ' ') : '';
+  const ok = r.apps.filter(a => a.status !== 'failed').length;
+  const bad = r.apps.length - ok;
+  const head = document.createElement('div');
+  head.className = 'runhead';
+  head.innerHTML = '<span class="title">' + escapeHtml(r.input_path || 'Run ' + r.id) + '</span>' +
+    '<span class="when">' + escapeHtml(when) + '</span>' +
+    '<span class="chip">' + ok + ' app' + (ok === 1 ? '' : 's') +
+    (bad ? ' · ' + bad + ' failed' : '') +
+    // A run that skipped everything would otherwise read as "0 apps" and look
+    // like it did nothing. The skipped files belong to the run that produced
+    // them, so they are counted here but listed there.
+    (r.skipped_count ? ' · ' + r.skipped_count + ' reused' : '') + '</span>' +
+    (r.status === 'cancelled' ? '<span class="chip packed">cancelled</span>' : '');
+  wrap.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'results';
+  r.apps.forEach(a => body.appendChild(appRow(a)));
+  wrap.appendChild(body);
+  return wrap;
 }
 
 async function loadResults() {
   const box = $('#results');
   box.innerHTML = '<div class="empty">Loading&hellip;</div>';
   try {
-    const { items } = await API.results();
+    const data = await API.results();
     box.innerHTML = '';
-    if (!items.length) {
-      box.innerHTML = '<div class="empty">No reports yet. Analyse something and it shows up here.</div>';
+
+    if (data.workbooks && Object.keys(data.workbooks).length) {
+      const wb = document.createElement('div');
+      wb.className = 'workbooks';
+      wb.innerHTML = '<span class="label">Batch workbooks</span>';
+      Object.entries(data.workbooks).forEach(([name, path]) => {
+        const b = document.createElement('button');
+        b.className = 'btn ghost';
+        b.textContent = name;
+        b.addEventListener('click', () => openPath(path));
+        wb.appendChild(b);
+      });
+      box.appendChild(wb);
+    }
+
+    if (!data.runs.length) {
+      box.insertAdjacentHTML('beforeend',
+        '<div class="empty">No reports yet. Analyse something and it shows up here.</div>');
       return;
     }
-    items.forEach(item => box.appendChild(resultRow(item)));
+    data.runs.forEach(r => box.appendChild(runGroup(r)));
   } catch (e) {
     box.innerHTML = '';
     toast(e.message, true);
   }
 }
+
+$('#rescan').addEventListener('click', async () => {
+  try {
+    const c = await API.rescan();
+    toast(`Rebuilt from disk — ${c.runs} run(s), ${c.apps} app(s).`);
+    loadResults();
+  } catch (e) { toast(e.message, true); }
+});
 
 /* -------------------------------------------------------------- boot */
 (async () => {
