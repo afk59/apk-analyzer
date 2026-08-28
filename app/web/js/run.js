@@ -96,6 +96,35 @@ function handleEvent(ev) {
   switch (ev.stage) {
     case 'run_started':
       run.total = ev.file_count; updateBar(); break;
+    case 'download_started':
+      run.seen = new Set(); run.fileStart = Date.now();
+      $('#run-file').textContent = ev.file;
+      renderStages(null);
+      logLine('── downloading ' + ev.file);
+      break;
+    case 'download_progress': {
+      // The only place a real percentage exists in this app: a download knows
+      // its Content-Length. Analysis does not, which is why nothing else shows
+      // one.
+      const mb = (n) => (n / 1048576).toFixed(1);
+      $('#run-elapsed').textContent = mb(ev.got) + ' / ' + mb(ev.total) + ' MB';
+      $('#run-bar').style.width =
+        Math.round(((run.done + ev.got / ev.total) / (run.total || 1)) * 100) + '%';
+      break;
+    }
+    case 'download_done':
+      logLine('fetched ' + ev.file + (ev.version ? ' v' + ev.version : '') +
+              ' from ' + ev.source, 'ok');
+      // Say when the config splits were dropped. The analysis is still valid --
+      // most of the reference corpus is base splits too -- but native libraries
+      // will be missing and the reader should know why.
+      if (ev.note) logLine('  ' + ev.note, 'warn');
+      break;
+    case 'download_failed':
+      run.done++; updateBar();
+      doneRow({ source_file: ev.file, error: ev.error }, true);
+      logLine('DOWNLOAD FAILED ' + ev.file + ' — ' + ev.error, 'err');
+      break;
     case 'file_started':
       run.seen = new Set();
       run.fileStart = Date.now();
@@ -145,38 +174,44 @@ function finishRun(ev) {
   $('#start').disabled = false;
 }
 
+/* Shared by "Start analysis" and "Download & analyse": both create a run and
+   then watch the same event stream. */
+function beginRun(res) {
+  run.id = res.run_id; run.total = res.file_count; run.done = 0; run.seen = new Set();
+  $('#nav-run').hidden = false;
+  $('#run-done').innerHTML = '';
+  $('#run-log').innerHTML = '';
+  $('#run-cancel').disabled = false;
+  $('#run-file').textContent = res.input;
+  updateBar();
+  showPanel('run');
+  if (res.skip_existing) logLine('Files that already have a report will be skipped.', 'ok');
+
+  run.source = new EventSource('/api/runs/' + res.run_id + '/events');
+  run.source.onmessage = (m) => {
+    try { handleEvent(JSON.parse(m.data)); } catch (e) { /* keep-alive or partial */ }
+  };
+  run.source.addEventListener('end', () => {
+    if (run.source) { run.source.close(); run.source = null; }
+  });
+  run.source.onerror = () => {
+    // EventSource reconnects by itself; only a hard close is worth reporting,
+    // and even then the run keeps going server-side.
+    if (run.source && run.source.readyState === EventSource.CLOSED) {
+      logLine('Lost the event stream. The run continues — reopen Progress to resync.', 'warn');
+    }
+  };
+  clearInterval(run.timer);
+  run.timer = setInterval(tickElapsed, 1000);
+}
+
 async function startRun() {
   const input = state.file || state.folder;
   if (!input) return;
   $('#start').disabled = true;
   try {
     const res = await API.startRun(input, $('#target').value, null);
-    run.id = res.run_id; run.total = res.file_count; run.done = 0; run.seen = new Set();
-    $('#nav-run').hidden = false;
-    $('#run-done').innerHTML = '';
-    $('#run-log').innerHTML = '';
-    $('#run-cancel').disabled = false;
-    $('#run-file').textContent = res.input;
-    updateBar();
-    showPanel('run');
-    if (res.skip_existing) logLine('Files that already have a report will be skipped.', 'ok');
-
-    run.source = new EventSource('/api/runs/' + res.run_id + '/events');
-    run.source.onmessage = (m) => {
-      try { handleEvent(JSON.parse(m.data)); } catch (e) { /* keep-alive or partial */ }
-    };
-    run.source.addEventListener('end', () => {
-      if (run.source) { run.source.close(); run.source = null; }
-    });
-    run.source.onerror = () => {
-      // EventSource reconnects by itself; only a hard close is worth reporting,
-      // and even then the run keeps going server-side.
-      if (run.source && run.source.readyState === EventSource.CLOSED) {
-        logLine('Lost the event stream. The run continues — reopen Progress to resync.', 'warn');
-      }
-    };
-    clearInterval(run.timer);
-    run.timer = setInterval(tickElapsed, 1000);
+    beginRun(res);
   } catch (e) {
     toast(e.message, true);
     $('#start').disabled = false;
@@ -194,3 +229,21 @@ $('#run-cancel').addEventListener('click', async () => {
     toast(e.message, true);
   }
 });
+
+
+/* ------------------------------------------------------------ download */
+async function startDownload() {
+  const packages = $('#packages').value.trim();
+  if (!packages) { toast('Enter at least one package name.', true); return; }
+  $('#download').disabled = true;
+  try {
+    const res = await API.download(packages, $('#target').value);
+    beginRun(res);
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    $('#download').disabled = false;
+  }
+}
+
+$('#download').addEventListener('click', startDownload);

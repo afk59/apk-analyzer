@@ -198,3 +198,13 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
   border-radius: var(--radius);
 }
 .workbooks .label { font-size: .8rem; color: var(--text2); margin-right: var(--space-2); }
+
+/* ----------------------------------------------------------- downloads */
+#packages {
+  width: 100%; resize: vertical;
+  font-family: var(--mono); font-size: .8rem;
+  padding: var(--space-3);
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+#packages:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

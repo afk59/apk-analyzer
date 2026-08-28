@@ -149,6 +149,38 @@ def start_run(req: RunRequest):
             "skip_existing": skip}
 
 
+class DownloadRequest(BaseModel):
+    packages: str                 # newline or comma separated
+    target: str = "hmos"
+
+
+@app.post("/api/downloads")
+def start_download(req: DownloadRequest):
+    """Fetch one or more packages by name, then analyse them in the same run.
+
+    It is one run, not a download followed by a separate analysis, so the UI
+    shows a single progress stream and a failed download is isolated exactly
+    like a corrupt file -- see docs/decisions/0006.
+    """
+    names = [p.strip() for p in req.packages.replace(",", "\n").splitlines()]
+    names = [n for n in names if n]
+    if not names:
+        raise HTTPException(400, "Give at least one package name.")
+    # A package name has no separators and no spaces. Rejecting them here keeps
+    # a path from ever reaching the downloader, which builds a filename from it.
+    bad = [n for n in names if "/" in n or "\\" in n or " " in n]
+    if bad:
+        raise HTTPException(400, f"Not package names: {', '.join(bad[:3])}")
+    if req.target not in ("hmos", "hms"):
+        raise HTTPException(400, "target must be 'hmos' or 'hms'")
+
+    label = names[0] if len(names) == 1 else f"{len(names)} packages"
+    run_id = runner.submit([], req.target, skip_existing=False,
+                           input_label=label, packages=names)
+    return {"run_id": run_id, "file_count": len(names), "input": label,
+            "skip_existing": False}
+
+
 @app.get("/api/runs/{run_id}")
 def run_state(run_id: int):
     run = runner.get(run_id)
