@@ -14,7 +14,7 @@ v1's history archived under `docs/v1/`; short root `CLAUDE.md`; ADRs for the fou
 
 ---
 
-## M1 — App shell `todo`
+## M1 — App shell `done` (2026-08-29)
 
 The window opens, the backend answers, nothing analyses yet.
 
@@ -28,9 +28,13 @@ The window opens, the backend answers, nothing analyses yet.
 **Acceptance:** window opens, a file picked through the dialog round-trips its path to the UI, an
 existing v1 report opens in the browser from a click.
 
+**Met.** Window reports `MainWindowTitle 'Migration Analyzer'`, `Responding=True`. The `/api/open`
+guard was verified against three cases: an outside path and `engine/result/../../../Windows/…`
+both 403, a missing path inside 404, a real report 200 and opens.
+
 ---
 
-## M2 — Run an analysis with real progress `todo`
+## M2 — Run an analysis with real progress `done` (2026-08-29)
 
 - `app/worker.py`: analyse ONE file in its own process, emit JSONL progress to stdout
 - Progress stages come from the engine's real phases, not a fake timer:
@@ -44,9 +48,21 @@ produced HTML/XLSX are byte-identical to what the v1 CLI produces for the same i
 
 > The last clause is the real test. If output differs, the UI has started doing the engine's job.
 
+**Met, and extended.** Per-app HTML and agent JSON hash identical to the CLI's; the XLSX differs
+in exactly two entries, both timestamps (`docProps/core.xml`, one digit of the analysis-time cell).
+A 4-file folder run: corrupt `.apk` failed and the run continued, `.apkm` never picked up, an
+already-analysed file skipped, packed app's coverage suppressed. Cancel terminates the file in
+flight and stops the queue.
+
+The batch workbooks were added on top, because a folder run that does not produce them is not
+equivalent to `--batch`. `app/aggregate.py` replays run_batch's aggregation over the side-cars and
+calls the REAL exporters. Verified cell by cell against v1's own `run_batch` over identical
+inputs: **all 6 sheets of `batch_summary.xlsx` and both sheets of `batch_unmapped.xlsx`
+identical**.
+
 ---
 
-## M3 — Results library `todo`
+## M3 — Results library `done` (2026-08-29)
 
 - SQLite schema + migration-on-open; rescan rebuilds it from `result/` alone
 - Run list → app cards: name, package, framework badge, coverage, kit/unmapped counts
@@ -55,6 +71,12 @@ produced HTML/XLSX are byte-identical to what the v1 CLI produces for the same i
   the reason shown instead
 
 **Acceptance:** delete `analyzer.db`, reopen, the library is identical.
+
+**Met.** Two things were needed to make it literally true: run grouping exists nowhere on disk, so
+a finished run writes a manifest to `engine/result/.runs/`; and coverage would have been lost,
+because the agent JSON has no namespace counts — they are read back from the report's own
+`report_data` block and handed to the engine's `coverage_status()`. Schema changes rebuild rather
+than ALTER, since every column is derivable from disk.
 
 ---
 
