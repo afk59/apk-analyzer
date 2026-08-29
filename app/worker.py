@@ -76,6 +76,9 @@ def _classify(msg: str):
     return None
 
 
+_LAST_WARN = []
+
+
 def _install_hooks():
     """Route the engine's console output into the JSONL stream.
 
@@ -95,7 +98,11 @@ def _install_hooks():
         emit({"stage": "log", "level": "ok", "detail": _ANSI.sub("", str(msg)).strip()})
 
     def warn(msg):
-        emit({"stage": "log", "level": "warn", "detail": _ANSI.sub("", str(msg)).strip()})
+        clean = _ANSI.sub("", str(msg)).strip()
+        # Kept so a SystemExit can explain itself: the engine prints the reason
+        # and THEN exits, and sys.exit does not carry the message.
+        _LAST_WARN.append(clean)
+        emit({"stage": "log", "level": "warn", "detail": clean})
 
     term.print_info, term.print_ok, term.print_warn = info, ok, warn
 
@@ -287,6 +294,15 @@ def main(argv: list[str]) -> int:
     try:
         _install_hooks()
         row = _run(path, args.target)
+    except SystemExit as exc:
+        # SystemExit is a BaseException, so `except Exception` does NOT catch it
+        # -- and engine/core/exe_engine.py calls sys.exit(1) on an unreadable PE
+        # after printing the reason. Without this branch the worker exited 1
+        # having emitted no error event at all, and the UI showed "worker exited
+        # 1" instead of the engine's own explanation.
+        reason = _LAST_WARN[-1] if _LAST_WARN else f"the engine exited ({exc.code})"
+        emit({"stage": "error", "error": reason})
+        return int(exc.code) if isinstance(exc.code, int) and exc.code else 1
     except Exception as exc:
         emit({"stage": "error", "error": f"{type(exc).__name__}: {exc}",
               "traceback": traceback.format_exc()[-2000:]})
