@@ -322,7 +322,20 @@ class JobRunner:
             if ev.get("stage") == "aggregate_done":
                 run.workbooks = ev.get("result")
             run.push(ev)
-        proc.wait(timeout=120)
+        try:
+            proc.wait(timeout=120)
+        except subprocess.TimeoutExpired:
+            run.push({"stage": "log", "level": "warn",
+                      "detail": "The workbook step did not exit - terminating it."})
+            proc.terminate()
+        finally:
+            # Both pipes, or the reader leaks a file handle per run -- surfaced
+            # as a ResourceWarning by the test suite.
+            for stream in (proc.stdout, proc.stderr):
+                try:
+                    stream.close()
+                except Exception:
+                    pass
         try:
             Path(plan_path).unlink()
         except OSError:
@@ -398,11 +411,28 @@ class JobRunner:
                           "index": index, "file": path.name})
                 continue
             ev["index"], ev["file"] = index, path.name
-            if ev.get("stage") == "done":
+            stage = ev.get("stage")
+            if stage == "done":
                 row, saw_done = ev.get("result"), True
-            elif ev.get("stage") == "error":
+            elif stage == "error":
                 error = ev.get("error")
             run.push(ev)
+            if stage in ("done", "error"):
+                # BOTH ARE TERMINAL BY PROTOCOL, AND BREAKING HERE IS LOAD-BEARING.
+                # `for line in proc.stdout` only ends when the child closes stdout,
+                # so a worker that announces its result and then lingers -- the
+                # exact v1 shape where the heaviest file held 8-11 GB after
+                # finishing -- would block this reader forever and the reap
+                # timeout below would never be reached. Found by the test that
+                # simulates precisely that.
+                break
+
+        # Reading is over, so the child can be reaped. Closing our end first
+        # means a child still writing gets a broken pipe instead of blocking.
+        try:
+            proc.stdout.close()
+        except Exception:
+            pass
 
         # See _REAP_GRACE_SEC: once the outputs exist we do not wait forever.
         try:

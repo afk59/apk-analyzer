@@ -6,6 +6,9 @@
 <title>Migration Analyzer</title>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
+<!-- In <head> and synchronous: the attribute must be on <html> before the
+     stylesheet paints, or every start flashes one frame of the wrong theme. -->
+<script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -14,6 +17,7 @@
   <span class="sub">Android / Windows / iOS &rarr; HarmonyOS NEXT</span>
   <span class="spacer"></span>
   <span class="status" id="status">connecting&hellip;</span>
+  <button class="theme-toggle" id="theme-toggle" title="Theme">Auto</button>
 </div>
 
 <div class="shell">

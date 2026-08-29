@@ -8,7 +8,8 @@ it exactly. Nothing may be shown to a user that exists only in this file.
 import sqlite3
 from pathlib import Path
 
-from app.config import DB_PATH, rel_to_root
+from app import config
+from app.config import rel_to_root
 
 SCHEMA_VERSION = 2
 
@@ -82,8 +83,12 @@ _TABLES = ("artifacts", "apps", "downloads", "runs")   # children first
 
 def connect() -> sqlite3.Connection:
     """Open (creating if needed) and bring the schema up to date."""
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    # config.DB_PATH is read HERE, not bound at import: the test suite redirects
+    # it through MA_DB_PATH, and an import-time binding would have every test
+    # writing into the real database.
+    db_path = config.DB_PATH
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     # WAL so a reader (the UI listing results) never blocks the writer (a worker

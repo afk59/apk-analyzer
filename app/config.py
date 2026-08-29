@@ -5,19 +5,34 @@ resolves, and so `app` never assumes a working directory -- run.bat, `python -m
 app` from a shell, and a spawned worker all start somewhere different.
 """
 
+import os
 from pathlib import Path
 
 # app/config.py -> app/ -> repo root
 ROOT = Path(__file__).resolve().parent.parent
 
+
+def _env_dir(name: str, default: Path) -> Path:
+    """Let a caller redirect where DATA is written, never where code lives.
+
+    The test suite points these at a temp directory so it can exercise the real
+    modules without writing into engine/result/ or over the real analyzer.db.
+    ENGINE_DIR, WEB_DIR and DOCS_REF_DIR are deliberately NOT overridable: they
+    locate code and reference material, and a test that redirected them would
+    be testing something other than this application.
+    """
+    raw = os.environ.get(name)
+    return Path(raw).expanduser().resolve() if raw else default
+
+
 ENGINE_DIR   = ROOT / "engine"
-INPUT_DIR    = ENGINE_DIR / "input"
-RESULT_DIR   = ENGINE_DIR / "result"
+INPUT_DIR    = _env_dir("MA_INPUT_DIR",  ENGINE_DIR / "input")
+RESULT_DIR   = _env_dir("MA_RESULT_DIR", ENGINE_DIR / "result")
 AGENT_DIR    = RESULT_DIR / "agent_outputs"
 MAPPINGS_DIR = ENGINE_DIR / "data" / "mappings"
 DOCS_REF_DIR = ROOT / "docs-ref"
 
-DB_PATH  = ROOT / "app" / "store" / "analyzer.db"
+DB_PATH  = _env_dir("MA_DB_PATH", ROOT / "app" / "store" / "analyzer.db")
 WEB_DIR  = ROOT / "app" / "web"
 
 # Loopback only, and a free port picked at startup. Never bind 0.0.0.0: this

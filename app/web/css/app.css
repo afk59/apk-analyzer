@@ -208,3 +208,22 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
   border: 1px solid var(--border); border-radius: var(--radius-sm);
 }
 #packages:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* --------------------------------------------------------------- theme */
+.theme-toggle {
+  all: unset;
+  cursor: pointer;
+  font-size: .72rem; font-weight: 600; letter-spacing: .02em;
+  padding: 3px 10px; margin-left: var(--space-3);
+  border-radius: 999px;
+  color: var(--accent-text);
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.10);
+  transition: background var(--dur), border-color var(--dur);
+}
+.theme-toggle:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.6); }
+.theme-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* The header is accent red in every theme, so the toggle sits on red and is
+   styled against THAT, not against --surface. Using theme tokens here would
+   make it invisible in one of the two modes. */
