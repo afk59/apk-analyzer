@@ -219,3 +219,93 @@ v1 "rcp gerçekse bu satırlar gözden geçirilmeli" demişti. Gerçek:
 Yukarıda bulunan **üç kitin de `kits/` altında `.d.ts`'i YOK**. Yani ".d.ts'te yoksa yoktur"
 kuralı, v1'in `hmos_api_index.json` hatasını yeni bir biçimde tekrarlardı. Doğru yöntem:
 korpusta **yeteneğe göre** ara, sonra çıkan yolun hangi kite ait olduğunu oku.
+
+---
+
+## 2026-08-30 (gece) — dark mode, 156 test, mapping v1.11.0
+
+### Dark / light mode
+Üç durum: **system / light / dark**, `localStorage`'da hatırlanıyor. İki değil üç,
+çünkü `data-theme` özniteliği tam da `prefers-color-scheme`'i devre dışı bırakan şey —
+"system" seçeneği olmasaydı bir tık sonra uygulama işletim sistemi ayarını sonsuza kadar
+yok sayardı. `theme.js` `<head>` içinde ve **senkron** çalışıyor; sonrasında çalışsaydı
+her açılışta bir kare yanlış tema görünürdü.
+
+### Test altyapısı — 156 test, ~2,5 dakika, ek bağımlılık yok
+Düz `unittest`. Kilitli bir makinede `pip install` listesine bir şey daha eklemek
+bu projenin sürekli kaçındığı sürtünme.
+
+İzolasyon: `app/config.py` artık `MA_RESULT_DIR` / `MA_DB_PATH` / `MA_INPUT_DIR`
+değişkenlerini dinliyor, testler üçünü de temp dizine yönlendiriyor. Motor, web ve
+docs-ref yolları **bilerek** yönlendirilemez — onları başka yere göstermek, bu
+uygulamadan başka bir şeyi test etmek olurdu.
+
+**Testlerin ilk koşuda bulduğu üç gerçek hata:**
+
+1. **Reap zaman aşımı, yazılma sebebi olan durumda erişilemezmiş.** `for line in
+   proc.stdout` çocuk süreç stdout'u kapatana kadar bitmiyor; sonucunu yazıp asılı
+   kalan bir worker — yani v1'de en ağır dosyanın 8-11 GB tutarak asılı kalması —
+   okuyucuyu sonsuza kadar bekletiyordu ve alttaki zaman aşımı hiç çalışmıyordu.
+   Artık terminal olay döngüyü kırıyor.
+2. **Worker yapılandırılmış sonuç dizinini yok sayıyordu**, `_ENGINE / "result"`
+   sabitini kullanıyordu; yani her yönlendirme bir yalandı ve test paketi gerçek
+   çıktı klasörüne yazardı.
+3. **Koşu başına dosya tanıtıcısı sızıntısı** — aggregate adımı iki pipe'ı da
+   kapatmıyordu. `-W error::ResourceWarning` altında ortaya çıktı.
+
+Ayrıca 19 senaryo testi: **CJK/Türkçe/Kiril dosya adları** (v1'de 26 uygulamanın
+11'ini kaybettiren hata — v2'de stdout her zaman pipe olduğu için bu artık uç
+durum değil, norm), dağınık klasörler, **eşzamanlı iki koşu**, kütüphane yaşam
+döngüsü ve mapping dosyası bütünlüğü.
+
+### Motor hatası: var olmayan izinler öneriliyordu
+
+Korpusun 41 eşleşmemiş iznini incelerken çıktı. `_OHOS_PERM_CATALOGUE`'daki 47
+girdinin **dördü HarmonyOS izni değil**:
+
+| Motorda | Gerçek |
+|---|---|
+| `READ_MEDIA_IMAGES` / `_VIDEO` | **Android** adları; HarmonyOS: `READ_IMAGEVIDEO` |
+| `READ_MEDIA_AUDIO` | HarmonyOS: `READ_AUDIO` |
+| `USE_BIOMETRIC` | gerçek ad `ACCESS_BIOMETRIC` |
+| `ACCESS_NFC` | gerçek ad `NFC_TAG` |
+
+İlk üçü migratöre **`high` güvenle** öneriliyordu — anahtar kelime eşleştirici tam
+kelime örtüşmesine en yüksek puanı verdiği için, rapor tam da en yanlış olduğu
+yerde en emindi.
+
+**Bir izin adı artık üç bağımsız kaynağa karşı doğrulanıyor** (aralarında 748 ad):
+`engine/data/permissions/*.txt` (132 — v1 bunları "kullanılmayan, atıl referans"
+diye işaretlemişti, oysa asıl katalog bu), doküman korpusu (82, kısmi) ve
+**SDK'nın `.d.ts` `@permission` anotasyonları (655, açık ara en zengin)**.
+Tek kaynağa bakmak iki yönde de yanlış negatif üretirdi.
+
+### mapping.json v1.10.0 → v1.11.0
+
+**namespace 279 → 311 (+32), izin 38 → 67 (+29, 3 düzeltildi).**
+
+**Expo korpustaki en büyük boşluktu ve hiç maplenmemişti** — 22 modül ailesinde
+223 namespace. React Native çekirdeği zaten tamamen kapsanıyordu
+(`com.facebook.react` altındaki her şeyi yutuyor), yani asıl delik Expo'daydı.
+Modül modül maplendi, blanket `expo.` öneki değil: blanket kural modül
+**çalışma zamanını** da yutardı (`expo.modules.kotlin` 37 ns, `core`, `adapters`,
+`interfaces`…), oysa onun karşılığı yok ve unmapped kalması doğru.
+
+**HMS SDK** taşıyan altı uygulama için kit karşılığı olanlar birebir maplendi;
+**SDK altyapısı bilerek maplenmedi** (7.144 metot) — HarmonyOS NEXT'te kitler
+sisteme gömülü olduğu için o katman **tamamen ortadan kalkıyor**; gösterecek bir
+kit yok ve uydurmak "bu iş yok oluyor" yerine "port et" demek olurdu.
+
+**İzin tarafında en değerlisi, sezgiselin aktif olarak yanlış olduğu yerler:**
+dokuz üretici launcher rozet izni (her biri 11 uygulamada, korpusun en sık
+eşleşmeyen izni) `MANAGE_SECURE_SETTINGS` diye cevaplanıyordu; HarmonyOS'ta rozet
+`setBadgeNumber`, yani **izin gerektirmeyen bir API çağrısı**.
+
+`KIT_DOC_URLS` 58 → 60; **mapping.json'daki 60 kit token'ının hepsi artık bir
+dokümana çözülüyor.** İki yeni URL `docs-ref` içinde **birebir** geçiyor — dizin
+yolundan tahmin edilmiş slug değil, crawler'ın koruduğu gerçek bağlantılar.
+
+### Emilim — tahmin
+12.030 unmapped satır üzerinde gerçek eşleştirme döngüsü tekrar oynatıldı:
+**160 farklı namespace, 249 uygulama-başı satır, 38'i ≥2 uygulamada, 0 gölgeleme,
+0 ölü kural.** Gerçek 43 uygulamalık koşuyla doğrulaması aşağıda.
