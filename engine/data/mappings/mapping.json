@@ -1,5 +1,5 @@
 {
-  "version": "1.10.0",
+  "version": "1.11.0",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -2305,6 +2305,262 @@
       "harmony_import": "@kit.CameraKit",
       "confidence": "medium",
       "note": "The CAPTURE HALF of WebRTC only: CameraCapturer / Camera1Session / Camera2Session / CameraEnumerator -> import { camera } from '@kit.CameraKit' (createCameraInput, createPreviewOutput, getSupportedCameras). Same scope warning as org.webrtc.audio -- the RTC stack itself does not port, and the video encode path (HardwareVideoEncoder, AndroidVideoDecoder) is left unmapped because no encoder/decoder API is attested in hmos_api_index.json."
+    },
+    {
+      "android_namespace": "expo.modules.filesystem",
+      "android_display": "Expo FileSystem",
+      "harmony_kit": "@kit.CoreFileKit",
+      "harmony_import": "@kit.CoreFileKit",
+      "confidence": "high",
+      "note": "Sandbox and document file IO. `import { fileIo } from '@kit.CoreFileKit'`; docs-ref harmonyos-guides/application-framework/core-file-kit."
+    },
+    {
+      "android_namespace": "expo.modules.location",
+      "android_display": "Expo Location",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "high",
+      "note": "`import { geoLocationManager } from '@kit.LocationKit'`; docs-ref harmonyos-guides/application-services/location-kit."
+    },
+    {
+      "android_namespace": "expo.modules.notifications",
+      "android_display": "Expo Notifications",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "high",
+      "note": "Local notifications. `import { notificationManager } from '@kit.NotificationKit'`. Remote push is @kit.PushKit -- Expo bundles both behind one module, so a migrator using push needs that kit as well."
+    },
+    {
+      "android_namespace": "expo.modules.webview",
+      "android_display": "Expo WebView",
+      "harmony_kit": "@kit.ArkWeb",
+      "harmony_import": "@kit.ArkWeb",
+      "confidence": "high",
+      "note": "`import { webview } from '@kit.ArkWeb'` with the Web component."
+    },
+    {
+      "android_namespace": "expo.modules.constants",
+      "android_display": "Expo Constants",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "Device and app constants. `import { deviceInfo } from '@kit.BasicServicesKit'`; app-level values come from bundleManager (@kit.AbilityKit)."
+    },
+    {
+      "android_namespace": "expo.modules.keepawake",
+      "android_display": "Expo KeepAwake",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "high",
+      "note": "`runningLock` -- docs-ref harmonyos-references/.../basic-services-kit/device-management/ohos-runninglock-runninglock."
+    },
+    {
+      "android_namespace": "expo.modules.fetch",
+      "android_display": "Expo Fetch",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "`import { http } from '@kit.NetworkKit'`. See also @kit.RemoteCommunicationKit (rcp), which Huawei documents as an equally valid session-based HTTP client."
+    },
+    {
+      "android_namespace": "expo.modules.taskManager",
+      "android_display": "Expo TaskManager",
+      "harmony_kit": "@kit.BackgroundTasksKit",
+      "harmony_import": "@kit.BackgroundTasksKit",
+      "confidence": "medium",
+      "note": "docs-ref harmonyos-references/application-framework/background-tasks-kit. medium: HarmonyOS separates short-term transient tasks, long-running tasks with a declared background mode, and deferred workScheduler jobs, so one Expo task definition becomes a choice between three mechanisms."
+    },
+    {
+      "android_namespace": "expo.modules.asset",
+      "android_display": "Expo Asset",
+      "harmony_kit": "@kit.LocalizationKit",
+      "harmony_import": "@kit.LocalizationKit",
+      "confidence": "medium",
+      "note": "Bundled asset access maps to `resourceManager` -- docs-ref harmonyos-references/application-framework/localization-kit (20 files). medium: Expo assets can also be resolved at runtime over the network, which resourceManager does not do."
+    },
+    {
+      "android_namespace": "expo.modules.font",
+      "android_display": "Expo Font",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "`registerFont` plus Text fontFamily. medium: no drop-in loader -- ArkUI registers a font family rather than returning a handle."
+    },
+    {
+      "android_namespace": "expo.modules.splashscreen",
+      "android_display": "Expo SplashScreen",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "HarmonyOS declares a start window (startWindowIcon/startWindowBackground in the ability config) rather than exposing a hide() call. medium: the API shape does not survive; the behaviour does."
+    },
+    {
+      "android_namespace": "expo.modules.systemui",
+      "android_display": "Expo SystemUI",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Status/navigation bar styling via the window manager -- `setWindowSystemBarProperties`, docs-ref arkui/arkts-api/window-manager."
+    },
+    {
+      "android_namespace": "com.huawei.hms.aaid",
+      "android_display": "HMS Push token (AAID)",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "high",
+      "note": "Push token acquisition. `import { pushService } from '@kit.PushKit'`."
+    },
+    {
+      "android_namespace": "com.huawei.hms.opendevice",
+      "android_display": "HMS OpenDevice",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Device/token plumbing behind HMS push registration."
+    },
+    {
+      "android_namespace": "com.huawei.hms.account",
+      "android_display": "HMS Account",
+      "harmony_kit": "@kit.AccountKit",
+      "harmony_import": "@kit.AccountKit",
+      "confidence": "high",
+      "note": "Huawei ID sign-in; docs-ref harmonyos-guides/application-services/account-kit."
+    },
+    {
+      "android_namespace": "com.huawei.hms.analytics",
+      "android_display": "HMS Analytics",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
+      "confidence": "medium",
+      "note": "`hiAppEvent`. Mapped for consistency with com.google.firebase.analytics, which this file already routes to @kit.PerformanceAnalysisKit rather than @kit.AnalyticsKit."
+    },
+    {
+      "android_namespace": "com.huawei.hms.safetydetect",
+      "android_display": "HMS SafetyDetect",
+      "harmony_kit": "@kit.DeviceSecurityKit",
+      "harmony_import": "@kit.DeviceSecurityKit",
+      "confidence": "high",
+      "note": "SafetyDetect is Device Security Kit on HarmonyOS -- docs-ref harmonyos-guides/system/security/device-security-kit: 'checks whether the device environment is secure, for example whether it has been jailbroken or is a non-real device'."
+    },
+    {
+      "android_namespace": "com.huawei.hms.network",
+      "android_display": "HMS Network",
+      "harmony_kit": "@kit.NetworkKit",
+      "harmony_import": "@kit.NetworkKit",
+      "confidence": "high",
+      "note": "`import { http } from '@kit.NetworkKit'`."
+    },
+    {
+      "android_namespace": "android.credentials",
+      "android_display": "Android Credential Manager",
+      "harmony_kit": "@kit.OnlineAuthenticationKit",
+      "harmony_import": "@kit.OnlineAuthenticationKit",
+      "confidence": "medium",
+      "note": "Passkeys/FIDO2 -- docs-ref harmonyos-references/system/security/online-authentication-kit (32 files; FIDO, FIDO2, IIFAA, SOTER). medium because Credential Manager spans three things: passkeys here, password autofill via autoFillManager (@kit.AbilityKit), and federated sign-in via @kit.AccountKit which is Huawei-ID only. No single API replaces it."
+    },
+    {
+      "android_namespace": "android.service.credentials",
+      "android_display": "Android Credential Provider",
+      "harmony_kit": "@kit.OnlineAuthenticationKit",
+      "harmony_import": "@kit.OnlineAuthenticationKit",
+      "confidence": "medium",
+      "note": "The provider half of Credential Manager. Same split as android.credentials."
+    },
+    {
+      "android_namespace": "com.scottyab.rootbeer",
+      "android_display": "RootBeer",
+      "harmony_kit": "@kit.DeviceSecurityKit",
+      "harmony_import": "@kit.DeviceSecurityKit",
+      "confidence": "high",
+      "note": "SafetyDetect answers the same question. v1 recorded 'no native attestation API', which the documentation contradicts. Note the shape inverts: RootBeer runs local heuristics in-process, SafetyDetect is a device/server attestation with a nonce -- a redesign of the check, not a symbol swap."
+    },
+    {
+      "android_namespace": "org.reactnative.facedetector",
+      "android_display": "RN Face Detector",
+      "harmony_kit": "@kit.CoreVisionKit",
+      "harmony_import": "@kit.CoreVisionKit",
+      "confidence": "high",
+      "note": "docs-ref harmonyos-references/ai/core-vision-kit has faceDetector (detection) and faceComparator (verification) as first-class API pages. v1 checked @kit.VisionKit, a DIFFERENT kit."
+    },
+    {
+      "android_namespace": "com.google.ads",
+      "android_display": "Google Ads (legacy)",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Joins the existing io.invertase.googlemobileads row. medium: ad formats and mediation adapters do not port, only the serve/display concept."
+    },
+    {
+      "android_namespace": "com.google.android.ads",
+      "android_display": "Google Mobile Ads",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Same family as com.google.ads."
+    },
+    {
+      "android_namespace": "com.google.android.ump",
+      "android_display": "Google User Messaging Platform",
+      "harmony_kit": "@kit.AdsKit",
+      "harmony_import": "@kit.AdsKit",
+      "confidence": "medium",
+      "note": "Consent collection for ads. On HarmonyOS the equivalent is the Ads Kit consent flow together with AppGallery Kit's privacy agreement management."
+    },
+    {
+      "android_namespace": "com.swmansion.worklets",
+      "android_display": "RN Worklets",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "The worklet runtime split out of react-native-reanimated, which this file already maps to @kit.ArkUI. Same caveat: ArkUI animation is declarative, so worklet code is rewritten rather than ported."
+    },
+    {
+      "android_namespace": "com.facebook.webpsupport",
+      "android_display": "Fresco WebP support",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "high",
+      "note": "WebP decoding is native -- docs-ref media/image-kit (9 reference + 8 guide files mention webp). Fresco's WebP shim has no counterpart because the format is supported directly."
+    },
+    {
+      "android_namespace": "me.dm7.barcodescanner",
+      "android_display": "dm7 BarcodeScanner",
+      "harmony_kit": "@kit.ScanKit",
+      "harmony_import": "@kit.ScanKit",
+      "confidence": "high",
+      "note": "`import { detectBarcode } from '@kit.ScanKit'`, matching the existing com.journeyapps.barcodescanner row."
+    },
+    {
+      "android_namespace": "me.relex.photodraweeview",
+      "android_display": "PhotoDraweeView",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "Zoomable Fresco image view. medium: ArkUI's Image with gesture modifiers covers it, and @ohos/photoview is the OHPM alternative already recorded for com.github.chrisbanes.photoview."
+    },
+    {
+      "android_namespace": "me.relex.largeimage",
+      "android_display": "Relex LargeImage",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "Tiled large-image viewer; same family as photodraweeview."
+    },
+    {
+      "android_namespace": "me.liolin.app_badge_plus",
+      "android_display": "app_badge_plus",
+      "harmony_kit": "@kit.NotificationKit",
+      "harmony_import": "@kit.NotificationKit",
+      "confidence": "medium",
+      "note": "Launcher badge count. `setBadgeNumber` -- docs-ref push-kit and notification-kit. Joins me.leolin.shortcutbadger."
+    },
+    {
+      "android_namespace": "me.relex.circleindicator",
+      "android_display": "CircleIndicator",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Pager dots. ArkUI's Swiper has a built-in indicator, so the library disappears rather than porting."
     }
   ],
   "permission_mappings": [
@@ -2406,7 +2662,7 @@
     },
     {
       "android": "android.permission.RECEIVE_BOOT_COMPLETED",
-      "harmony": "ohos.permission.RECEIVE_BOOT_COMPLETED",
+      "harmony": "ohos.permission.RECEIVER_STARTUP_COMPLETED",
       "kit": "@kit.BasicServicesKit",
       "grant_level": "unknown"
     },
@@ -2460,7 +2716,7 @@
     },
     {
       "android": "android.permission.RECEIVE_SMS",
-      "harmony": "ohos.permission.RECEIVE_MESSAGES",
+      "harmony": "ohos.permission.RECEIVE_SMS",
       "kit": "@kit.TelephonyKit",
       "grant_level": "unknown"
     },
@@ -2502,7 +2758,7 @@
     },
     {
       "android": "android.permission.PACKAGE_USAGE_STATS",
-      "harmony": "ohos.permission.BUNDLE_ACTIVESTATE_CHANGED",
+      "harmony": "ohos.permission.BUNDLE_ACTIVE_INFO",
       "kit": "@kit.AbilityKit",
       "grant_level": "unknown"
     },
@@ -2535,6 +2791,180 @@
       "harmony": "ohos.permission.GET_NETWORK_INFO",
       "kit": "@kit.NetworkKit",
       "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.READ_MEDIA_IMAGES",
+      "harmony": "ohos.permission.READ_IMAGEVIDEO",
+      "kit": "@kit.MediaLibraryKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.READ_MEDIA_VIDEO",
+      "harmony": "ohos.permission.READ_IMAGEVIDEO",
+      "kit": "@kit.MediaLibraryKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.READ_MEDIA_AUDIO",
+      "harmony": "ohos.permission.READ_AUDIO",
+      "kit": "@kit.MediaLibraryKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+      "harmony": "(none - the photo picker returns a URI without a permission)",
+      "kit": "@kit.MediaLibraryKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "android.permission.CHANGE_NETWORK_STATE",
+      "harmony": "ohos.permission.SET_NETWORK_INFO",
+      "kit": "@kit.NetworkKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+      "harmony": "ohos.permission.SET_WIFI_INFO",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.NEARBY_WIFI_DEVICES",
+      "harmony": "ohos.permission.GET_WIFI_INFO",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.BLUETOOTH_ADVERTISE",
+      "harmony": "ohos.permission.DISCOVER_BLUETOOTH",
+      "kit": "@kit.ConnectivityKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.MODIFY_AUDIO_SETTINGS",
+      "harmony": "ohos.permission.MANAGE_AUDIO_CONFIG",
+      "kit": "@kit.AudioKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_NOTIFICATION_POLICY",
+      "harmony": "ohos.permission.NOTIFICATION_CONTROLLER",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.WRITE_SETTINGS",
+      "harmony": "ohos.permission.MANAGE_SECURE_SETTINGS",
+      "kit": "@kit.BasicServicesKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.READ_SYNC_SETTINGS",
+      "harmony": "ohos.permission.DISTRIBUTED_DATASYNC",
+      "kit": "@kit.ArkData",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.WRITE_SYNC_SETTINGS",
+      "harmony": "ohos.permission.DISTRIBUTED_DATASYNC",
+      "kit": "@kit.ArkData",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS",
+      "harmony": "ohos.permission.LOCATION",
+      "kit": "@kit.LocationKit",
+      "grant_level": "user_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_LOCATION",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_PHONE_CALL",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+      "harmony": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+      "kit": "@kit.BackgroundTasksKit",
+      "grant_level": "system_grant"
+    },
+    {
+      "android": "com.huawei.android.launcher.permission.READ_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.huawei.android.launcher.permission.WRITE_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.htc.launcher.permission.READ_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.oppo.launcher.permission.READ_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.oppo.launcher.permission.WRITE_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.android.launcher.permission.READ_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.android.launcher.permission.WRITE_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.bbk.launcher2.permission.READ_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
+    },
+    {
+      "android": "com.bbk.launcher2.permission.WRITE_SETTINGS",
+      "harmony": "(none - badge count is a Notification Kit API call)",
+      "kit": "@kit.NotificationKit",
+      "grant_level": "none"
     }
   ]
 }
