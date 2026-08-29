@@ -132,20 +132,17 @@ def _sidecar(result: dict, framework: dict) -> dict:
     }
 
 
-def _run(path: Path, target: str) -> dict:
-    """Mirror engine/analyzer.py's single-file branch exactly.
+def resolve_mode(path: Path, target: str):
+    """(mode, effective_target, output_stem) for one input.
 
-    The order and the filenames are lifted from it verbatim, because M2's
-    acceptance test is that the artifacts are byte-identical to the CLI's.
+    Lifted out of _run so it can be tested without paying for an analysis, and
+    because getting it wrong silently produces a report under the wrong name --
+    which then makes skip_existing skip the wrong thing.
+
+    Only APK has a target choice: HMS is an Android concept, so an EXE or an IPA
+    is always analysed against HarmonyOS NEXT, exactly as engine/analyzer.py
+    decides it.
     """
-    import analyzer as cli          # runs deps bootstrap + loguru silencing
-
-    result_dir = _ENGINE / "result"
-    agent_dir = result_dir / "agent_outputs"
-    result_dir.mkdir(parents=True, exist_ok=True)
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    mappings = _ENGINE / "data" / "mappings"
-
     sfx = path.suffix.lower()
     if path.is_dir():
         mode = "exe_folder"
@@ -157,8 +154,29 @@ def _run(path: Path, target: str) -> dict:
         mode = "apk"
     if mode != "apk":
         target = "hmos"
-
     stem = path.name if mode == "exe_folder" else path.stem
+    return mode, target, stem
+
+
+def _run(path: Path, target: str) -> dict:
+    """Mirror engine/analyzer.py's single-file branch exactly.
+
+    The order and the filenames are lifted from it verbatim, because M2's
+    acceptance test is that the artifacts are byte-identical to the CLI's.
+    """
+    import analyzer as cli          # runs deps bootstrap + loguru silencing
+    from app import config
+
+    # config, not a hardcoded _ENGINE/"result": the worker is a child process, so
+    # it re-reads the environment, and a hardcoded path made MA_RESULT_DIR a lie
+    # -- the test suite would have written into the real output folder.
+    result_dir = config.RESULT_DIR
+    agent_dir = config.AGENT_DIR
+    result_dir.mkdir(parents=True, exist_ok=True)
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    mappings = config.MAPPINGS_DIR
+
+    mode, target, stem = resolve_mode(path, target)
     output_html = result_dir / f"{stem}_{mode}_{target}_report.html"
     agent_path = agent_dir / f"{stem}_{mode}_{target}_agent.json"
 

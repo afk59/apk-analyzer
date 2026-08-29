@@ -22,14 +22,18 @@ from pathlib import Path
 from app import config
 from app.store.db import connect, rel
 
-RUNS_DIR = config.RESULT_DIR / ".runs"
+def runs_dir() -> Path:
+    """Resolved on each call, so a redirected RESULT_DIR is honoured. Binding it
+    at import time made the whole module untestable in isolation."""
+    return config.RESULT_DIR / ".runs"
 
 
 # ------------------------------------------------------------------ writing
 def write_manifest(snapshot: dict) -> Path:
-    RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    d = runs_dir()
+    d.mkdir(parents=True, exist_ok=True)
     stamp = (snapshot.get("started_at") or datetime.now().isoformat()).replace(":", "-")
-    path = RUNS_DIR / f"run-{stamp}-{snapshot.get('id', 0)}.json"
+    path = d / f"run-{stamp}-{snapshot.get('id', 0)}.json"
     path.write_text(json.dumps(snapshot, ensure_ascii=False, default=str, indent=1),
                     encoding="utf-8")
     return path
@@ -138,7 +142,8 @@ def rescan() -> dict:
         conn.execute("DELETE FROM runs")
 
         claimed = set()
-        manifests = sorted(RUNS_DIR.glob("run-*.json")) if RUNS_DIR.exists() else []
+        rd = runs_dir()
+        manifests = sorted(rd.glob("run-*.json")) if rd.exists() else []
         for mpath in manifests:
             try:
                 snap = json.loads(mpath.read_text(encoding="utf-8"))
