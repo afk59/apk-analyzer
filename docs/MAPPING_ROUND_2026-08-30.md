@@ -191,4 +191,46 @@ Heaviest: `expo.modules.filesystem` (38 ns), `android.service.credentials` (12),
 
 Every one of the 32 new rules matches something — no dead rows.
 
-_Confirmation against a real 43-app run is appended below once it lands._
+## 6. Absorption — confirmed
+
+Real 43-app run through v2's own UI, 2026-08-30: **43/43 analysed, 0 failures,
+55 minutes** (HSBC included, in sequence, no manual intervention).
+
+| | predicted | actual |
+|---|---|---|
+| distinct namespaces absorbed | 161 | **161** ✓ |
+| per-app row instances absorbed | 251 | **251** ✓ |
+| rows shadowed by a pre-existing rule | 0 | **0** ✓ |
+| namespaces covered by a new rule leaking back to unmapped | 0 | **0** ✓ |
+| unexpected new namespaces | 0 | **0** ✓ |
+
+Symmetric difference between the predicted and the actual absorbed sets: **zero**.
+
+> **A measurement trap, recorded so it is not repeated.** The first comparison
+> read 160/249 and disagreed with the run by one namespace. The engine was
+> right and the *reader* was wrong: `batch_unmapped.xlsx` puts its header on row
+> 1 and data from row 2, and the script had `min_row=3` — silently dropping the
+> first data row of all 43 sheets. It only surfaced as a mismatch because the
+> top row of one sheet differed between the two runs. Same family as v1's
+> recorded openpyxl gotcha, where an empty-string namespace reads back as
+> `None` and a naive filter drops a real row. **Read `batch_unmapped.xlsx` from
+> row 2.**
+
+### Corpus totals
+
+| | v1.10.0 | v1.11.0 |
+|---|---|---|
+| `batch_unmapped.xlsx` rows | 12,072 | **11,821** |
+| distinct unmapped namespaces | 8,284 | **8,123** |
+| `Common Unmapped` | 1,769 | **1,731** |
+| `Common Mapped` | 230 | **243** |
+| `OHPM Matches` | 139 | 139 (unchanged — no OHPM rows added) |
+
+Coverage across the 43: 54.3 % – 99.9 %, mean **86.3 %** over 39 rateable apps;
+the other 4 are the packed ones and correctly show an em-dash. 1,270 kit matches
+in total, 29.5 per app. Framework split unchanged: React Native 17, Flutter 9,
+Native 8, uni-app 3, mPaaS 2, Unknown (packed) 2, Capacitor 1, Cordova 1.
+
+`OHPM Matches` staying at exactly 139 is the expected result of adding no OHPM
+rows, and a useful negative control: the native additions did not disturb the
+second tier.

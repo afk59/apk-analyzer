@@ -118,6 +118,12 @@ Two things the testing changed:
 
 ## M5 — Mapping re-grounding against `docs-ref` `wip`
 
+**Round 1 landed 2026-08-30 — `mapping.json` v1.11.0**, 279 → 311 namespaces and
+38 → 67 permissions. Expo (the corpus's largest gap, 223 unmapped namespaces),
+the HMS SDK, and the three gaps the documentation corpus closed. Write-up in
+`docs/MAPPING_ROUND_2026-08-30.md`. All 60 kit tokens now resolve to a doc URL.
+
+
 The reason v2 exists at all, alongside the UI. See `MAPPING_DISCIPLINE.md` and `DOCS_REF_GUIDE.md`.
 
 - Re-test every **rejected** candidate in `docs/v1/MAPPING_CANDIDATES_2026-08-20.md` and the six
@@ -146,6 +152,20 @@ audit.
 
 ---
 
+## M5b — Test suite `done` (2026-08-30)
+
+Not originally a milestone; it became one because the absence of tests was the
+standing risk flagged before v2 started. 162 tests, ~2.5 min, plain `unittest`, no
+new dependency. See `tests/README.md`.
+
+**Five real bugs found on first runs:** the reap timeout was unreachable in the exact
+case it was written for; the worker ignored the configured result directory; a
+file-handle leak per run; a `SystemExit` from the engine reaching the UI as
+"worker exited 1"; and the permission suggester recommending four permissions that do
+not exist.
+
+---
+
 ## M6 — Packaging `todo`
 
 - `requirements.txt` pinned; first-run install keeps v1's XGATE proxy-stripping behaviour
@@ -158,7 +178,7 @@ audit.
 
 | Item | Where it is written up |
 |---|---|
-| No automated tests anywhere | `docs/v1/ENGINE_REFERENCE.md`, housekeeping round |
+| ~~No automated tests anywhere~~ | **CLOSED 2026-08-30** — 162 tests, `tests/README.md`. Found 5 real bugs on their first runs. |
 | Per-process batch runner never committed | v1 log §1, §16 — M2 supersedes it |
 | `device_matrix` always `{}` in agent JSON | v1 Known gaps |
 | 50 legacy `-V5` doc URLs unaudited | M5 |
