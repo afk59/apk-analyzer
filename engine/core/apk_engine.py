@@ -8,13 +8,25 @@ from collections import defaultdict
 from ui.terminal import print_info, print_ok, print_warn, _c, C
 
 
+# Every name here is attested in at least one of three sources: the permission
+# lists in engine/data/permissions/*.txt, the crawled HarmonyOS documentation,
+# or the SDK .d.ts @permission annotations (748 distinct names between them).
+#
+# CORRECTED 2026-08-30: four entries were not HarmonyOS permissions at all and
+# the gap suggester was recommending them to migrators --
+#   READ_MEDIA_IMAGES / READ_MEDIA_VIDEO / READ_MEDIA_AUDIO  are ANDROID names;
+#       HarmonyOS uses READ_IMAGEVIDEO and READ_AUDIO, both already listed here
+#   USE_BIOMETRIC   -> the real name is ACCESS_BIOMETRIC, also already listed
+#   ACCESS_NFC      -> the real name is NFC_TAG
+# Check any addition against those three sources before adding it: a suggestion
+# nobody can grant is worse than no suggestion.
 _OHOS_PERM_CATALOGUE = [
 
     "ohos.permission.INTERNET",
     "ohos.permission.MANAGE_WIFI_CONNECTION",
     "ohos.permission.MANAGE_BLUETOOTH",
     "ohos.permission.ACCESS_BLUETOOTH",
-    "ohos.permission.ACCESS_NFC",
+    "ohos.permission.NFC_TAG",
     "ohos.permission.ACCESS_NEARLINK",
 
     "ohos.permission.LOCATION",
@@ -29,9 +41,6 @@ _OHOS_PERM_CATALOGUE = [
     "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO",
     "ohos.permission.READ_AUDIO",
     "ohos.permission.WRITE_AUDIO",
-    "ohos.permission.READ_MEDIA_IMAGES",
-    "ohos.permission.READ_MEDIA_VIDEO",
-    "ohos.permission.READ_MEDIA_AUDIO",
     "ohos.permission.WRITE_MEDIA",
 
     "ohos.permission.READ_CONTACTS",
@@ -58,7 +67,6 @@ _OHOS_PERM_CATALOGUE = [
     "ohos.permission.VIBRATE",
 
     "ohos.permission.ACCESS_BIOMETRIC",
-    "ohos.permission.USE_BIOMETRIC",
     "ohos.permission.MANAGE_SECURE_SETTINGS",
 
     "ohos.permission.NOTIFICATION_CONTROLLER",
