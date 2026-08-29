@@ -81,6 +81,16 @@ KIT_DOC_URLS: dict[str, str] = {
     # CHINESE-ONLY, and correctly so: Payment Kit is a China-market kit (its
     # ecnyPaymentService module is digital-yuan payment) and has no /en/ guide.
     # Real and attested — 27 @kit.PaymentKit imports in hmos_api_index.json.
+    # Added 2026-08-30 for the two kits this round's mappings introduce. Both
+    # URLs are attested VERBATIM inside docs-ref -- they are links the crawler
+    # preserved in the official pages, not slugs guessed from a path. Neither
+    # kit has a confirmable "About This Kit" landing, so these are the capability
+    # pages that match what the mapping rows point at: system-integrity checking
+    # for Device Security Kit (com.scottyab.rootbeer, HMS SafetyDetect) and the
+    # passkey introduction for Online Authentication Kit (android.credentials).
+    # Same "best available" precedent as @kit.PDFKit and @kit.AnalyticsKit.
+    "@kit.DeviceSecurityKit":      "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/devicesecurity-sysintegrity-check",
+    "@kit.OnlineAuthenticationKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/onlineauthentication-passkey-intro",
     "@kit.PaymentKit":             "https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/payment-preparations",
 }
 
