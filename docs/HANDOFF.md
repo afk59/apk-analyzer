@@ -12,7 +12,7 @@ Last updated **2026-08-30**, end of session. Read this, then `CLAUDE.md`.
 | App | Working. `run.bat` → window, pickers, analysis with live progress, results library, APK download by package name. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **169**, `python -m unittest discover -s tests -t .`, ~2.5 min when nothing else is running. |
+| Tests | **173**, `python -m unittest discover -s tests -t .`, ~2.5 min when nothing else is running. |
 | `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 
@@ -62,7 +62,7 @@ instances, 0 shadowed, 0 leak-back.
 1. **Dark/light/system theme**, and **EN/TR/中文**. The i18n boundary is the
    decision worth remembering: chrome yes, analysis output never — kit tokens,
    permission names and the reports are identifiers and deliverables.
-2. **A test suite from nothing to 169 tests**, which found **six real bugs** on
+2. **A test suite from nothing to 173 tests**, which found **six real bugs** on
    its first runs (see `tests/README.md` and the session log).
 3. **`mapping.json` v1.10.0 → v1.11.1**: +32 namespaces (Expo was the corpus's
    largest gap at 223 unmapped namespaces and had nothing mapped), +29
