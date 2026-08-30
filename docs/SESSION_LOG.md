@@ -309,3 +309,83 @@ yolundan tahmin edilmiş slug değil, crawler'ın koruduğu gerçek bağlantıla
 12.030 unmapped satır üzerinde gerçek eşleştirme döngüsü tekrar oynatıldı:
 **160 farklı namespace, 249 uygulama-başı satır, 38'i ≥2 uygulamada, 0 gölgeleme,
 0 ölü kural.** Gerçek 43 uygulamalık koşuyla doğrulaması aşağıda.
+
+---
+
+## 2026-08-30 (gündüz) — mapping denetimi ve dil desteği
+
+### "Halüsinasyon var mı" sorusunun cevabı: vardı, dokuzu
+
+Her mapping dosyasının **her satırı** dört bağımsız kaynağa karşı denetlendi
+(47 kit barrel, api `.d.ts`, taranmış doküman, üretilmiş index — aralarında
+**97 kit token'ı ve 748 izin adı**). Bir değer, kaynaklardan **herhangi birinde**
+geçiyorsa gerçek sayıldı; birinde yok olması hiçbir şey kanıtlamaz.
+
+**`@kit.AnalyticsKit` diye bir kit yok.** "AnalyticsKit" dizesi 110 MB'lık
+korpusta **tek bir kez bile geçmiyor** — kit token'ı olarak da değil, kelime
+olarak da değil. 13 satır kullanıyordu (3 mapping.json, 10 ios_mapping) ve
+`KIT_DOC_URLS`'te bir **HMS ürün sayfasına** bağlıydı, yani başka bir platforma.
+
+İki şey bunu daha önce yakalamalıydı: satırların *kendi notları* hedefin
+"AGConnect Analytics" olduğunu yazıyordu — o bir **ohpm paketi**, `@kit.*` değil.
+Ve v1'in doc URL yanındaki yorumu zaten "bunun için HarmonyOS sayfası
+doğrulanamadı" diyordu; bağlantı yine de bırakılmıştı.
+
+Hepsi artık `@kit.PerformanceAnalysisKit`'e (hiAppEvent) bakıyor — HarmonyOS'un
+uygulama-olayı tesisi orada (19 doküman dosyası) ve bu dosya zaten
+`com.google.firebase.analytics`'i tam bu sebeple oraya yönlendiriyordu.
+
+**`@kit.RelationalStoreKit` de yok**: `relationalStore`, `@kit.ArkData`
+barrel'ında. Realm / RealmSwift / FMDB düzeltildi.
+
+**Beş iOS izni Android adı taşıyordu** (Haziran'dan beri hiç denetlenmemiş dosya):
+`READ_MEDIA_IMAGES/VIDEO` → `READ_IMAGEVIDEO`, `READ_MEDIA_AUDIO` → `READ_AUDIO`,
+`WRITE_MEDIA_IMAGES` → `WRITE_IMAGEVIDEO`. `WRITE_HEALTH_DATA` ayrı bir durum:
+**yazmaya özel bir sağlık izni yok**, o yüzden satır uydurma bir ad yerine
+attestasyonlu `HEALTH_DATA`'ya bakıyor.
+
+### v1 ↔ v2 karşılaştırması: hiçbir kit kaybolmadı
+
+Arşivlenmiş v1.10.0 koşusu ile yeni koşu, agent JSON'lardan uygulama uygulama:
+
+| | |
+|---|---|
+| eklenen kit türü | 4 (DeviceSecurityKit 5 uyg, OnlineAuthenticationKit 4, AdsKit 1, CoreVisionKit 1) |
+| **kaybolan kit türü** | **0** |
+| güven değişen | 3 satır |
+| OHPM / framework değişimi | 0 |
+| kapanan izin boşluğu | 29 farklı izin |
+
+**Hiçbir uygulamadan hiçbir kit kaybolmadı** — asıl önemli özellik bu: satır
+eklemek bir sonucu asla silmemeli. Üç güven değişimi min-güven politikasının
+tasarım gereği çalışması; her biri adı belli bir yeni `medium` katkıcıdan
+kaynaklanıyor.
+
+Fazladan görünen 44. uygulama (`com.app.auralaw`) bir tutarsızlık değil —
+**kullanıcının kendi koşusu**; manifest 10:50'de tek dosyalık bir koşu diyor.
+
+### Kalıcı koruma
+`tests/test_scenarios.py::TestMappingDataIntegrity` içinde beş test artık bu
+denetimi her koşuda yapıyor: var olmayan kit, var olmayan doc URL, registry'de
+olmayan OHPM paketi, var olmayan izin hedefi, var olmayan öneri. `docs-ref`
+yoksa temizce atlanıyor, yani `main` etkilenmiyor.
+
+### Dil desteği: EN / TR / 中文
+
+**Ne çevriliyor, ne çevrilmiyor** — asıl karar bu. Arayüz *kabuğu* çevriliyor;
+**analiz çıktısı çevrilmiyor**. Kit token'ları, izin adları, paket adları,
+framework etiketleri ve HTML/Excel raporları motorun ürettiği gibi kalıyor.
+Bunlar tanımlayıcı ve teslimat, düzyazı değil: `@kit.ArkUI` bir cümle değil, ve
+okuyana göre farklı okunan bir rapor karşılaştırılamaz, başkasına iletilemez.
+Bir test hedef adlarının üç dilde de değişmediğini doğruluyor.
+
+Yapı olarak: işaretleme kaynak (`data-i18n`), dosya sadece dizeleri taşıyor.
+Çalışma anında üretilen metinler doğrudan `t()` çağırıyor ve `setLang()`
+`onLanguageChanged()` ile onları yeniden çizdiriyor. Aşama etiketleri çizim
+anında çözülüyor, yani koşu ortasında dil değiştirmek onları yerinde
+etiketliyor. `t()` önce İngilizce'ye sonra anahtara düşüyor — eksik bir dize
+asla "undefined" olarak görünemez.
+
+Gerçek pencerede 7 test, üç dil için: her `data-i18n` anahtarı çözülüyor, dil
+etiketleniyor, seçim hatırlanıyor, kabuk üç dilde de gerçekten farklı, çalışma
+anı metinleri de değişiyor, tanımlayıcılar dokunulmamış, sıfır JS hatası.
