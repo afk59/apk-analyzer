@@ -65,6 +65,10 @@ def probe(window):
             window.evaluate_js("setTheme('%s')" % mode)
             time.sleep(0.3)
             OUT.setdefault("themes", {})[mode] = json.loads(window.evaluate_js(THEME_PROBE))
+        for lang in ("en", "tr", "zh"):
+            window.evaluate_js("setLang('%s')" % lang)
+            time.sleep(0.4)
+            OUT.setdefault("langs", {})[lang] = json.loads(window.evaluate_js(LANG_PROBE))
         OUT["errors"] = json.loads(window.evaluate_js(
             "JSON.stringify(window.__errs || [])"))
     except Exception as exc:
@@ -132,6 +136,30 @@ THEME_PROBE = r"""
 """
 
 
+LANG_PROBE = r"""
+(function () {
+  var missing = [];
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    var v = (el.textContent || '').trim();
+    if (!v || v === el.dataset.i18n) missing.push(el.dataset.i18n);
+  });
+  return JSON.stringify({
+    lang: document.documentElement.lang,
+    stored: (function () { try { return localStorage.getItem('ma.lang'); }
+                           catch (e) { return 'unavailable'; } })(),
+    navAnalyze: document.querySelector('nav.side button[data-panel=analyze]').textContent.trim(),
+    startBtn: document.getElementById('start').textContent.trim(),
+    hint: document.getElementById('start-hint').textContent.trim(),
+    resultsTitle: document.querySelector('#panel-results h2 span').textContent.trim(),
+    // Identifiers must NOT be translated -- they are the analysis output.
+    targets: Array.from(document.getElementById('target').options).map(function (o) { return o.text; }),
+    untranslated: missing,
+    errors: (window.__errs || []).length
+  });
+})()
+"""
+
+
 @requires_webview
 class TestFrontend(IsolatedTest):
 
@@ -147,6 +175,7 @@ class TestFrontend(IsolatedTest):
                 + "LOAD_PROBE = " + repr(LOAD_PROBE) + "\n"
                 + "RESULTS_PROBE = " + repr(RESULTS_PROBE) + "\n"
                 + "THEME_PROBE = " + repr(THEME_PROBE) + "\n"
+                + "LANG_PROBE = " + repr(LANG_PROBE) + "\n"
                 + PROBE_SCRIPT)
         script.write_text(body, encoding="utf-8")
         env = {**dict(os.environ),
@@ -262,3 +291,64 @@ class TestThemeStates(IsolatedTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@requires_webview
+class TestLanguages(IsolatedTest):
+    """English, Turkish and Simplified Chinese.
+
+    What is translated is the CHROME. Kit tokens, permission names, package
+    names and the reports themselves are identifiers and deliverables, not
+    prose -- a report that read differently per viewer could not be compared or
+    forwarded, and "@kit.ArkUI" is not a phrase.
+    """
+
+    def _langs(self):
+        probe = TestFrontend._probe
+        if probe is None:
+            helper = TestFrontend(methodName="test_page_loads_with_no_javascript_errors")
+            helper.setUp()
+            try:
+                probe = helper._run_probe()
+            finally:
+                helper.tearDown()
+        return probe["langs"]
+
+    def test_every_marked_string_resolves_in_every_language(self):
+        for lang, p in self._langs().items():
+            self.assertEqual(p["untranslated"], [],
+                             f"{lang}: keys with no translation: {p['untranslated']}")
+
+    def test_the_document_language_is_stamped(self):
+        for lang, p in self._langs().items():
+            self.assertEqual(p["lang"], lang)
+
+    def test_the_choice_is_remembered(self):
+        for lang, p in self._langs().items():
+            self.assertIn(p["stored"], (lang, "unavailable"))
+
+    def test_the_chrome_actually_changes(self):
+        langs = self._langs()
+        self.assertEqual(langs["en"]["navAnalyze"], "Analyze")
+        self.assertEqual(langs["tr"]["navAnalyze"], "Analiz")
+        self.assertEqual(langs["zh"]["navAnalyze"], "分析")
+        # Three distinct renderings, not one string leaking across.
+        starts = {langs[l]["startBtn"] for l in ("en", "tr", "zh")}
+        self.assertEqual(len(starts), 3, f"start button did not change: {starts}")
+
+    def test_runtime_built_strings_switch_too(self):
+        """The hint is written by JS, not by data-i18n, so it exercises the
+        onLanguageChanged path rather than the markup scan."""
+        langs = self._langs()
+        hints = {langs[l]["hint"] for l in ("en", "tr", "zh")}
+        self.assertEqual(len(hints), 3, f"runtime string did not switch: {hints}")
+
+    def test_identifiers_are_never_translated(self):
+        """Target names are platform identifiers. Translating them would make
+        the report and the workbook disagree with the UI."""
+        for lang, p in self._langs().items():
+            self.assertEqual(p["targets"], ["HarmonyOS NEXT", "HMS Core"], lang)
+
+    def test_switching_language_raises_nothing(self):
+        for lang, p in self._langs().items():
+            self.assertEqual(p["errors"], 0, f"{lang} produced JS errors")

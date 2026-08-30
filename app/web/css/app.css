@@ -227,3 +227,20 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 /* The header is accent red in every theme, so the toggle sits on red and is
    styled against THAT, not against --surface. Using theme tokens here would
    make it invisible in one of the two modes. */
+
+/* ------------------------------------------------------------ language */
+.lang-select {
+  margin-left: var(--space-2);
+  font-size: .72rem; font-weight: 600;
+  padding: 2px 6px; border-radius: 999px;
+  color: var(--accent-text);
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.35);
+  cursor: pointer;
+}
+.lang-select:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.6); }
+.lang-select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* The closed control sits on the accent-red header, so it is styled against
+   THAT rather than --surface. The option list is drawn by the OS on its own
+   background and needs real theme colours instead. */
+.lang-select option { color: var(--text); background: var(--surface); }

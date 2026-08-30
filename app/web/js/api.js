@@ -9,7 +9,8 @@ const API = (() => {
     } catch (e) {
       // The server is local, so a network error here means it died or never
       // came up -- worth saying plainly rather than "failed to fetch".
-      throw new Error('Cannot reach the local server.');
+      throw new Error(typeof t === 'function' ? t('msg.noServer')
+                                              : 'Cannot reach the local server.');
     }
     let body = null;
     const text = await res.text();

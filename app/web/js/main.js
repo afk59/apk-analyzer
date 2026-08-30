@@ -59,21 +59,22 @@ function renderPicked(kind, res) {
   $('#picked-folder').hidden = !state.folder;
   const input = state.file || state.folder;
   $('#start').disabled = !input;
-  $('#start-hint').textContent = input ? '' : 'pick a file or a folder first';
+  $('#start-hint').textContent = input ? '' : t('analyze.hint');
 
   const box = kind === 'folder' ? $('#picked-folder') : $('#picked-file');
   let html = `<strong>${escapeHtml(res.name)}</strong><br>${escapeHtml(res.path)}`;
   if (kind === 'folder') {
     const n = res.file_count || 0;
-    html += `<br><strong>${n}</strong> supported file${n === 1 ? '' : 's'}`;
+    html += '<br><strong>' + n + '</strong> ' + t('msg.supportedFiles');
     if (n === 0) {
-      html += ' <span class="warn">&mdash; nothing here to analyse</span>';
+      html += ' <span class="warn">' + t('msg.nothingHere') + '</span>';
     }
     // APKM/XAPK are ZIPs of split APKs with no dex of their own. Saying so beats
     // letting someone wonder why their file was ignored.
     if (res.skipped_bundles && res.skipped_bundles.length) {
-      html += `<br><span class="warn">Skipped ${res.skipped_bundles.length} split-APK bundle(s):
-               ${escapeHtml(res.skipped_bundles.join(', '))} &mdash; extract and use base.apk</span>`;
+      html += '<br><span class="warn">' + res.skipped_bundles.length + ' ' +
+              t('msg.skippedBundles') + ': ' +
+              escapeHtml(res.skipped_bundles.join(', ')) + '</span>';
     }
   }
   box.innerHTML = html;
@@ -95,9 +96,9 @@ async function openPath(path) {
 function coverageBits(a) {
   // The engine's own honesty rules, carried through unchanged: a packed DEX or
   // a sample too small to rate gets a reason, never a flattering number.
-  if (a.coverage_status === 'ok')     return a.coverage_pct + '% coverage';
-  if (a.coverage_status === 'packed') return 'coverage not measurable';
-  if (a.coverage_status === 'low')    return 'too few refs to rate';
+  if (a.coverage_status === 'ok')     return a.coverage_pct + '% ' + t('msg.coverage');
+  if (a.coverage_status === 'packed') return t('msg.notMeasurable');
+  if (a.coverage_status === 'low')    return t('msg.tooFew');
   return null;
 }
 
@@ -124,12 +125,13 @@ function appRow(a) {
 
   if (a.packer) {
     row.insertAdjacentHTML('beforeend',
-      '<span class="chip packed">DEX packed · ' + escapeHtml(a.packer) + '</span>');
+      '<span class="chip packed">' + t('msg.packed') + ' · ' + escapeHtml(a.packer) + '</span>');
   } else if (a.framework) {
     row.insertAdjacentHTML('beforeend', '<span class="chip">' + escapeHtml(a.framework) + '</span>');
   }
   if (a.kit_count !== null && a.kit_count !== undefined) {
-    row.insertAdjacentHTML('beforeend', '<span class="chip kits">' + a.kit_count + ' kits</span>');
+    row.insertAdjacentHTML('beforeend',
+      '<span class="chip kits">' + a.kit_count + ' ' + t('msg.kits') + '</span>');
   }
   const art = a.artifacts || {};
   if (art.xlsx) {
@@ -160,12 +162,12 @@ function runGroup(r) {
   head.className = 'runhead';
   head.innerHTML = '<span class="title">' + escapeHtml(r.input_path || 'Run ' + r.id) + '</span>' +
     '<span class="when">' + escapeHtml(when) + '</span>' +
-    '<span class="chip">' + ok + ' app' + (ok === 1 ? '' : 's') +
-    (bad ? ' · ' + bad + ' failed' : '') +
+    '<span class="chip">' + ok + ' ' + t('msg.apps') +
+    (bad ? ' · ' + bad + ' ' + t('msg.failed') : '') +
     // A run that skipped everything would otherwise read as "0 apps" and look
     // like it did nothing. The skipped files belong to the run that produced
     // them, so they are counted here but listed there.
-    (r.skipped_count ? ' · ' + r.skipped_count + ' reused' : '') + '</span>' +
+    (r.skipped_count ? ' · ' + r.skipped_count + ' ' + t('msg.reused') : '') + '</span>' +
     (r.status === 'cancelled' ? '<span class="chip packed">cancelled</span>' : '');
   wrap.appendChild(head);
 
@@ -178,7 +180,7 @@ function runGroup(r) {
 
 async function loadResults() {
   const box = $('#results');
-  box.innerHTML = '<div class="empty">Loading&hellip;</div>';
+  box.innerHTML = '<div class="empty">' + t('results.loading') + '</div>';
   try {
     const data = await API.results();
     box.innerHTML = '';
@@ -186,7 +188,7 @@ async function loadResults() {
     if (data.workbooks && Object.keys(data.workbooks).length) {
       const wb = document.createElement('div');
       wb.className = 'workbooks';
-      wb.innerHTML = '<span class="label">Batch workbooks</span>';
+      wb.innerHTML = '<span class="label">' + t('results.workbooks') + '</span>';
       Object.entries(data.workbooks).forEach(([name, path]) => {
         const b = document.createElement('button');
         b.className = 'btn ghost';
@@ -199,7 +201,7 @@ async function loadResults() {
 
     if (!data.runs.length) {
       box.insertAdjacentHTML('beforeend',
-        '<div class="empty">No reports yet. Analyse something and it shows up here.</div>');
+        '<div class="empty">' + t('results.empty') + '</div>');
       return;
     }
     data.runs.forEach(r => box.appendChild(runGroup(r)));
@@ -212,7 +214,7 @@ async function loadResults() {
 $('#rescan').addEventListener('click', async () => {
   try {
     const c = await API.rescan();
-    toast(`Rebuilt from disk — ${c.runs} run(s), ${c.apps} app(s).`);
+    toast(t('msg.rebuilt') + ' — ' + c.runs + ' / ' + c.apps + ' ' + t('msg.apps') + '.');
     loadResults();
   } catch (e) { toast(e.message, true); }
 });
@@ -221,8 +223,17 @@ $('#rescan').addEventListener('click', async () => {
 (async () => {
   try {
     const h = await API.health();
-    $('#status').textContent = h.mappings ? 'engine ready' : 'mappings missing';
+    $('#status').textContent = t(h.mappings ? 'status.ready' : 'status.nomappings');
   } catch {
-    $('#status').textContent = 'server unreachable';
+    $('#status').textContent = t('status.unreachable');
   }
 })();
+
+/* Called by i18n.setLang. applyI18n only touches elements carrying data-i18n,
+   so anything the scripts built themselves has to be redrawn here. */
+function onLanguageChanged() {
+  const input = state.file || state.folder;
+  $('#start-hint').textContent = input ? '' : t('analyze.hint');
+  if (!$('#panel-results').hidden) loadResults();
+  if (typeof redrawStages === 'function') redrawStages();
+}
