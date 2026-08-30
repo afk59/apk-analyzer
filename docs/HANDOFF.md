@@ -102,6 +102,14 @@ Written here because each cost real time:
 - **Predict absorption, then confirm it.** Every round has landed exactly.
 - **Output-changing commits stay separate** from ones claiming to be neutral.
 
+## A small thing that slows the tests
+
+`tests/support.py::find_sample_apk` looks in `engine/input/` **first** and takes the
+smallest APK there. That folder currently holds `com.app.auralaw.apk` (41 MB, downloaded
+through the app), so the handful of tests that need a real APK now analyse that instead of
+the 3 MB corpus file, and the suite takes noticeably longer. Nothing is wrong — but if you
+want the fast path back, either empty `engine/input/` or set `MA_TEST_APK` to a small APK.
+
 ## Environment
 
 - `PYTHONIOENCODING` is no longer required — the CLI forces UTF-8 itself.
