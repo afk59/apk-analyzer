@@ -5,16 +5,11 @@
    is no synthetic percentage inside a stage: androguard gives no progress
    signal, and a bar driven by elapsed time would be most wrong on the long
    files -- this corpus runs from 1.8 s to 17 minutes per file. */
-const STAGE_LABELS = {
-  loading: 'Loading',
-  dex:     'DEX',
-  scan:    'Scanning refs',
-  imports: 'Imports',
-  kits:    'Matching kits',
-  api:     'Matching APIs',
-  render:  'Rendering',
-};
-const STAGE_ORDER = ['loading', 'dex', 'scan', 'imports', 'kits', 'api', 'render'];
+/* Labels resolve through t() at draw time, so switching language redraws them
+   and the stage machinery needs to know nothing about i18n. */
+const STAGE_KEYS = ['loading', 'dex', 'scan', 'imports', 'kits', 'api', 'render'];
+const STAGE_ORDER = STAGE_KEYS;
+const stageLabel = (key) => t('stage.' + key);
 
 const run = {
   id: null, total: 0, done: 0, source: null,
@@ -32,7 +27,7 @@ function renderStages(active) {
     if (!run.seen.has(key) && key !== active) return;
     const el = document.createElement('span');
     el.className = 'stage' + (key === active ? ' active' : (activeIdx > i || activeIdx === -1 ? ' done' : ''));
-    el.textContent = STAGE_LABELS[key];
+    el.textContent = stageLabel(key);
     box.appendChild(el);
   });
 }
@@ -73,9 +68,9 @@ function doneRow(row, failed) {
   if (row.package_name) bits.push(row.package_name);
   // coverage_status carries the engine's own honesty rules: a packed DEX or a
   // sample too small to rate has no percentage and must not be given one here.
-  if (row.coverage_status === 'ok') bits.push(row.coverage_pct + '% coverage');
-  else if (row.coverage_status === 'packed') bits.push('coverage not measurable');
-  else if (row.coverage_status === 'low') bits.push('too few refs to rate');
+  if (row.coverage_status === 'ok') bits.push(row.coverage_pct + '% ' + t('msg.coverage'));
+  else if (row.coverage_status === 'packed') bits.push(t('msg.notMeasurable'));
+  else if (row.coverage_status === 'low') bits.push(t('msg.tooFew'));
   if (row.analysis_time_sec) bits.push(row.analysis_time_sec + 's');
 
   el.innerHTML = '<div class="grow"><div class="name">' +
@@ -83,11 +78,12 @@ function doneRow(row, failed) {
     escapeHtml(bits.join('  ·  ')) + '</div></div>';
   if (row.packer) {
     el.insertAdjacentHTML('beforeend',
-      '<span class="chip packed">DEX packed · ' + escapeHtml(row.packer) + '</span>');
+      '<span class="chip packed">' + t('msg.packed') + ' · ' + escapeHtml(row.packer) + '</span>');
   } else if (row.framework) {
     el.insertAdjacentHTML('beforeend', '<span class="chip">' + escapeHtml(row.framework) + '</span>');
   }
-  el.insertAdjacentHTML('beforeend', '<span class="chip kits">' + row.kit_count + ' kits</span>');
+  el.insertAdjacentHTML('beforeend',
+    '<span class="chip kits">' + row.kit_count + ' ' + t('msg.kits') + '</span>');
   el.addEventListener('click', () => openPath(row.report));
   $('#run-done').appendChild(el);
 }
@@ -100,7 +96,7 @@ function handleEvent(ev) {
       run.seen = new Set(); run.fileStart = Date.now();
       $('#run-file').textContent = ev.file;
       renderStages(null);
-      logLine('── downloading ' + ev.file);
+      logLine('── ' + t('msg.downloading') + ' ' + ev.file);
       break;
     case 'download_progress': {
       // The only place a real percentage exists in this app: a download knows
@@ -113,8 +109,8 @@ function handleEvent(ev) {
       break;
     }
     case 'download_done':
-      logLine('fetched ' + ev.file + (ev.version ? ' v' + ev.version : '') +
-              ' from ' + ev.source, 'ok');
+      logLine(t('msg.fetched') + ' ' + ev.file + (ev.version ? ' v' + ev.version : '') +
+              ' — ' + t('msg.from') + ' ' + ev.source, 'ok');
       // Say when the config splits were dropped. The analysis is still valid --
       // most of the reference corpus is base splits too -- but native libraries
       // will be missing and the reader should know why.
@@ -134,11 +130,11 @@ function handleEvent(ev) {
       break;
     case 'file_skipped':
       run.done++; updateBar();
-      logLine('skipped ' + ev.file + ' — ' + ev.reason, 'ok');
+      logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + ev.reason, 'ok');
       break;
     case 'file_done':
       run.done++; updateBar(); doneRow(ev.result, false);
-      logLine('done ' + ev.file, 'ok');
+      logLine(t('msg.done') + ' ' + ev.file, 'ok');
       break;
     case 'file_failed':
       run.done++; updateBar();
@@ -152,10 +148,10 @@ function handleEvent(ev) {
       if (ev.level === 'warn' || ev.level === 'raw') logLine(ev.detail, 'warn');
       break;
     default:
-      if (ev.stage && STAGE_LABELS[ev.stage]) {
+      if (ev.stage && STAGE_KEYS.includes(ev.stage)) {
         run.seen.add(ev.stage);
         renderStages(ev.stage);
-        logLine('  ' + STAGE_LABELS[ev.stage] + (ev.detail ? ': ' + ev.detail : ''));
+        logLine('  ' + stageLabel(ev.stage) + (ev.detail ? ': ' + ev.detail : ''));
       }
   }
 }
@@ -163,14 +159,15 @@ function handleEvent(ev) {
 function finishRun(ev) {
   clearInterval(run.timer); run.timer = null; run.fileStart = 0;
   if (run.source) { run.source.close(); run.source = null; }
-  $('#run-file').textContent = ev.status === 'cancelled' ? 'Cancelled' : 'Finished';
+  $('#run-file').textContent = t(ev.status === 'cancelled' ? 'run.cancelled' : 'run.finished');
   $('#run-cancel').disabled = true;
   run.seen = new Set();
   renderStages(null);
   $('#run-bar').style.width = '100%';
   toast(ev.status === 'cancelled'
-    ? 'Run cancelled.'
-    : 'Finished — ' + ev.ok + ' ok, ' + ev.failed + ' failed.', ev.failed > 0);
+    ? t('msg.cancelled')
+    : t('msg.finished') + ' — ' + ev.ok + ' ' + t('msg.ok') + ', ' +
+      ev.failed + ' ' + t('msg.failed') + '.', ev.failed > 0);
   $('#start').disabled = false;
 }
 
@@ -185,7 +182,7 @@ function beginRun(res) {
   $('#run-file').textContent = res.input;
   updateBar();
   showPanel('run');
-  if (res.skip_existing) logLine('Files that already have a report will be skipped.', 'ok');
+  if (res.skip_existing) logLine(t('msg.skipping'), 'ok');
 
   run.source = new EventSource('/api/runs/' + res.run_id + '/events');
   run.source.onmessage = (m) => {
@@ -198,7 +195,7 @@ function beginRun(res) {
     // EventSource reconnects by itself; only a hard close is worth reporting,
     // and even then the run keeps going server-side.
     if (run.source && run.source.readyState === EventSource.CLOSED) {
-      logLine('Lost the event stream. The run continues — reopen Progress to resync.', 'warn');
+      logLine(t('msg.streamLost'), 'warn');
     }
   };
   clearInterval(run.timer);
@@ -224,7 +221,7 @@ $('#run-cancel').addEventListener('click', async () => {
   if (!run.id) return;
   try {
     await API.cancelRun(run.id);
-    logLine('Cancelling — the file in flight is stopped, the rest are skipped.', 'warn');
+    logLine(t('msg.cancelling'), 'warn');
   } catch (e) {
     toast(e.message, true);
   }
@@ -234,7 +231,7 @@ $('#run-cancel').addEventListener('click', async () => {
 /* ------------------------------------------------------------ download */
 async function startDownload() {
   const packages = $('#packages').value.trim();
-  if (!packages) { toast('Enter at least one package name.', true); return; }
+  if (!packages) { toast(t('msg.pickFirst'), true); return; }
   $('#download').disabled = true;
   try {
     const res = await API.download(packages, $('#target').value);
@@ -247,3 +244,10 @@ async function startDownload() {
 }
 
 $('#download').addEventListener('click', startDownload);
+
+/* i18n hook: redraw the stage pills in the new language, keeping the active one. */
+function redrawStages() {
+  const active = document.querySelector('.stage.active');
+  const key = active ? STAGE_KEYS.find((k) => stageLabel(k) === active.textContent) : null;
+  renderStages(key || null);
+}
