@@ -5,6 +5,9 @@ HarmonyOS NEXT kits. **v1 is the shipped CLI tool and stays in production on `ma
 This branch adds a desktop UI, an APK downloader, a SQLite index and a documentation-grounded
 mapping expansion — without touching the analysis engine's behaviour.
 
+> **Start with `docs/HANDOFF.md`** — current state, the one unfinished item, and
+> the rules that keep being re-learned. Then come back here.
+
 > **This file is deliberately short.** v1's `CLAUDE.md` grew to 149 KB, and it was loaded in
 > full at the start of every session. Detail lives in `docs/`, one file per concern, and you
 > read only what the task needs. Keep it that way: when you finish a piece of work, append to
@@ -34,6 +37,7 @@ mapping expansion — without touching the analysis engine's behaviour.
 
 | Path | What it is | Read when |
 |---|---|---|
+| `docs/HANDOFF.md` | **Read first.** State, what is unfinished, environment | Every session |
 | `docs/ARCHITECTURE.md` | Module map, process model, SQLite schema, data flow | Touching `app/` |
 | `docs/ROADMAP.md` | v2 milestones and their acceptance criteria | Starting any feature |
 | `docs/MAPPING_DISCIPLINE.md` | The rules every mapping row must pass | Adding/changing a mapping |
@@ -52,8 +56,12 @@ mapping expansion — without touching the analysis engine's behaviour.
 ```
 run.bat                      # v2 desktop app
 python -m app                # same thing, from a shell
+python -m unittest discover -s tests -t .     # 169 tests, ~2.5 min
 python engine/analyzer.py <file> --no-open    # v1 CLI, still works and still supported
 ```
+
+**Run the tests before and after any change.** They found six real bugs on their
+first runs, and five of them guard the mapping files themselves.
 
 ## Working agreements
 

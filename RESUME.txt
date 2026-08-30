@@ -1,0 +1,19 @@
+v1.11.1 ile yeniden analiz edilmesi gerekenler:
+com.app.auralaw
+hk.com.hsbc.hsbchkmobilebanking
+hk.edu.cityu.mobile
+hk.edu.polyu.polyumobile
+hk.edu.polyu.polyustaffmobile
+hk.gov.ogcio.iamsmart
+hk.org.ha.hago
+hk.ust.alum
+hk.ust.ei
+hk.ust.itsc.pathadvisor
+hk.ust.itsc.tt.iLearn
+hk.ust.researchapp
+hk.ust.staffapp
+hk.ust.student
+mo.gov.safp.portal
+mo.org.kwh.kwapp
+Octopus
+scameter.hk.cyberdefender
