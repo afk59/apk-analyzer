@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-06-25",
+  "version": "1.0.1",
+  "last_updated": "2026-08",
   "description": "iOS NSUsageDescription keys → HarmonyOS NEXT permission + kit mapping",
   "permission_mappings": [
     {
@@ -36,13 +36,13 @@
     {
       "ios_key": "NSPhotoLibraryUsageDescription",
       "ios_display": "Photo Library (Read)",
-      "harmony": "ohos.permission.READ_MEDIA_IMAGES",
+      "harmony": "ohos.permission.READ_IMAGEVIDEO",
       "kit": "@kit.MediaLibraryKit"
     },
     {
       "ios_key": "NSPhotoLibraryAddUsageDescription",
       "ios_display": "Photo Library (Add Only)",
-      "harmony": "ohos.permission.WRITE_MEDIA_IMAGES",
+      "harmony": "ohos.permission.WRITE_IMAGEVIDEO",
       "kit": "@kit.MediaLibraryKit"
     },
     {
@@ -90,7 +90,7 @@
     {
       "ios_key": "NSHealthUpdateUsageDescription",
       "ios_display": "Health Data (Write)",
-      "harmony": "ohos.permission.WRITE_HEALTH_DATA",
+      "harmony": "ohos.permission.HEALTH_DATA",
       "kit": "@kit.HealthServiceKit"
     },
     {
@@ -102,7 +102,7 @@
     {
       "ios_key": "NSAppleMusicUsageDescription",
       "ios_display": "Media Library (Apple Music)",
-      "harmony": "ohos.permission.READ_MEDIA_AUDIO",
+      "harmony": "ohos.permission.READ_AUDIO",
       "kit": "@kit.AudioKit"
     },
     {
@@ -121,7 +121,7 @@
       "ios_key": "NSUserTrackingUsageDescription",
       "ios_display": "App Tracking Transparency (ATT)",
       "harmony": "ohos.permission.APP_TRACKING_CONSENT",
-      "kit": "@kit.AnalyticsKit"
+      "kit": "@kit.AdsKit"
     },
     {
       "ios_key": "NSLocationTemporaryUsageDescriptionDictionary",
@@ -132,7 +132,7 @@
     {
       "ios_key": "NSVideoSubscriberAccountUsageDescription",
       "ios_display": "TV Provider Account",
-      "harmony": "ohos.permission.READ_MEDIA_VIDEO",
+      "harmony": "ohos.permission.READ_IMAGEVIDEO",
       "kit": "@kit.MediaKit"
     }
   ]

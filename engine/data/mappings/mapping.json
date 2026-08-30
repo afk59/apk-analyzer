@@ -1,5 +1,5 @@
 {
-  "version": "1.11.0",
+  "version": "1.11.1",
   "last_updated": "2026-08",
   "namespace_mappings": [
     {
@@ -1071,10 +1071,10 @@
     {
       "android_namespace": "com.google.android.datatransport",
       "android_display": "Google Data Transport (Firebase internal)",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
-      "note": "@kit.AnalyticsKit is recommended. Google Data Transport is an internal Firebase telemetry layer; equivalent event dispatch is handled by AGConnect analytics pipelines."
+      "note": "Firebase's internal telemetry transport. Native equivalent is `hiAppEvent` (`import { hiAppEvent } from '@kit.PerformanceAnalysisKit'`). medium: this is a dispatch layer, not an analytics API -- most of it simply disappears. CORRECTED 2026-08-30: previously @kit.AnalyticsKit, a token attested nowhere in the HarmonyOS documentation."
     },
     {
       "android_namespace": "com.google.firebase.inappmessaging",
@@ -1164,10 +1164,10 @@
     {
       "android_namespace": "com.facebook.appevents",
       "android_display": "Facebook App Events (Analytics)",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
-      "note": "@kit.AnalyticsKit is recommended for event tracking and app analytics. Facebook AppEvents custom event logging maps to AGConnect Analytics event reporting."
+      "note": "Custom event logging maps to `hiAppEvent` (`import { hiAppEvent } from '@kit.PerformanceAnalysisKit'`). medium: event schema and audience/attribution features do not port. CORRECTED 2026-08-30: previously @kit.AnalyticsKit, attested nowhere."
     },
     {
       "android_namespace": "com.facebook.share",
@@ -1197,10 +1197,10 @@
     {
       "android_namespace": "com.adjust.sdk",
       "android_display": "Adjust SDK (Mobile attribution & analytics)",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
-      "note": "@kit.AnalyticsKit is recommended for attribution and event analytics. Adjust SDK install tracking and in-app event logging maps to AGConnect Analytics attribution and custom event APIs."
+      "note": "Install attribution and in-app event logging. The event half maps to `hiAppEvent` (@kit.PerformanceAnalysisKit); ATTRIBUTION HAS NO NATIVE COUNTERPART and needs a vendor SDK or AGConnect. medium for that reason. CORRECTED 2026-08-30: previously @kit.AnalyticsKit, attested nowhere."
     },
     {
       "android_namespace": "androidx.compose.foundation",

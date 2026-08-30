@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-06-25",
+  "version": "1.0.1",
+  "last_updated": "2026-08",
   "target": "hmos",
   "description": "iOS framework → HarmonyOS NEXT kit mapping for IPA migration analysis",
   "framework_mappings": [
@@ -23,16 +23,16 @@
     {
       "framework_name": "FirebaseAnalytics",
       "framework_display": "Firebase Analytics",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "high",
       "note": "Firebase Analytics event tracking → @kit.AnalyticsKit (HiAppEvent). Custom events, user properties, funnel analysis all supported."
     },
     {
       "framework_name": "FirebaseCore",
       "framework_display": "Firebase Core",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Firebase initialization → migrate Firebase app config to AGC (AppGallery Connect) initialization via @kit.AnalyticsKit."
     },
@@ -143,24 +143,24 @@
     {
       "framework_name": "Realm",
       "framework_display": "Realm Mobile Database",
-      "harmony_kit": "@kit.RelationalStoreKit",
-      "harmony_import": "@kit.RelationalStoreKit",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
       "confidence": "medium",
       "note": "Realm object store → @kit.RelationalStoreKit (RDB). Schema migration required; Realm live-objects model differs from SQL rows."
     },
     {
       "framework_name": "RealmSwift",
       "framework_display": "Realm Swift Mobile Database",
-      "harmony_kit": "@kit.RelationalStoreKit",
-      "harmony_import": "@kit.RelationalStoreKit",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
       "confidence": "medium",
       "note": "Realm Swift API → @kit.RelationalStoreKit (RDB). Full data layer rewrite needed; async query and change notification APIs differ."
     },
     {
       "framework_name": "FMDB",
       "framework_display": "FMDB SQLite Wrapper (Objective-C)",
-      "harmony_kit": "@kit.RelationalStoreKit",
-      "harmony_import": "@kit.RelationalStoreKit",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
       "confidence": "high",
       "note": "FMDB SQLite → @kit.RelationalStoreKit. Standard SQL queries, transactions, and migrations map directly to RDB APIs."
     },
@@ -199,16 +199,16 @@
     {
       "framework_name": "AdjustSDK",
       "framework_display": "Adjust Attribution SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Adjust install attribution → @kit.AnalyticsKit. Install tracking, event attribution, and deep link measurement available via AGC Analytics."
     },
     {
       "framework_name": "AppsFlyerLib",
       "framework_display": "AppsFlyer Attribution SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "AppsFlyer → @kit.AnalyticsKit. Install attribution and in-app events map to HiAppEvent; AGC Analytics provides equivalent functionality."
     },
@@ -319,32 +319,32 @@
     {
       "framework_name": "Branch",
       "framework_display": "Branch Deep Linking & Attribution SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Branch attribution + deep links → @kit.AnalyticsKit + AGC App Linking. Custom URI schemes and App Links replace Branch links."
     },
     {
       "framework_name": "Mixpanel",
       "framework_display": "Mixpanel Analytics SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Mixpanel product analytics → @kit.AnalyticsKit. Event tracking, user profiles, and funnel analysis maps to AGC Analytics."
     },
     {
       "framework_name": "Amplitude",
       "framework_display": "Amplitude Analytics SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Amplitude product analytics → @kit.AnalyticsKit. Event ingestion, session tracking, and cohort analysis maps to HiAppEvent."
     },
     {
       "framework_name": "Segment",
       "framework_display": "Segment Customer Data Platform SDK",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Segment CDP → @kit.AnalyticsKit. Event forwarding pipeline must be rebuilt; replace Segment destinations with native AGC integrations."
     },
@@ -391,16 +391,16 @@
     {
       "framework_name": "GoogleAppMeasurement",
       "framework_display": "Google App Measurement (Analytics Core)",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "high",
       "note": "Google App Measurement (Firebase Analytics backend) → @kit.AnalyticsKit (HiAppEvent). Session, event, and user-property measurement map directly."
     },
     {
       "framework_name": "GoogleAppMeasurementIdentitySupport",
       "framework_display": "Google App Measurement Identity Support",
-      "harmony_kit": "@kit.AnalyticsKit",
-      "harmony_import": "@kit.AnalyticsKit",
+      "harmony_kit": "@kit.PerformanceAnalysisKit",
+      "harmony_import": "@kit.PerformanceAnalysisKit",
       "confidence": "medium",
       "note": "Google identity support for App Measurement → @kit.AnalyticsKit. User-identity stitching handled via AGC Analytics user ID APIs."
     },
