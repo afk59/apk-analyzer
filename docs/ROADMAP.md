@@ -166,6 +166,23 @@ not exist.
 
 ---
 
+## M5c — Mapping audit + i18n `done` (2026-08-30)
+
+Not planned as a milestone; added because the maintainer asked for proof that no
+mapping is a hallucination, and for Turkish and Chinese.
+
+**Nine hallucinated values found and corrected** across the mapping files —
+`@kit.AnalyticsKit` (13 rows, a kit that appears NOWHERE in the 110 MB corpus),
+`@kit.RelationalStoreKit` (3 rows), and five iOS permission targets carrying
+Android names. Write-up in `docs/MAPPING_AUDIT_2026-08-30.md`; the audit is now
+five permanent tests.
+
+**EN / TR / 中文.** UI chrome only — kit tokens, permission names and the reports
+stay as the engine produced them, and a test asserts identifiers never change
+across languages.
+
+---
+
 ## M6 — Packaging `todo`
 
 - `requirements.txt` pinned; first-run install keeps v1's XGATE proxy-stripping behaviour
