@@ -286,6 +286,109 @@ class TestMappingDataIntegrity(IsolatedTest):
         missing = sorted(k for k in kits if k not in KIT_DOC_URLS)
         self.assertEqual(missing, [], f"no doc URL for: {missing}")
 
+    def _attested_kits(self):
+        """Every kit token any reference source knows about.
+
+        Four sources, because no single one is complete: the .d.ts barrels cover
+        only the 47 OPEN SDK kits, the crawled docs are the only place closed
+        kits like ScanKit and PushKit appear, and the generated API index keys on
+        normalised method names. A kit is real if ANY of them attests it.
+        """
+        import re
+        kits = set()
+        dr = self.config.DOCS_REF_DIR
+        dts = dr / "ArkTS-Harmonyos-apis-and-kits"
+        if not dr.is_dir():
+            self.skipTest("docs-ref not present in this checkout")
+        for p in (dts / "kits").glob("@kit.*.d.ts"):
+            kits.add(p.name[:-5])
+        rx = re.compile(r"@kit\.[A-Za-z0-9]+")
+        for root in (dr / "harmonos-official-docs-ref-and-examples" / "data", dts):
+            for p in root.rglob("*"):
+                if (p.is_file() and p.suffix.lower() in (".md", ".ts", ".ets")
+                        and ".meta" not in p.parts):
+                    kits |= set(rx.findall(p.read_text(encoding="utf-8", errors="ignore")))
+        idx = self.config.ENGINE_DIR / "data" / "reference" / "hmos_api_index.json"
+        if idx.exists():
+            kits |= set(rx.findall(idx.read_text(encoding="utf-8", errors="ignore")))
+        return kits
+
+    def test_no_mapping_names_a_kit_that_does_not_exist(self):
+        """The audit that caught @kit.AnalyticsKit and @kit.RelationalStoreKit.
+
+        Both were used by real mapping rows and neither appears anywhere in the
+        reference corpora -- "AnalyticsKit" not even as a word. A kit token that
+        nothing attests is a guess, and a guess in this file is the one thing the
+        product cannot afford.
+        """
+        attested = self._attested_kits()
+        self.assertGreater(len(attested), 40, "kit evidence base looks empty")
+        offenders = []
+        for fname, key, field in (
+                ("mapping.json", "namespace_mappings", "harmony_kit"),
+                ("hms_mapping.json", "namespace_mappings", "hms_kit"),
+                ("ios_mapping.json", "framework_mappings", "harmony_kit"),
+                ("win_mapping.json", "dll_mappings", "harmony_kit")):
+            path = self.config.MAPPINGS_DIR / fname
+            if not path.exists():
+                continue
+            for e in json.loads(path.read_text(encoding="utf-8")).get(key, []):
+                kit = e.get(field)
+                # Only @kit.* tokens are checkable; HMS kit names and NDK labels
+                # are prose by design.
+                if kit and kit.startswith("@kit.") and kit not in attested:
+                    offenders.append(f"{fname}: {kit}")
+        self.assertEqual(sorted(set(offenders)), [], f"unattested kit tokens: {sorted(set(offenders))}")
+
+    def test_doc_urls_only_describe_kits_that_exist(self):
+        attested = self._attested_kits()
+        sys.path.insert(0, str(self.config.ENGINE_DIR))
+        from core.mapping import KIT_DOC_URLS
+        bogus = sorted(k for k in KIT_DOC_URLS
+                       if k.startswith("@kit.") and k not in attested)
+        self.assertEqual(bogus, [], f"doc URLs for non-existent kits: {bogus}")
+
+    def test_every_ohpm_package_exists_in_the_registry(self):
+        """The registry answers HTTP 200 for a missing package, so existence is
+        `isinstance(body, dict)` and nothing else -- which is how v1 caught
+        @hw-agconnect/core, a package that does not exist."""
+        reg = self.config.ENGINE_DIR / "data" / "reference" / "ohpm_registry_cache.json"
+        if not reg.exists():
+            self.skipTest("no OHPM registry cache in this checkout")
+        packages = set(json.loads(reg.read_text(encoding="utf-8")).get("packages", {}))
+        self.assertGreater(len(packages), 1000, "registry cache looks empty")
+        rows = json.loads((self.config.MAPPINGS_DIR / "ohpm_mapping.json")
+                          .read_text(encoding="utf-8"))["ohpm_mappings"]
+        missing = sorted({e["ohpm_package"] for e in rows
+                          if e["ohpm_package"] not in packages})
+        self.assertEqual(missing, [], f"packages not in the registry: {missing}")
+
+    def test_permission_targets_in_every_mapping_file(self):
+        import re
+        names = set()
+        for f in (self.config.ENGINE_DIR / "data" / "permissions").glob("*.txt"):
+            names |= set(re.findall(r"ohos\.permission\.[A-Z_0-9]+",
+                                    f.read_text(encoding="utf-8")))
+        dts = self.config.DOCS_REF_DIR / "ArkTS-Harmonyos-apis-and-kits"
+        if dts.is_dir():
+            for p in dts.rglob("*.d.ts"):
+                names |= set(re.findall(r"ohos\.permission\.[A-Z_0-9]+",
+                                        p.read_text(encoding="utf-8", errors="ignore")))
+        if len(names) < 100:
+            self.skipTest("permission sources unavailable")
+        bad = []
+        for fname in ("mapping.json", "hms_mapping.json", "ios_permission_mapping.json"):
+            path = self.config.MAPPINGS_DIR / fname
+            if not path.exists():
+                continue
+            for e in json.loads(path.read_text(encoding="utf-8")).get("permission_mappings", []):
+                h = e.get("harmony")
+                # Prose answers such as "(none - the photo picker ...)" are
+                # deliberate and are not permission names.
+                if h and h.startswith("ohos.permission.") and h not in names:
+                    bad.append(f"{fname}: {h}")
+        self.assertEqual(sorted(set(bad)), [], f"non-existent permission targets: {sorted(set(bad))}")
+
     def test_every_suggested_permission_actually_exists(self):
         """The engine must not recommend a permission nobody can grant.
 

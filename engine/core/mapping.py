@@ -75,9 +75,13 @@ KIT_DOC_URLS: dict[str, str] = {
     # Best available: PDF Kit has no confirmed landing page, this is its
     # "Opening a Document" guide.
     "@kit.PDFKit":                 "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/pdf-open-document",
-    # Best available: no HarmonyOS guides page for @kit.AnalyticsKit could be
-    # confirmed; this is the HMS Analytics Kit product page (same product).
-    "@kit.AnalyticsKit":           "https://developer.huawei.com/consumer/en/hms/huawei-analyticskit/",
+    # REMOVED 2026-08-30: @kit.AnalyticsKit does not exist. The string
+    # "AnalyticsKit" appears nowhere in the 110 MB documentation corpus -- not as
+    # a kit token, not as a word -- and v1's own comment here already said no
+    # HarmonyOS page for it could be confirmed. It linked to an HMS PRODUCT page,
+    # which is a different platform. HarmonyOS's app-event facility is hiAppEvent
+    # under @kit.PerformanceAnalysisKit, and every row that used the phantom kit
+    # now points there.
     # CHINESE-ONLY, and correctly so: Payment Kit is a China-market kit (its
     # ecnyPaymentService module is digital-yuan payment) and has no /en/ guide.
     # Real and attested — 27 @kit.PaymentKit imports in hmos_api_index.json.
