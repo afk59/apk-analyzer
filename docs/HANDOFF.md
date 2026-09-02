@@ -1,6 +1,6 @@
 # Handoff — start here
 
-Last updated **2026-08-30**, end of session. Read this, then `CLAUDE.md`.
+Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
 
 ---
 
@@ -12,7 +12,7 @@ Last updated **2026-08-30**, end of session. Read this, then `CLAUDE.md`.
 | App | Working. `run.bat` → window, pickers, analysis with live progress, results library, APK download by package name. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **173**, `python -m unittest discover -s tests -t .`, ~2.5 min when nothing else is running. |
+| Tests | **202**, `python -m unittest discover -s tests -t .`, ~3 min when nothing else is running. |
 | `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 
@@ -112,6 +112,17 @@ want the fast path back, either empty `engine/input/` or set `MA_TEST_APK` to a 
 
 ## Environment
 
+- **Setting this up on another machine is one double-click.** `run.bat` checks for
+  Python 3.10+ and the first run installs everything itself
+  (`app/__main__.py::_ensure_deps`, guarded by `tests/test_bootstrap.py`). Verified
+  from a bare venv: seven packages pulled, server up, `mappings:true`.
+- **The engine's four dependencies are pinned exactly** in `requirements.txt`;
+  the shell's three are floored at the tested version. Bumping an engine pin
+  changes analysis output, so it needs a corpus re-run behind it.
+- **Clone to a SHORT path.** `C:\ma\`, not a deep folder. At a ~130-character prefix
+  the checkout succeeds with the right file count but `rglob` silently skips `docs-ref`
+  directories, and the mapping-integrity tests then fail claiming kit tokens are
+  unattested. The message blames the mappings; the cause is the path.
 - `PYTHONIOENCODING` is no longer required — the CLI forces UTF-8 itself.
 - The corpus needs AC power. Sleep-on-battery killed a v1 run; the DC timeouts
   are currently 0, but check `PowerLineStatus` before starting anything long.
