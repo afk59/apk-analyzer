@@ -5,5 +5,11 @@ docs-ref/** -text
 
 # Generated data. Diffing them is noise and normalising them would rewrite files
 # the tool reads back verbatim.
-src/data/reference/*.json -text -diff
-src/data/reference/*.xlsx binary
+#
+# These paths said `src/data/reference/` until 2026-09-02. That was v1's layout;
+# v2 moved the engine to `engine/` and the rules quietly stopped matching
+# anything, so the files they were written to protect were unprotected for the
+# whole of v2. Measured before fixing: no damage done -- the blobs and the
+# working tree are byte-identical -- but the guard was off.
+engine/data/reference/*.json -text -diff
+engine/data/reference/*.xlsx binary
