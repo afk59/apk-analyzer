@@ -25,10 +25,23 @@ v2'de iki şey yaptık: **aracı herkesin kullanabileceği hale getirdik** ve
 - Analiz edilecek APK dosyasını elle bulup indirmeye gerek kalmadı.
 - Paket adını yazıyorsunuz, program uygulamayı kendisi indirip analize sokuyor.
 
-## 3. Sonuç kütüphanesi
+## 3. Sonuç kütüphanesi — sonuçları saklama biçimimizi değiştirdik
 
+Eskiden her analiz sadece diskte duran bir dosyaydı. "Kapsamı %60'ın altında kalan
+uygulamalar hangileri?" sorusunun cevabı, 43 dosyayı tek tek açmaktı.
+
+- Artık dosyaların üzerinde bir **dizin (veritabanı)** var. Liste, filtreleme, geçmişe
+  bakma ve iki analizi karşılaştırma anında geliyor.
 - Yapılan her analiz kaydediliyor; eski raporlara listeden tek tıkla dönülebiliyor.
 - Daha önce yapılmış bir analiz tekrar çalıştırılmıyor — zaman kaybı ortadan kalktı.
+- İndirilen uygulamaların durumu da burada tutuluyor (sırada / indiriliyor / hazır / hatalı).
+
+**Buradaki güvence önemli:** veritabanı bir *dizin*, teslimat değil. İçindeki her bilgi
+diskteki rapordan yeniden üretilebiliyor; dosya silinse bile bir tarama ile geri geliyor.
+Yani **hiçbir iş çıktısı veritabanına bağlı değil** — raporlar ve Excel dosyaları neyse
+o kalıyor. Bir sayı önemliyse önce raporda vardır, sonra dizinde.
+
+Ek bir kurulum da gerektirmiyor; kullanılan altyapı Python'un kendi içinde geliyor.
 
 ## 4. Üç dil ve karanlık tema
 
