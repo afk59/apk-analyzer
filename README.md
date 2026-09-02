@@ -7,8 +7,8 @@ directly, what needs work, and what has no equivalent yet.
 **v2 adds a desktop UI, an APK downloader, a run library, and a documentation-grounded mapping
 expansion.** v1's analysis engine is inherited unchanged and its CLI still works.
 
-> Status: skeleton. The app shell lands in M1 — see `docs/ROADMAP.md`.
-> Until then use the CLI below; it is fully functional.
+> Status: the app works — window, pickers, live progress, results library, APK download.
+> See `docs/HANDOFF.md` for the current state and `docs/ROADMAP.md` for what is left.
 
 ## Layout
 
@@ -25,15 +25,26 @@ docs-ref/   HarmonyOS SDK .d.ts + official docs corpus (read-only, mapping-time)
 ## Running
 
 ```
-run.bat                                       # v2 desktop app  (M1)
+run.bat                                       # v2 desktop app
 python engine/analyzer.py <file> --no-open    # v1 CLI, works today
 python engine/analyzer.py --batch             # every file in engine/input/
 python engine/analyzer.py engine/input/pc/<app>   # a folder of .exe/.dll
 ```
 
-First run installs `androguard`, `openpyxl`, `pefile` and `macholib` via pip. On a corporate
-network that install is the one step that needs real internet — disconnect from XGATE /
-wlanaccess, run once, then reconnect.
+**There is no install step.** `run.bat` checks that Python 3.10+ is on PATH, and the first
+run installs everything in `requirements.txt` itself — the four the engine needs plus the
+three the shell needs. It says what it is doing and it happens once. `python -m app` does
+the same thing; the logic lives in `app/__main__.py::_ensure_deps`, not in the batch file.
+
+The engine's four are **pinned exactly** — they decide what the analysis outputs, so a
+silent minor bump is an undecided change to the product. The shell's three are floored at
+the tested version and capped below the next major. Note that the first-run installer
+checks *presence*, not version: a machine that already has a package keeps the one it has.
+Reproducing the exact environment is `pip install -r requirements.txt`, run on purpose.
+
+That first run is the one step that needs real internet. On a corporate network, disconnect
+from XGATE / wlanaccess, launch once, then reconnect — pip is invoked with the proxy
+variables stripped for exactly this reason.
 
 ## What a clone needs
 
@@ -61,6 +72,12 @@ binaries, not ours to redistribute) and generated output.
 > ```
 > git config --global core.longpaths true
 > ```
+>
+> **And clone somewhere short** — `C:\ma\` rather than a deep folder under Documents.
+> Measured: at a ~130-character prefix the checkout reported success and even had the right
+> file count, but Python's `rglob` then skipped `docs-ref` directories silently and two
+> mapping-integrity tests failed claiming seven kit tokens were unattested. The same commit
+> passed cleanly at a short path. The failure blames the mappings; the cause is the path.
 
 ## Contributing
 

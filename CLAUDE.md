@@ -44,6 +44,7 @@ mapping expansion — without touching the analysis engine's behaviour.
 | `docs/DOCS_REF_GUIDE.md` | How to use `docs-ref/` to ground a mapping | Adding/changing a mapping |
 | `docs/decisions/` | Why the stack is what it is (ADRs) | Questioning a design choice |
 | `docs/SESSION_LOG.md` | Running work log, Turkish, maintainer-facing | Start of a session |
+| `docs/V2_YONETICI_OZETI.md` | What v2 did, in Turkish, for a non-technical reader | Reporting upwards |
 | `docs/v1/ENGINE_REFERENCE.md` | v1's full 149 KB history — engine internals, every sprint | Debugging engine behaviour |
 | `docs/v1/SESSION_LOG_2026-08-20.txt` | v1's Turkish work log | Chasing a v1 decision |
 | `docs/v1/MAPPING_CANDIDATES_2026-08-20.md` | Mapping proposals **and rejections**, with reasons | Before re-proposing anything |
@@ -56,7 +57,7 @@ mapping expansion — without touching the analysis engine's behaviour.
 ```
 run.bat                      # v2 desktop app
 python -m app                # same thing, from a shell
-python -m unittest discover -s tests -t .     # 173 tests
+python -m unittest discover -s tests -t .     # 202 tests
 python engine/analyzer.py <file> --no-open    # v1 CLI, still works and still supported
 ```
 

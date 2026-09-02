@@ -389,3 +389,112 @@ asla "undefined" olarak görünemez.
 Gerçek pencerede 7 test, üç dil için: her `data-i18n` anahtarı çözülüyor, dil
 etiketleniyor, seçim hatırlanıyor, kabuk üç dilde de gerçekten farklı, çalışma
 anı metinleri de değişiyor, tanımlayıcılar dokunulmamış, sıfır JS hatası.
+
+---
+
+## 2026-09-02 — taşınabilirlik denetimi ve gözetimsiz ilk kurulum
+
+Soru şuydu: repo başka bir bilgisayarda, sıfırdan, çalışır durumda mı?
+Tahmin etmedik — temiz bir klon açıp orada ölçtük.
+
+### Ölçülenler
+
+| | |
+|---|---|
+| `origin/v2` ile fark | 0 ileri / 0 geri, çalışma ağacı temiz |
+| Temiz klonda test | **173/173 geçti**, 10 atlandı (corpus ikilileri repoda yok, beklenen) |
+| Temiz klonda uygulama | açıldı; `/api/health` → `mappings:true`, arayüz HTTP 200 |
+| Kodda mutlak yol | yok — `app/config.py` her şeyi kökten türetiyor |
+| Çalışma anı veri dosyaları | 14'ünün hepsi takipte |
+| Paket boyutu | 21.68 MiB, git-lfs yok |
+
+### Bulunan üç engel
+
+1. **`pip install -r requirements.txt` hiçbir yerde yazmıyordu.** Boş bir venv'de
+   `run.bat` → `ModuleNotFoundError: No module named 'uvicorn'` ve ardından
+   `pause`. Motor kendi dört paketini `_ensure_deps()` ile kuruyordu; v2
+   kabuğunun `fastapi` / `uvicorn` / `pywebview`'i için hiçbir karşılığı yoktu.
+   **Bu oturumda düzeltildi**, aşağıda.
+
+2. **Uzun yol sorunu belgelendiğinden daha sinsi.** `core.longpaths` bu repoda
+   *yerel* ayarlı, global değil. Derin bir yola (≈130 karakter önek) klonladığımızda
+   checkout başarılı göründü, **dosya sayısı bile doğruydu (8495)** — ama Python'un
+   `rglob`'u `docs-ref` klasörlerini sessizce atlayınca `TestMappingDataIntegrity`
+   içindeki iki test kırıldı ve mesaj "7 kit token'ı kanıtlanmamış" dedi. Aynı klon
+   `C:\v2t`'de tertemiz geçti. Yani hata mapping'lerde değil yolun uzunluğundaydı,
+   **ama insanı mapping'lerin bozuk olduğuna inandırıyor.** Şirket makinesinde repo
+   kısa bir yola konmalı.
+
+3. **`requirements.txt`'te sürüm pinlenmemiş.** Boş venv'e androguard **4.1.4**
+   geldi, oysa burada 4.1.3 var ve 43 uygulamalık corpus 4.1.3 ile analiz edildi.
+   Donmuş bir motor için istenmeyen tek şey sessiz sürüm kayması. **Düzeltildi**,
+   aşağıda.
+
+### Yapılan: ilk açılışta gözetimsiz kurulum
+
+`app/__main__.py::_ensure_deps()`. Motorun `_ensure_deps`'ini aynalıyor — aynı pip
+çağrısı, aynı proxy temizliği, aynı "ne yaptığını söyle" kuralı — iki bilinçli farkla:
+
+- **Motorun dört paketi de burada kuruluyor.** Bu süreç onları import etmiyor;
+  analiz alt sürecinin ihtiyacı olacak, ve şimdi çekmek ilk analizin yarı yolda
+  pip'e gitmesini engelliyor.
+- **Sadece `_FATAL` başarısızlığı iptal ettiriyor.** Motor dördünün herhangi biri
+  için `sys.exit(1)` yapabilir çünkü CLI koşusunda dördü de taşıyıcı; burada
+  `fastapi` ve `uvicorn` dışındaki bir eksik uygulamayı açılmaktan alıkoymamalı —
+  `pywebview` zaten tarayıcıya düşüyor.
+
+`requirements.txt` neyin kurulacağının tek kaynağı olarak kaldı; `_IMPORT_NAME`
+sadece "kurulu mu" sorusunu nasıl soracağımızı söylüyor (`pywebview` → `webview`).
+`run.bat` artık yalnızca Python'un kendisi hakkında rapor veremeyeceği iki şeyi
+kontrol ediyor: var mı, ve 3.10+ mı.
+
+### Kalıcı koruma
+
+`tests/test_bootstrap.py`, **19 test**. Ağa ve pip'e dokunmuyor; her kurulum taklit,
+denetlenen şey kurulumun etrafındaki karar. Bunu test etmenin sebebi tam olarak
+çalışan bir makinede hiç koşmayan bir kod yolu olması: sadece sıfırdan bir PC'de
+çalışıyor, kimsenin bakmadığı yerde, ve orada bir hata "uygulama açılmıyor" gibi
+görünüyor. Kapsananlar: yorum satırlarının ayrıştırılması (isteğe bağlı blok
+kurulum listesine sızarsa çevrimdışı ilk açılış çalışan uygulamayı bloklanmışa
+çevirir), `pywebview` → `webview` eşlemesi (yanlışsa her açılış pywebview'i sonsuza
+kadar yeniden kurar), proxy temizliği, ölümcül/ölümcül-olmayan ayrımı, ve pip'in
+hiç olmaması.
+
+### Uçtan uca doğrulama
+
+Boş bir venv (`pip==25.3`, başka hiçbir şey yok) → `python -m app --no-window` →
+yedi paketin hepsi kendiliğinden kuruldu → sunucu açıldı, `mappings:true`, arayüz
+HTTP 200. **Kullanıcıya düşen adım: sıfır.**
+
+Sonrasında tam paket: 192 test.
+
+### Ayrıca
+
+- `docs/V2_YONETICI_OZETI.md` — v2'de ne yapıldığının yönetici düzeyinde, teknik
+  olmayan Türkçe özeti. Bakımcının talebi.
+### Sürüm pinleme
+
+Motorun dördü **tam pinli** (`==`), kabuğun üçü doğrulanmış sürümden tabanlı ve bir
+sonraki majör'ün altında tavanlı (`>=x,<y`). Ayrım kasıtlı: motorun çıktısı işin
+teslimatı, dolayısıyla APK'yı ayrıştıran kütüphanenin sessizce minör atlaması
+kimsenin karar vermediği bir çıktı değişikliği demek. Kabuğun üçü yerel bir sayfa
+sunuyor, çıktıya dokunmuyor; orada bir güvenlik yamasını corpus'u yeniden
+çalıştırmadan alabilmek bayt düzeyinde tekrarlanabilirlikten değerli. Taban
+gerçekten test edilmiş sürüm, "herhalde buraya kadar çalışır" tahmini değil.
+
+Pin eklemek **`_missing()`'i sessizce bozuyordu**: satır hem pip'e giden şey hem de
+import edilecek ad olarak kullanılıyordu, yani `find_spec("androguard==4.1.3")`
+hiçbir zaman bulunamayacak bir modül arıyor ve **her açılışta tüm listeyi yeniden
+kuruyordu**. `_requirement_name()` ayrımı yapıyor; `_FATAL` karşılaştırması da çıplak
+ada göre yapılıyor, yoksa pinli bir `uvicorn` ölümcül sayılmayı bırakıyordu. Her
+ikisi de teste bağlandı — `tests/test_bootstrap.py` artık **29 test**.
+
+Boş venv'de doğrulandı: androguard bu sefer 4.1.4 değil **4.1.3** geldi.
+
+### `.gitattributes` ölü kural taşıyordu
+
+`src/data/reference/*` diyordu, oysa yol v2'de `engine/data/reference/` oldu. Yani o
+`-text` / `-diff` / `binary` kuralları **v2 boyunca hiçbir dosyaya uygulanmadı**.
+Düzeltmeden önce ölçüldü: hasar yok — blob ile çalışma ağacı bayt bayt aynı (ikisinde
+de 80.837 CR), yani dönüşüm zaten olmuyordu. Düzeltmeden sonra `git check-attr` kuralı
+görüyor ve hiçbir dosya "değişmiş" görünmüyor. **Düzeltildi.**
