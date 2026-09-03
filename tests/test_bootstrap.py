@@ -8,8 +8,11 @@ Nothing here touches the network or pip. Every install is faked; what is being
 checked is the decision-making around it.
 """
 
+import http.server
 import subprocess
+import threading
 import unittest
+import urllib.request
 from unittest import mock
 
 from tests.support import ROOT
@@ -199,6 +202,65 @@ class TestEnsureDeps(unittest.TestCase):
              mock.patch.object(entry.subprocess, "check_call",
                                side_effect=OSError("no pip")):
             self.assertFalse(entry._ensure_deps())
+
+
+class TestHealthProbeIgnoresProxies(unittest.TestCase):
+    """The probe must never be sent to a proxy.
+
+    On Windows urllib reads the WinINET proxy settings, and the "<local>"
+    bypass entry matches only hostnames with NO DOT -- "127.0.0.1" has three.
+    A managed machine with a system proxy therefore sends the health check to
+    the corporate proxy, which cannot reach this process, and the app reports
+    "the local server did not start" while the server is running fine.
+    """
+
+    def setUp(self):
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):                       # noqa: N802
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{"ok":true}')
+
+            def log_message(self, *a):              # keep the suite quiet
+                pass
+
+        self.httpd = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
+        self.url = f"http://127.0.0.1:{self.httpd.server_address[1]}/api/health"
+        # addCleanup is LIFO, so register close first and shutdown second:
+        # closing the socket while serve_forever is still selecting on it
+        # raises WinError 10038 into the suite's output.
+        self.addCleanup(self.httpd.server_close)
+        self.addCleanup(self.httpd.shutdown)
+
+    # Port 9 is discard: nothing listens, so a proxied request fails at once.
+    PROXY = {"http_proxy": "http://127.0.0.1:9", "HTTP_PROXY": "http://127.0.0.1:9",
+             "no_proxy": "", "NO_PROXY": ""}
+
+    def test_the_probe_still_reaches_loopback(self):
+        with mock.patch.dict(entry.os.environ, self.PROXY):
+            ok, why = entry._wait_until_up(self.url, timeout=5)
+        self.assertTrue(ok, f"probe failed with a proxy configured: {why!r}")
+
+    def test_an_ordinary_opener_would_have_been_proxied(self):
+        """Proves the bug is real rather than theoretical: an opener built the
+        ordinary way, in the same environment, does not get through.
+
+        build_opener() rather than urlopen(): urlopen caches one global opener
+        on first use, which snapshots the proxy configuration as it was then,
+        so asserting through it would pass or fail depending on whether some
+        earlier test in the run had already built it.
+        """
+        with mock.patch.dict(entry.os.environ, self.PROXY):
+            with self.assertRaises(OSError):
+                urllib.request.build_opener().open(self.url, timeout=2)
+
+    def test_a_server_that_never_answers_reports_the_last_error(self):
+        """The failure has to say what it saw, or it is a dead end."""
+        dead = "http://127.0.0.1:9/api/health"
+        ok, why = entry._wait_until_up(dead, timeout=1)
+        self.assertFalse(ok)
+        self.assertIsNotNone(why)
 
 
 class TestRunBat(unittest.TestCase):

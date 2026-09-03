@@ -175,7 +175,7 @@ def _free_port() -> int:
 
 
 def _serve(port: int):
-    """uvicorn in a daemon thread. Returns the thread once it is listening."""
+    """uvicorn in a daemon thread. Returns (server, thread, failure)."""
     import uvicorn
     from app.api.routes import app as fastapi_app
 
@@ -183,26 +183,52 @@ def _serve(port: int):
         fastapi_app, host=config.HOST, port=port,
         log_level="warning", access_log=False,
     ))
-    thread = threading.Thread(target=server.run, daemon=True, name="uvicorn")
+    failure = {}
+
+    def run():
+        # A thread that raises takes its traceback down with it, and the only
+        # symptom left is a health probe that never answers -- which reads as
+        # "the server did not start" with no reason attached.
+        try:
+            server.run()
+        except BaseException as exc:
+            failure["error"] = exc
+
+    thread = threading.Thread(target=run, daemon=True, name="uvicorn")
     thread.start()
-    return server, thread
+    return server, thread, failure
 
 
-def _wait_until_up(url: str, timeout: float = 20.0) -> bool:
+def _loopback_opener():
+    """An opener that never sends a loopback request through a proxy.
+
+    On Windows urllib reads the WinINET proxy settings, and the usual "<local>"
+    bypass entry matches only hostnames with NO DOT -- "127.0.0.1" has three.
+    So on a machine with a system proxy the health probe below is sent to the
+    corporate proxy, which cannot reach this process, and the app reports that
+    the server never started while it is in fact running and listening.
+    """
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
+def _wait_until_up(url: str, timeout: float = 20.0):
     """Poll /api/health rather than sleeping a guessed interval.
 
-    A fixed sleep is either too short on a cold start (blank window) or wasted
-    time on a warm one.
+    Returns (ok, last_error) so a failure can say what it actually saw.
     """
+    opener = _loopback_opener()
     deadline = time.monotonic() + timeout
+    last = None
     while time.monotonic() < deadline:
         try:
-            with urllib.request.urlopen(url, timeout=1) as r:
+            with opener.open(url, timeout=1) as r:
                 if r.status == 200:
-                    return True
-        except (urllib.error.URLError, OSError):
-            time.sleep(0.15)
-    return False
+                    return True, None
+                last = f"HTTP {r.status}"
+        except (urllib.error.URLError, OSError) as exc:
+            last = exc
+        time.sleep(0.15)
+    return False, last
 
 
 def main(argv: list[str]) -> int:
@@ -213,10 +239,23 @@ def main(argv: list[str]) -> int:
 
     port = _free_port()
     base = f"http://{config.HOST}:{port}"
-    server, _thread = _serve(port)
+    server, thread, failure = _serve(port)
 
-    if not _wait_until_up(f"{base}/api/health"):
+    ok, why = _wait_until_up(f"{base}/api/health")
+    if not ok:
         print("[!] The local server did not start. Nothing was opened.")
+        if failure.get("error") is not None:
+            print(f"    The server thread stopped: {failure['error']!r}")
+        elif not thread.is_alive():
+            print("    The server thread ended without reporting an error.")
+        elif getattr(server, "started", False):
+            # It IS listening, so something between here and the port refused.
+            print(f"    It is listening on {base}, but the health check could")
+            print(f"    not reach it. Last error: {why!r}")
+            print("    A proxy or a security product intercepting loopback is")
+            print("    the usual cause on a managed machine.")
+        else:
+            print(f"    It did not finish starting in time. Last error: {why!r}")
         return 1
 
     print(f"[*] Migration Analyzer v2 - serving on {base}")

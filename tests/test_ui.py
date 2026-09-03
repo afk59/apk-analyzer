@@ -42,8 +42,9 @@ config.ensure_dirs()
 port = _free_port()
 base = f"http://{config.HOST}:{port}"
 _serve(port)
-if not _wait_until_up(f"{base}/api/health"):
-    print(json.dumps({"error": "server did not start"})); sys.exit(1)
+_up, _why = _wait_until_up(f"{base}/api/health")
+if not _up:
+    print(json.dumps({"error": f"server did not start: {_why!r}"})); sys.exit(1)
 
 import webview
 OUT = {}
