@@ -16,6 +16,48 @@ Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
 | `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 
+## The two branches
+
+`v2` is where the work happens, with Claude, in a terminal. `v2-nocomment` is
+what gets pulled onto the company machine and pushed to the company repo.
+
+**The only difference between them is comment density.** Same code, same tests,
+same `docs/`. `v2-nocomment` carries the comments a developer needs and none of
+the session narrative -- no dated changelog notes, no corpus measurements quoted
+as evidence, no retellings of how a bug was found. Every rule those stories
+justified is still there.
+
+Two things follow, and both cost time when forgotten:
+
+1. **Commits on `v2-nocomment` carry no AI attribution trailers.** No
+   `Co-Authored-By: Claude`, no `Claude-Session:` link. They were stripped from
+   all 73 commits once, by rewriting the branch; writing them and rewriting
+   again every time is the wrong trade.
+2. **The histories have diverged.** That rewrite changed every SHA, so
+   `v2-nocomment` shares no ancestry with `v2`. It is a one-way export branch:
+   cherry-pick INTO it, never merge it back.
+
+### Syncing a change
+
+Do it in the same session as the `v2` commit, while what changed is still
+fresh -- the trim is editorial, not mechanical, and it cannot be scripted.
+
+```
+git checkout v2-nocomment
+git cherry-pick -n <sha-on-v2>       # conflicts on every file whose comments differ
+# resolve, trim the new comments to this branch's style, then:
+git commit                            # no attribution trailers
+git push origin v2-nocomment
+git checkout v2
+```
+
+Verify before pushing:
+
+```
+git log --format='%B' v2-nocomment | grep -ciE '^Co-Authored-By: Claude|claude\.ai/code'   # 0
+git diff --stat v2 v2-nocomment -- <the files you touched>   # comment lines only
+```
+
 ## THE ONE THING THAT IS UNFINISHED
 
 **The corpus results are in a mixed state and must be re-run.**
