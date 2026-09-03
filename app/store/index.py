@@ -1,16 +1,10 @@
 """Building and reading the SQLite index. See docs/decisions/0002.
 
-THE INVARIANT: delete analyzer.db, rescan, and the library is identical.
-
-That is only true if everything the index holds also exists on disk, so a
-finished run writes a small manifest next to its outputs:
-
-    engine/result/.runs/run-<started>-<id>.json
-
-The manifest is the durable record; the database is a queryable copy of it.
-Reports that belong to no manifest -- anything produced by the v1 CLI, or by a
-run whose manifest was deleted -- are still listed, under a synthetic
-"Unfiled" run, so nothing on disk is invisible in the UI.
+THE INVARIANT: delete analyzer.db, rescan, and the library is identical. That
+holds because a finished run writes a manifest next to its outputs,
+engine/result/.runs/run-<started>-<id>.json, and the database is only a
+queryable copy of it. Reports belonging to no manifest are still listed, under
+a synthetic "Unfiled" run.
 """
 
 import json
@@ -23,8 +17,7 @@ from app import config
 from app.store.db import connect, rel
 
 def runs_dir() -> Path:
-    """Resolved on each call, so a redirected RESULT_DIR is honoured. Binding it
-    at import time made the whole module untestable in isolation."""
+    """Resolved on each call, so a redirected RESULT_DIR is honoured."""
     return config.RESULT_DIR / ".runs"
 
 
@@ -46,12 +39,7 @@ def _agent_for(report: Path):
 
 
 def _from_agent(report: Path) -> dict:
-    """What a report can tell us about itself, with no manifest.
-
-    Every field here is read from the agent JSON the engine wrote, so an app
-    discovered this way is described by the engine's own output rather than by
-    anything this module inferred.
-    """
+    """What a report can tell us about itself, with no manifest."""
     out = {
         "source_file": report.stem.replace("_report", ""),
         "app_name": None, "package_name": None, "version": None,
@@ -90,16 +78,9 @@ _NS_RE = re.compile(rb'"total_detected_ns":\s*(\d+).{0,40}?"total_3p_ns":\s*(\d+
 def _coverage_from_report(report: Path, framework):
     """Recover coverage for a report that has no run manifest.
 
-    The agent JSON does not carry the two namespace counts, but the report
-    embeds them in its own report_data block (the renderer puts them there for
-    the in-browser export). So they are read back from there and handed to the
-    ENGINE's coverage_status() -- the same function the stat card and the batch
-    workbook call. Recomputing the percentage here instead would create the
-    fourth implementation that v1 spent a commit eliminating.
-
-    Without this, deleting the database would silently lose the coverage column
-    for every v1-CLI report, and the "rescan rebuilds everything" invariant in
-    docs/decisions/0002 would quietly be false.
+    The counts come from the report_data block the renderer embeds, and go to
+    the ENGINE's coverage_status(). Never recompute the percentage here: that
+    function is the one source the stat card and the workbook already share.
     """
     try:
         blob = report.read_bytes()
@@ -162,9 +143,8 @@ def rescan() -> dict:
             for row in snap.get("results", []):
                 report = Path(row["report"]) if row.get("report") else None
                 if row.get("skipped") or not report:
-                    # A skipped file was analysed by an EARLIER run and belongs
-                    # to that run's manifest. Listing it twice would double-count
-                    # the library.
+                    # A skipped file belongs to the EARLIER run that analysed
+                    # it; listing it twice would double-count the library.
                     continue
                 _insert_app(conn, run_id, row, report)
                 claimed.add(report.resolve())
@@ -175,14 +155,12 @@ def rescan() -> dict:
                     (run_id, fail.get("source_file", "?"), "failed", fail.get("error")))
 
         # Anything on disk that no manifest claims -- v1 CLI output, or a run
-        # whose manifest was removed. It is real work and must not vanish from
-        # the UI just because its bookkeeping is missing.
+        # whose manifest was removed.
         orphans = [p for p in sorted(config.RESULT_DIR.glob("*_report.html"))
                    if p.resolve() not in claimed]
         if orphans:
-            # A real timestamp, taken from the newest report it contains, so the
-            # pseudo-run sorts into the library where those results actually
-            # belong -- and so it is still derived from disk, not invented.
+            # Taken from the newest report it contains, so the pseudo-run sorts
+            # into the library where those results belong.
             newest = max(p.stat().st_mtime for p in orphans)
             stamp = datetime.fromtimestamp(newest).isoformat(timespec="seconds")
             cur = conn.execute(
@@ -246,8 +224,7 @@ def library() -> dict:
                 }
                 apps.append(app)
             run["apps"] = apps
-            # The two batch workbooks are per-result-directory, not per-app, so
-            # they hang off the run rather than off any one row.
+            # The batch workbooks are per-result-directory, not per-app.
             runs.append(run)
         workbooks = {}
         for name in ("batch_summary.xlsx", "batch_unmapped.xlsx"):

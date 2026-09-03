@@ -1,8 +1,7 @@
 """SQLite index over the file outputs. See docs/decisions/0002.
 
-The database is NOT a business output. Every column here is derivable from an
-artifact on disk, so deleting the file and rescanning `result/` must reproduce
-it exactly. Nothing may be shown to a user that exists only in this file.
+Not a business output: every column is derivable from an artifact on disk, so
+deleting the file and rescanning `result/` must reproduce it exactly.
 """
 
 import sqlite3
@@ -83,16 +82,13 @@ _TABLES = ("artifacts", "apps", "downloads", "runs")   # children first
 
 def connect() -> sqlite3.Connection:
     """Open (creating if needed) and bring the schema up to date."""
-    # config.DB_PATH is read HERE, not bound at import: the test suite redirects
-    # it through MA_DB_PATH, and an import-time binding would have every test
-    # writing into the real database.
+    # Read HERE, not bound at import: the tests redirect it through MA_DB_PATH.
     db_path = config.DB_PATH
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    # WAL so a reader (the UI listing results) never blocks the writer (a worker
-    # finishing a file), which is the normal state during a batch.
+    # WAL so a reader never blocks the writer, the normal state during a batch.
     conn.execute("PRAGMA journal_mode = WAL")
     _migrate(conn)
     conn.executescript(_SCHEMA)
@@ -102,19 +98,9 @@ def connect() -> sqlite3.Connection:
 def _migrate(conn: sqlite3.Connection) -> None:
     """Schema changes are applied by REBUILDING, not by ALTER.
 
-    This file is an index: every column in it is derivable from an artifact on
-    disk (see the module docstring and docs/decisions/0002), so the correct
-    response to a schema change is to throw the copy away and re-derive it. That
-    is simpler than a migration ladder and it cannot leave a half-migrated
-    database behind.
-
-    It also avoids a trap: `CREATE TABLE IF NOT EXISTS` silently does nothing
-    when the table exists, so adding a column to _SCHEMA without this would
-    leave an old database missing that column and every query against it
-    failing at runtime rather than at upgrade time.
-
-    Callers re-populate by calling store.index.rescan(); /api/results does it
-    automatically when it finds an empty index and reports on disk.
+    `CREATE TABLE IF NOT EXISTS` silently does nothing when the table exists, so
+    adding a column without this leaves an old database missing it and every
+    query failing at runtime. Callers re-populate with store.index.rescan().
     """
     current = conn.execute("PRAGMA user_version").fetchone()[0]
     if current == SCHEMA_VERSION:
@@ -125,7 +111,6 @@ def _migrate(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-# Store paths relative to the repo root; absolute ones do not travel. One
-# implementation, in config, so the index and the API can never disagree about
-# what a stored path means.
+# Relative to the repo root; absolute paths do not travel. One implementation,
+# in config, so the index and the API cannot disagree.
 rel = rel_to_root

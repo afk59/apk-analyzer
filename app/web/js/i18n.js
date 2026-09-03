@@ -1,18 +1,12 @@
 /* Interface language: English, Turkish, Simplified Chinese.
 
-   WHAT IS AND IS NOT TRANSLATED
-   The UI chrome is. The ANALYSIS OUTPUT is not: kit tokens (@kit.ArkUI),
+   The UI chrome is translated. The ANALYSIS OUTPUT is not: kit tokens,
    permission names, package names, framework labels and the HTML/Excel reports
    stay exactly as the engine produced them. Those are identifiers and
-   deliverables, not prose -- translating "@kit.ArkUI" would be nonsense, and a
-   report that read differently per viewer could not be compared or forwarded.
+   deliverables, not prose.
 
    Applied by scanning for data-i18n attributes, so markup stays the source of
-   truth for structure and this file only carries strings. Anything a script
-   builds at runtime calls t() directly.
-
-   Loaded in <head> with theme.js and applied on DOMContentLoaded. The chosen
-   language is remembered in localStorage; the default follows the browser. */
+   truth for structure. Anything built at runtime calls t() directly. */
 
 const I18N_KEY = 'ma.lang';
 const LANGS = ['en', 'tr', 'zh'];

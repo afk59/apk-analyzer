@@ -54,12 +54,9 @@ def _qt6_banner(qt6_dlls: list) -> str:
 def _packed_dex_banner(fw: dict, total_3p_ns: int, kit_count: int) -> str:
     """Say plainly that a packed APK's numbers describe the stub, not the app.
 
-    Without this the report is actively misleading rather than merely thin: the
-    four packed apps in the corpus expose 2 / 3 / 5 / 56 third-party namespaces
-    and one of them rendered "100% coverage", which reads BETTER than the 93.4%
-    of an app that was genuinely analysed end to end. The packer name is already
-    known -- it is just buried behind the "Built with" evidence toggle, which
-    nobody opens before reading the stat cards.
+    Without this the report is actively misleading rather than merely thin: a
+    packed app exposing three namespaces renders "100% coverage", which reads
+    BETTER than an app that was genuinely analysed end to end.
     """
     detail = (fw or {}).get("detail") or {}
     if "packed" not in (detail.get("note") or "").lower():
@@ -84,8 +81,7 @@ def _packed_dex_banner(fw: dict, total_3p_ns: int, kit_count: int) -> str:
 
 
 # Below this many third-party namespaces a percentage is arithmetic, not a
-# measurement. Chosen from the 43-app corpus: the four packed apps sit at
-# 2 / 3 / 5 / 56 and the lowest genuinely analysable app is at 429.
+# measurement.
 _LOW_SAMPLE_NS = 50
 
 
@@ -97,10 +93,9 @@ def coverage_status(result: dict) -> tuple:
     disagree about an app. status is "ok" | "packed" | "low" | "none", and the
     percent is None for everything except "ok".
 
-    Withholding beats reporting here. A packed APK exposes only the unpacking
-    stub, and hk.gov.ogcio.iamsmart rendered "100% coverage" off a denominator
-    of 3 while the fully analysable com.polyulife rendered 93.4% off 2,020 --
-    the packed app read BETTER than the real one.
+    Withholding beats reporting. A packed APK exposes only the unpacking stub,
+    so a percentage off a denominator of 3 reads better than a real one off
+    2,020.
 
     Accepts anything carrying total_detected_ns / total_3p_ns / framework, which
     is true of both a result dict and a batch row.
@@ -972,10 +967,8 @@ def _render_kit_table_apk(flat_rows: list, ns_lookup: dict, is_hmos: bool = True
 
                 for im in inner_matches:
                     # The HarmonyOS side, NOT im["method_name"] -- that is the
-                    # Android method already printed by the ns-row directly above,
-                    # so printing it again made level 3 a duplicate of level 2 and
-                    # the import statement (the only reason this level exists)
-                    # never reached the page.
+                    # Android method already printed by the ns-row above, so
+                    # printing it again made level 3 a duplicate of level 2.
                     hmos = im.get("hmos_method") or ""
                     st   = im.get("status", "Supported")
                     sc   = im.get("status_color", "green")
@@ -1136,10 +1129,9 @@ def _render_kit_table_exe(kit_matches: list) -> str:
 def _render_ohpm_table(ohpm_matches: list) -> str:
     """Second-tier OHPM suggestions.
 
-    Deliberately styled apart from the native kit table: an amber lead-in note
-    and a neutral header (not the accent-red kit header), so it cannot be
-    mistaken for a native @kit.* match. Native kits stay the recommendation;
-    these are third-party packages that only apply where no kit exists.
+    Deliberately styled apart from the native kit table -- amber lead-in, neutral
+    header -- so it cannot be mistaken for a native @kit.* match. Native kits
+    stay the recommendation.
     """
     if not ohpm_matches:
         return ""
@@ -1308,10 +1300,8 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
 
     unmapped = ""
     if result["unmapped_namespaces"]:
-        # Capped at 30 rows, and the cap is STATED below. It used to be silent:
-        # HSBC has 1,458 unmapped namespaces and the section rendered 30 of them
-        # under an untitled heading, so the page read as "this app has 30
-        # unrecognised libraries". Same principle as the batch sheets -- a
+        # Capped at 30 rows, and the cap is STATED below. Silent, it read as
+        # "this app has 30 unrecognised libraries" for an app with 1,458. A
         # truncation nobody can see reads as completeness.
         _UNMAPPED_SHOWN = 30
         items = ""
@@ -1505,11 +1495,9 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         ("Manifest Components", "manifest-components-section"),
     ]
     # Drop links whose section was not rendered. Several sections are conditional
-    # (Permission Gaps is absent for 13 of the 43 corpus apps, Unmatched
-    # Permissions and Unrecognized Libraries can be too) but the sidebar listed
-    # them unconditionally, so the link scrolled nowhere. Testing body_sections
-    # rather than repeating each section's own condition keeps this correct even
-    # if a section's condition later changes.
+    # but the sidebar listed them unconditionally, so the link scrolled nowhere.
+    # Testing body_sections rather than repeating each section's own condition
+    # keeps this correct if a condition later changes.
     sidebar_links = [(label, sid) for label, sid in sidebar_links
                      if f'id="{sid}"' in body_sections]
     sidebar_html = (
@@ -2216,8 +2204,7 @@ def export_excel_apk(result: dict, output_path: Path):
     hdr(ws1[f"A{r}"])
     # "Number of Libraries Mapped" used to sit here carrying len(kit_matches),
     # while the HTML stat card of the SAME NAME carries the namespace-row count.
-    # The two disagreed on 42 of the 43 corpus reports. Both numbers are useful,
-    # so both are emitted -- under names that say which is which.
+    # Both numbers are useful, so both are emitted under names that say which.
     _ns_rows = sum(len(km.get("android_sources", [])) for km in result["kit_matches"])
     for i, (k, v) in enumerate([
         ("Kit Matches",           len(result["kit_matches"])),
@@ -2280,11 +2267,9 @@ def export_excel_apk(result: dict, output_path: Path):
     ws2.auto_filter.ref = f"A1:{get_column_letter(len(hdrs2))}1"
 
 
-    # Second tier. Omitted when empty, exactly like the HTML section, so a clean
-    # app gets no hollow sheet. Created here so it lands directly after Kit
-    # Matches, mirroring the report's own section order. Until this existed the
-    # OHPM tier was visible ONLY in the batch workbook -- 481 rows across 32 of
-    # the 43 corpus apps never reached a single-app export.
+    # Second tier. Omitted when empty, exactly like the HTML section. Created
+    # here so it lands directly after Kit Matches, mirroring the report's own
+    # section order.
     ohpm_rows = result.get("ohpm_matches", [])
     if ohpm_rows:
         wso = wb.create_sheet("3rd Party (OHPM)")
@@ -2742,17 +2727,14 @@ def export_excel_ipa(result: dict, output_path: Path):
 def _rel_link(html_path, output_path) -> str:
     """Hyperlink target for a report, relative to the workbook that points at it.
 
-    An absolute `file:///C:/Users/<me>/...` URI resolves only on the machine that
-    produced the workbook; hand the file to anyone else and every link is dead.
-    Excel resolves a relative target against the workbook's own location, and the
-    reports sit beside `batch_summary.xlsx` in `result/`, so a bare filename
+    An absolute `file:///C:/...` URI resolves only on the machine that produced
+    the workbook. Excel resolves a relative target against the workbook's own
+    location, and the reports sit beside it in `result/`, so a bare filename
     travels with the folder.
 
     Forward slashes on purpose: the OOXML relationship target is a URI, not a
-    Windows path, and a backslash is not a separator there.
-
-    Falls back to the absolute URI only when no relative path exists at all --
-    a different drive on Windows, where os.path.relpath raises.
+    Windows path. Falls back to the absolute URI only when no relative path
+    exists at all -- a different drive, where os.path.relpath raises.
     """
     src = Path(html_path).resolve()
     try:
@@ -2808,26 +2790,23 @@ def export_excel_batch(
 
         # Platform reads off the row's own framework dict, NOT the `frameworks`
         # argument: that one is keyed by package_name, which this sheet does not
-        # carry, and it is populated only for APKs that resolved a package. The
-        # "(+ secondary)" form matches the Framework column on App Info so the
-        # two sheets never disagree. EXE/IPA rows have no framework and stay blank.
+        # carry. The "(+ secondary)" form matches the Framework column on App
+        # Info. EXE/IPA rows have no framework and stay blank.
         fw   = row.get("framework") or {}
         plat = fw.get("framework") or ""
         hyb  = ", ".join(h["framework"] for h in (fw.get("hybrid") or []))
         if plat and hyb:
             plat = f"{plat} (+ {hyb})"
         # A packed app's Kit Count / Unmapped columns are single digits and look
-        # like an analysis failure. Naming the packer right here is what turns
-        # "Unknown, 1 kit" from a mystery into a finding -- the alternative is
-        # cross-referencing the Packer column on another sheet.
+        # like an analysis failure. Naming the packer here turns a mystery into
+        # a finding.
         _fd = fw.get("detail") or {}
         if plat and "packed" in (_fd.get("note") or "").lower():
             plat = f"{plat} — DEX packed: {_fd.get('packer') or 'unknown'}"
 
         # Same rule as the report's stat card, via the same function, so the
-        # sheet and the HTML can never disagree. Not measurable -> an em-dash
-        # rather than a number; the Platform cell alongside already says why
-        # (it carries the packer name).
+        # sheet and the HTML cannot disagree. Not measurable -> an em-dash; the
+        # Platform cell alongside already says why.
         cov_pct, cov_state = coverage_status(row)
         cov_val = cov_pct if cov_pct is not None else "—"
 
@@ -2854,22 +2833,18 @@ def export_excel_batch(
     ws.freeze_panes = "A3"
     ws.auto_filter.ref = f"A2:{get_column_letter(7)}2"
 
-    # Play Store metadata — inserted at index 0 so it lands FIRST in tab order,
-    # ahead of Batch Summary. APK-only; omitted entirely when there is nothing
-    # to show. Cells may carry the "No internet connection" / "N/A" placeholders
-    # produced by core.play_meta. There is no Size column by design: Play no
-    # longer exposes an app size field, so it would be permanently empty.
+    # Play Store metadata -- inserted at index 0 so it lands FIRST in tab order.
+    # APK-only; omitted entirely when there is nothing to show. Cells may carry
+    # the placeholders produced by core.play_meta. No Size column by design:
+    # Play no longer exposes an app size field.
     if play_metadata:
         ws_ai = wb.create_sheet("App Info", 0)
         ws_ai.sheet_view.showGridLines = False
-        # Framework columns ride on App Info rather than a sheet of their own:
-        # it is already the one row-per-app descriptive sheet. "Framework Version"
-        # is spelled out because "Version" here already means the Play release.
-        # Store Region / Data Fetched / Source are provenance, not Play fields.
-        # They answer "how much do I trust this row", which matters because the
-        # scraper is an unofficial HTML scrape: a wave of N/A can mean Play
-        # changed its page, and a cached row can be a month old. Without them a
-        # stale row and a live row look identical.
+        # Framework columns ride on App Info rather than a sheet of their own.
+        # "Framework Version" is spelled out because "Version" here already means
+        # the Play release. Store Region / Data Fetched / Source are provenance:
+        # the scraper is an unofficial HTML scrape, so without them a stale row
+        # and a live row look identical.
         hdrs_ai = ["Package Name", "App Name", "Category", "Installs", "Rating",
                    "Rating Count", "Developer", "Last Updated", "Version",
                    "Store Region", "Data Fetched", "Source",
@@ -2917,9 +2892,8 @@ def export_excel_batch(
         ws_ai.freeze_panes = "A2"
         ws_ai.auto_filter.ref = f"A1:{get_column_letter(len(hdrs_ai))}1"
 
-    # Batch rollup: one row per framework, for a leadership-level read of the
-    # portfolio. Its own sheet rather than a block on App Info, which would break
-    # that sheet's freeze pane and auto-filter. Placed directly after App Info.
+    # Batch rollup: one row per framework. Its own sheet rather than a block on
+    # App Info, which would break that sheet's freeze pane and auto-filter.
     if frameworks:
         counts, examples = {}, {}
         for pkg, fw in frameworks.items():
@@ -3014,10 +2988,8 @@ def export_excel_batch(
 
     if ohpm_ns_apps:
         # Second tier. No _COMMON_MIN_APPS threshold here, unlike the Common
-        # sheets: those drop <2-app rows because they would otherwise run to
-        # thousands, whereas the whole OHPM tier is ~139 namespaces and a
-        # single-app hit is still a real migration finding. Sheet is omitted
-        # entirely when empty, so EXE/IPA-only and HMS batches never get one.
+        # sheets: the whole OHPM tier is small enough that a single-app hit is
+        # still a real finding. Omitted entirely when empty.
         ws_oh = wb.create_sheet("OHPM Matches")
         ws_oh.sheet_view.showGridLines = False
         hdrs_oh = ["Android Namespace", "OHPM Package", "Install", "Category",
@@ -3091,12 +3063,9 @@ def export_excel_batch(
         ws3.auto_filter.ref = f"A1:{get_column_letter(len(hdrs3))}1"
 
     # Tab order is asserted here rather than left to the order the code happens
-    # to build sheets in, which is how OHPM Matches ended up after Common
-    # Unmapped. The order tells a story: what the portfolio IS (App Info,
-    # Framework Rollup), then per-app results (Batch Summary), then what DID map
-    # (Common Mapped, then the OHPM second tier), then what did NOT (Common
-    # Unmapped and the EXE/IPA equivalents). Any sheet not listed keeps its
-    # relative position at the end.
+    # to build sheets in. The order tells a story: what the portfolio IS, then
+    # per-app results, then what DID map, then what did NOT. Any sheet not
+    # listed keeps its relative position at the end.
     _TAB_ORDER = ["App Info", "Framework Rollup", "Batch Summary", "Common Mapped",
                   "OHPM Matches", "Common Unmapped", "Unmapped DLLs",
                   "Unmapped Frameworks"]
@@ -3269,12 +3238,8 @@ def build_agent_json(result: dict) -> dict:
         agent["api_matches"]     = result.get("api_matches", [])
         agent["permission_gaps"] = result.get("permission_gaps", [])
         # Passed through verbatim, exactly like api_matches above, so each row
-        # keeps the engine's tier:"ohpm" tag without re-adding it here.
-        #
-        # NOTE: no human-readable schema note is emitted per app. Each row is
-        # already self-describing via tier:"ohpm"; the prose explanation lives
-        # ONCE at the top of agent_summary.json (see OHPM_SCHEMA_NOTE), because
-        # repeating a static sentence in all 41 per-app files is pure redundancy.
+        # keeps the engine's tier:"ohpm" tag. No per-app schema note: the prose
+        # explanation lives ONCE at the top of agent_summary.json.
         agent["ohpm_matches"]    = result.get("ohpm_matches", [])
         # Top level and tier-independent: this describes what the app was BUILT
         # with, which is orthogonal to the native/OHPM mapping tiers. Passed

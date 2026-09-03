@@ -1,9 +1,8 @@
 """EXE and EXE-folder analysis, using real Windows binaries.
 
-These modes reach the app through the same picker and the same queue as an APK,
-but nothing was exercising them: the mode classifier had unit tests and the
-engine had none. PE parsing is fast, so a real end-to-end run costs a second or
-two rather than the minute an APK costs.
+These modes reach the app through the same picker and the same queue as an APK.
+PE parsing is fast, so a real end-to-end run costs a second or two rather than
+the minute an APK costs.
 
 Skipped off Windows, and skipped if the system binaries are not readable.
 """
@@ -108,10 +107,11 @@ class TestWindowsAnalysis(IsolatedTest):
         self.assertIsNone(apps[0]["coverage_pct"])
 
     def test_a_file_that_is_not_a_pe_explains_itself(self):
-        """The engine calls sys.exit(1) here after printing the reason, and
-        SystemExit is a BaseException that `except Exception` does not catch --
-        so this used to exit 1 with no error event and the UI showed
-        "worker exited 1" instead of what the engine actually said."""
+        """A non-PE file must explain itself.
+
+        The engine calls sys.exit(1) after printing the reason, and SystemExit
+        is a BaseException that `except Exception` does not catch.
+        """
         fake = self.config.INPUT_DIR / "broken.exe"
         fake.write_bytes(b"this is not a PE file at all")
         proc, events = self.run_worker(fake, timeout=300)

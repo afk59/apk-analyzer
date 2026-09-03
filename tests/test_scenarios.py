@@ -1,8 +1,5 @@
-"""End-to-end user situations, and the edge cases that have actually bitten.
-
-Everything here is a shape someone can put the app into: a non-ASCII filename, a
-folder of mixed junk, two runs at once, a report opened twice, an index deleted
-mid-session. These are cheap to get wrong and expensive to notice.
+"""End-to-end user situations: a non-ASCII filename, a folder of mixed junk,
+two runs at once, a report opened twice, an index deleted mid-session.
 """
 
 import json
@@ -18,11 +15,9 @@ from tests.support import IsolatedTest
 
 
 class TestNonAsciiInputs(IsolatedTest):
-    """The failure that cost v1 eleven apps in one run.
+    """Non-ASCII names must survive the pipe.
 
-    Its console summary raised UnicodeEncodeError on a CJK app name whenever
-    stdout was a pipe, and the per-file handler swallowed the whole app. In v2
-    stdout is ALWAYS a pipe, so this is not an edge case -- it is the norm.
+    stdout is ALWAYS a pipe in v2, so this is the norm, not an edge case.
     """
 
     def test_the_worker_protocol_survives_cjk_and_turkish_paths(self):
@@ -39,8 +34,7 @@ class TestNonAsciiInputs(IsolatedTest):
                      "MA_RESULT_DIR": str(self.config.RESULT_DIR),
                      "MA_INPUT_DIR": str(self.config.INPUT_DIR),
                      # Deliberately NOT setting PYTHONIOENCODING: the worker has
-                     # to force UTF-8 itself, because nothing guarantees the
-                     # parent sets it.
+                     # to force UTF-8 itself.
                      })
             events = []
             for line in proc.stdout.splitlines():
@@ -94,8 +88,7 @@ class TestMessyFolders(IsolatedTest):
         self.assertEqual(files, [])
 
     def test_subfolders_are_not_recursed_into(self):
-        """Matching the CLI: run_batch globs one level. Recursing would silently
-        analyse a whole tree someone did not mean to hand over."""
+        """Matching the CLI: run_batch globs one level, never a whole tree."""
         d = self.tmp / "outer"
         (d / "inner").mkdir(parents=True)
         self.make_fake_apk(d / "top.apk")
@@ -212,8 +205,8 @@ class TestLibraryLifecycle(IsolatedTest):
                 "failures": []})
         index.rescan()
         lib = index.library()
-        # The same report claimed by two manifests appears under both runs; what
-        # must NOT happen is it also showing up as an orphan.
+        # A report claimed by two manifests appears under both; what must NOT
+        # happen is it also showing up as an orphan.
         self.assertEqual([r["input_path"] for r in lib["runs"]], ["run2", "run1"])
         self.assertNotIn("Unfiled", [r["input_path"] for r in lib["runs"]])
 
@@ -289,10 +282,9 @@ class TestMappingDataIntegrity(IsolatedTest):
     def _attested_kits(self):
         """Every kit token any reference source knows about.
 
-        Four sources, because no single one is complete: the .d.ts barrels cover
-        only the 47 OPEN SDK kits, the crawled docs are the only place closed
-        kits like ScanKit and PushKit appear, and the generated API index keys on
-        normalised method names. A kit is real if ANY of them attests it.
+        Four sources, because none is complete: the .d.ts barrels cover only the
+        47 OPEN SDK kits, the crawled docs are the only place closed kits appear,
+        and the generated API index keys on normalised method names.
         """
         import re
         kits = set()
@@ -314,13 +306,7 @@ class TestMappingDataIntegrity(IsolatedTest):
         return kits
 
     def test_no_mapping_names_a_kit_that_does_not_exist(self):
-        """The audit that caught @kit.AnalyticsKit and @kit.RelationalStoreKit.
-
-        Both were used by real mapping rows and neither appears anywhere in the
-        reference corpora -- "AnalyticsKit" not even as a word. A kit token that
-        nothing attests is a guess, and a guess in this file is the one thing the
-        product cannot afford.
-        """
+        """A kit token that no reference corpus attests is a guess."""
         attested = self._attested_kits()
         self.assertGreater(len(attested), 40, "kit evidence base looks empty")
         offenders = []
@@ -350,8 +336,7 @@ class TestMappingDataIntegrity(IsolatedTest):
 
     def test_every_ohpm_package_exists_in_the_registry(self):
         """The registry answers HTTP 200 for a missing package, so existence is
-        `isinstance(body, dict)` and nothing else -- which is how v1 caught
-        @hw-agconnect/core, a package that does not exist."""
+        `isinstance(body, dict)` and nothing else."""
         reg = self.config.ENGINE_DIR / "data" / "reference" / "ohpm_registry_cache.json"
         if not reg.exists():
             self.skipTest("no OHPM registry cache in this checkout")
@@ -392,8 +377,7 @@ class TestMappingDataIntegrity(IsolatedTest):
     def test_every_suggested_permission_actually_exists(self):
         """The engine must not recommend a permission nobody can grant.
 
-        Attested against the three sources: the curated permission lists, the
-        crawled documentation, and the SDK's .d.ts @permission annotations.
+        Attested against the curated lists, the docs, and the .d.ts annotations.
         """
         import re
         names = set()

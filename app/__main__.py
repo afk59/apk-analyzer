@@ -1,24 +1,17 @@
 """Entry point: `python -m app` (and what run.bat calls).
 
-Startup order matters in three places:
+Startup order matters:
 
-  0. Install what is missing BEFORE anything third-party is imported. A fresh
-     machine has none of this, and the person opening run.bat should not have
-     to read a traceback to find that out. See _ensure_deps below.
+  0. Install what is missing BEFORE anything third-party is imported.
   1. Bind a FREE port on 127.0.0.1 only. Never 0.0.0.0 -- this server opens
-     local files and drives native dialogs, so it must not be reachable from
-     the network.
+     local files and drives native dialogs.
   2. uvicorn goes on a BACKGROUND thread and pywebview gets the MAIN thread.
-     pywebview must own the main thread on Windows; the other way round is a
-     hang, not an error message.
+     pywebview must own the main thread on Windows; the other way round hangs.
 
-If pywebview cannot start (no WebView2, import failure, headless), open the
-default browser at the same URL and SAY SO. Degrading silently leaves someone
-staring at a window that never appears.
+If pywebview cannot start, fall back to the default browser at the same URL.
 
 Printed strings use ASCII hyphens: em-dashes mojibake on the Windows console
-under the locale codepage. Same convention as engine/core/ohpm_fetch.py --
-docstrings and comments still use em-dashes.
+under the locale codepage.
 """
 
 import importlib.util
@@ -33,38 +26,31 @@ import urllib.request
 
 from app import config
 
-# Packages whose absence stops the app dead. Everything else in
-# requirements.txt is installed too, but a failure to get it is survivable:
-# pywebview falls back to the browser (see main), and the engine's four are
-# only needed by the analysis subprocess, which installs them itself.
+# Packages whose absence stops the app dead. The rest are installed too, but
+# failing to get one is survivable: pywebview falls back to the browser, and
+# the engine's four are only needed by the analysis subprocess.
 _FATAL = ("fastapi", "uvicorn")
 
 # Distribution name -> import name, for the ones that differ. requirements.txt
-# stays the single source of truth for WHAT gets installed; this table only says
-# how to tell whether it is already there. tests/test_bootstrap.py keeps them in
-# step, and gets it wrong once means reinstalling that package on every launch.
+# is the single source of truth for WHAT gets installed; this only says how to
+# tell whether it is already there.
 _IMPORT_NAME = {"pywebview": "webview"}
 
-# Used only if requirements.txt is missing, which means a broken checkout --
-# but a broken checkout should still open, not crash on a file read.
+# Used only if requirements.txt is missing; a broken checkout should still open.
 _FALLBACK = ("androguard==4.1.3", "openpyxl==3.1.5", "pefile==2024.8.26",
              "macholib==1.16.4", "fastapi>=0.141.1,<1.0",
              "uvicorn>=0.52.4,<1.0", "pywebview>=6.2.1,<7.0")
 
 # Where a distribution name stops and its version specifier begins. Extras and
-# environment markers end it too, so that a later "uvicorn[standard]" or a
-# "; sys_platform == 'win32'" does not silently become part of the name.
+# environment markers end it too.
 _SPEC_CHARS = "=<>!~[; "
 
 
 def _requirement_name(req: str) -> str:
     """The bare distribution name out of a requirement line.
 
-    `androguard==4.1.3` -> `androguard`. Needed because the line is two things
-    at once: what pip installs, and -- via _IMPORT_NAME -- what gets imported to
-    check whether the install already happened. Feeding the pinned form to
-    find_spec looks for a module called "androguard==4.1.3", never finds one,
-    and reinstalls the whole list on every single launch.
+    `androguard==4.1.3` -> `androguard`. Feeding the pinned form to find_spec
+    finds nothing and reinstalls the whole list on every launch.
     """
     for i, ch in enumerate(req):
         if ch in _SPEC_CHARS:
@@ -90,12 +76,8 @@ def _required_packages() -> list[str]:
 def _missing(packages) -> list[str]:
     """Which requirement lines have nothing importable behind them.
 
-    Presence only, never version. A machine that already has androguard 4.1.4
-    installed keeps it; this function will not downgrade it to the pin. That is
-    deliberate -- enforcing the pins here would mean asking pip about every
-    package on every launch -- and it is why the pins are described as what a
-    FRESH machine gets. Reproducing an exact environment is
-    `pip install -r requirements.txt`, run on purpose.
+    Presence only, never version: a machine that already has a package keeps
+    the one it has. Reproducing an exact environment is `pip install -r`.
     """
     importlib.invalidate_caches()
     out = []
@@ -113,21 +95,10 @@ def _missing(packages) -> list[str]:
 def _ensure_deps() -> bool:
     """Install everything on first run, unattended. Returns False to abort.
 
-    Mirrors engine/analyzer.py::_ensure_deps -- same pip invocation, same proxy
-    stripping, same "say what you are doing" convention -- with two deliberate
-    differences:
-
-      * The engine's four packages are installed HERE as well. They are not
-        imported by this process; they are what the analysis subprocess will
-        need, and pulling them now means the first analysis does not stop
-        halfway to talk to pip.
-      * Only _FATAL failures abort. The engine can sys.exit(1) on any of its
-        four because all four are load-bearing for a CLI run; here, an offline
-        machine that already has fastapi and uvicorn should still open.
-
-    The proxy variables are cleared for the same reason v1 cleared them: on the
-    corporate network pip resolves through a proxy it cannot authenticate to and
-    hangs, where a direct connection just works.
+    Mirrors engine/analyzer.py::_ensure_deps, with two differences: the
+    engine's four are installed here too (the analysis subprocess needs them),
+    and only _FATAL failures abort. Proxy variables are cleared because on the
+    corporate network pip hangs against a proxy it cannot authenticate to.
     """
     packages = _required_packages()
     missing = _missing(packages)
@@ -151,8 +122,7 @@ def _ensure_deps() -> bool:
         print(f"[!] The install did not finish ({exc}).")
 
     still = _missing(packages)
-    # Compare bare names: `still` carries pinned lines like "uvicorn>=0.52.4,<1.0"
-    # and _FATAL lists distributions, not requirements.
+    # Compare bare names: `still` carries pinned lines, _FATAL lists names.
     blocking = [p for p in still if _requirement_name(p) in _FATAL]
     if blocking:
         print(f"[!] Cannot start without: {', '.join(blocking)}")
@@ -189,11 +159,7 @@ def _serve(port: int):
 
 
 def _wait_until_up(url: str, timeout: float = 20.0) -> bool:
-    """Poll /api/health rather than sleeping a guessed interval.
-
-    A fixed sleep is either too short on a cold start (blank window) or wasted
-    time on a warm one.
-    """
+    """Poll /api/health rather than sleeping a guessed interval."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
@@ -240,8 +206,7 @@ def main(argv: list[str]) -> int:
                 "Migration Analyzer", base,
                 width=1240, height=820, min_size=(900, 600),
             )
-            # Blocks until the window is closed; the daemon server thread dies
-            # with the process.
+            # Blocks until the window closes; the daemon thread dies with it.
             webview.start()
             return 0
         except Exception as exc:

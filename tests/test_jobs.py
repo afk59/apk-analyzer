@@ -1,9 +1,7 @@
 """jobs: the queue, and the rules that keep a long run survivable.
 
-The worker is replaced by a stub script, so these run in seconds and exercise
-the queue rather than androguard. What is under test is everything around the
-analysis: ordering, isolation, cancel, skip, reaping, and the entry list handed
-to the aggregate step.
+The worker is replaced by a stub script, so these exercise ordering, isolation,
+cancel, skip, reaping and the aggregate entry list rather than androguard.
 """
 
 import json
@@ -101,8 +99,7 @@ def runner_cwd():
 def _drive_stub(runner, run, path, index, cmd):
     """A copy of _run_one's reader loop, with the command supplied.
 
-    Deliberately mirrors the real one rather than calling it: the point is to
-    exercise the queue's handling of protocol output, reaping and failures
+    Mirrors the real one rather than calling it, to exercise protocol handling
     without paying for androguard on every test.
     """
     import subprocess
@@ -197,8 +194,8 @@ class TestQueue(JobsTest):
         self.assertEqual(len(run.results), 1, "one bad line should not lose the result")
 
     def test_a_worker_that_will_not_exit_is_terminated(self):
-        """v1's heaviest file wrote its outputs, printed done, then held 8-11 GB
-        and made everything after it 2-3x slower."""
+        """A worker that writes its outputs, prints done and then lingers must
+        be terminated, not waited on."""
         self.use_stub(STUB_HANG, reap=2)
         started = time.monotonic()
         run = self.wait(self.runner.submit(self.touch_inputs("h.apk"), "hmos"), timeout=60)

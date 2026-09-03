@@ -1,16 +1,11 @@
-/* Design tokens. Everything else in the UI references these -- no raw hex
-   outside this file.
+/* Design tokens. Everything else references these -- no raw hex outside this
+   file. The palette is inherited from the HTML report (engine/core/renderer.py):
+   a report opened from the app must not look like a different product.
 
-   The palette is inherited from the HTML report (engine/core/renderer.py) on
-   purpose: a report opened from the app must not look like a different
-   product. Two rules carried over from there, both meaningful:
-
-     * Accent red is reserved for HarmonyOS/Huawei chrome. The OHPM second tier
-       and other third-party surfaces use neutral slate, so "native kit" and
-       "third-party package" never read as the same thing.
+     * Accent red is reserved for HarmonyOS/Huawei chrome. Third-party surfaces
+       use neutral slate, so the two never read as the same thing.
      * Status colours are green / amber / blue for high / medium / low
-       confidence -- Supported / Replaceable / Should Confirm. They are also
-       used for coverage thresholds at 70 and 40.
+       confidence, and for coverage thresholds at 70 and 40.
 
    Light is defined on bare :root; dark only redefines. Never give a colour its
    single definition inside a media query. */
@@ -76,9 +71,8 @@
   --shadow:    0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
 }
 
-/* Analysis is slow -- 1.8 s for a packed APK, 17 minutes for the heaviest file
-   in the corpus -- so the progress UI animates for a long time. Anyone who
-   needs motion reduced needs it here most. */
+/* The progress UI animates for a long time -- analysis runs from seconds to
+   minutes -- so anyone who needs motion reduced needs it here most. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;

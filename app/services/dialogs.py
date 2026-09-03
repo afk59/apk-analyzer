@@ -3,21 +3,19 @@
     pick_file()   -> Path | None
     pick_folder() -> Path | None
 
-WHY THIS MODULE EXISTS AT ALL
-    A browser's <input type="file"> gives file CONTENT, never a path, and there
-    is no folder picker in it. The engine needs a real absolute path, and batch
-    mode needs a directory. That single gap is what decided the whole stack
-    (docs/decisions/0001) -- this is not a convenience wrapper, it is the reason
-    v2 is a local app.
+A browser's <input type="file"> gives file CONTENT, never a path, and has no
+folder picker at all. The engine needs a real absolute path and batch mode
+needs a directory. That gap is what decided the whole stack
+(docs/decisions/0001).
 
-TWO IMPLEMENTATIONS, tried in order
-    1. pywebview's own dialog, when a window exists. Parented to the app window,
-       so it cannot end up behind it and it looks native.
-    2. app/_dialog_proc.py in a throwaway process. Owns its own GUI main thread,
-       so it has no affinity problem at all, and it works in browser-fallback
-       mode where there is no window to parent to.
+Two implementations, tried in order:
 
-    Cancel returns None. Cancel is not an error and must never surface as one.
+    1. pywebview's own dialog, when a window exists. Parented to the app
+       window, so it cannot end up behind it.
+    2. app/_dialog_proc.py in a throwaway process. Owns its own GUI main
+       thread, and works in browser-fallback mode where there is no window.
+
+Cancel returns None. Cancel is not an error and must never surface as one.
 """
 
 import subprocess
@@ -30,9 +28,9 @@ _FILE_TYPES = ("Supported (*.apk;*.exe;*.dll;*.ipa)", "All files (*.*)")
 def _via_webview(kind: str):
     """pywebview's dialog, or None if there is no window / it is unavailable.
 
-    Returns a sentinel-free result: (handled, path). `handled` False means fall
-    through to the subprocess, so a cancelled dialog (handled True, path None)
-    is never mistaken for "pywebview is missing".
+    Returns (handled, path). `handled` False means fall through to the
+    subprocess, so a cancelled dialog is never mistaken for "pywebview is
+    missing".
     """
     try:
         import webview
@@ -50,8 +48,7 @@ def _via_webview(kind: str):
                 file_types=(f"Supported files (*.apk;*.exe;*.dll;*.ipa)", "All files (*.*)"),
             )
     except Exception:
-        # Any GUI-thread or backend problem: fall through rather than fail. The
-        # subprocess path is the reason this is recoverable.
+        # Any GUI-thread or backend problem: fall through rather than fail.
         return False, None
     if not res:
         return True, None            # cancelled -- a real answer

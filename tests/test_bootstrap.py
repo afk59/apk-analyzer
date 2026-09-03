@@ -1,11 +1,8 @@
 """The first-run installer in app/__main__.py.
 
-This is the code path nobody on a working machine ever executes, which is
-exactly why it needs tests: it only runs on a fresh PC, where nobody is
-watching and where a mistake looks like "the app does not open".
-
-Nothing here touches the network or pip. Every install is faked; what is being
-checked is the decision-making around it.
+A code path that only runs on a fresh machine, where a mistake looks like "the
+app does not open". Nothing here touches the network or pip: every install is
+faked, and what is checked is the decision-making around it.
 """
 
 import subprocess
@@ -26,29 +23,24 @@ class TestRequirementParsing(unittest.TestCase):
              "fastapi", "uvicorn", "pywebview"])
 
     def test_the_pins_survive_parsing(self):
-        """What reaches pip must still carry the version specifier. A parser
-        that helpfully stripped it would turn a pinned engine into an unpinned
-        one, silently, which is the exact thing the pins exist to prevent."""
+        """What reaches pip must still carry the version specifier."""
         by_name = {entry._requirement_name(r): r
                    for r in entry._required_packages()}
         self.assertEqual(by_name["androguard"], "androguard==4.1.3")
         self.assertTrue(by_name["fastapi"].startswith("fastapi>="))
 
     def test_the_engine_packages_are_pinned_exactly(self):
-        """The engine is behaviour-frozen. A minor bump in the library that
-        parses the APK changes analysis output without anyone deciding to."""
+        """The engine is behaviour-frozen: an unpinned bump changes its output."""
         by_name = {entry._requirement_name(r): r
                    for r in entry._required_packages()}
         for pkg in ("androguard", "openpyxl", "pefile", "macholib"):
             self.assertIn("==", by_name[pkg], f"{pkg} is not pinned exactly")
 
     def test_the_optional_block_stays_out(self):
-        """requirements.txt lists google-play-scraper and httpx in a comment.
+        """google-play-scraper and httpx are commented out FOR A REASON.
 
-        They are commented FOR A REASON -- each backs one additive feature and
-        failing to install it is a normal offline outcome. If the parser ever
-        starts returning them, an offline first run turns a working app into a
-        blocked one.
+        Each backs one additive feature and failing to install it is a normal
+        offline outcome. Returning them would block an offline first run.
         """
         names = entry._required_packages()
         self.assertNotIn("google-play-scraper", names)
@@ -60,8 +52,7 @@ class TestRequirementParsing(unittest.TestCase):
             self.assertIn(pkg, names, f"{pkg} is fatal but nothing installs it")
 
     def test_no_stale_import_name_mappings(self):
-        """A mapping for a package no longer in requirements.txt is dead code
-        that reads like documentation. Delete it with the package."""
+        """A mapping for a package no longer in requirements.txt is dead code."""
         names = {entry._requirement_name(r) for r in entry._required_packages()}
         for pkg in entry._IMPORT_NAME:
             self.assertIn(pkg, names, f"_IMPORT_NAME maps {pkg}, nothing needs it")
@@ -89,8 +80,7 @@ class TestRequirementName(unittest.TestCase):
                          "fastapi")
 
     def test_extras_do_not_become_part_of_the_name(self):
-        """Nothing uses extras today. When something does, the name must not
-        quietly become "uvicorn[standard]" and stop matching _IMPORT_NAME."""
+        """A future "uvicorn[standard]" must not stop matching _IMPORT_NAME."""
         self.assertEqual(entry._requirement_name("uvicorn[standard]>=0.30"),
                          "uvicorn")
 
@@ -103,9 +93,8 @@ class TestRequirementName(unittest.TestCase):
 class TestMissingDetection(unittest.TestCase):
 
     def test_a_pin_does_not_break_detection(self):
-        """The regression that pinning introduces if the name is not split out:
-        find_spec looks for a module called "sqlite3>=1.0", never finds one, and
-        the whole list reinstalls on every launch."""
+        """Without splitting the name out, find_spec looks for a module called
+        "sqlite3>=1.0" and the whole list reinstalls on every launch."""
         self.assertEqual(entry._missing(["sqlite3>=1.0"]), [])
 
     def test_a_pinned_requirement_is_returned_whole_for_pip(self):
@@ -114,8 +103,7 @@ class TestMissingDetection(unittest.TestCase):
                          ["no-such-package-xyz==9.9.9"])
 
     def test_pywebview_is_detected_under_its_import_name(self):
-        """The one package whose pip name is not its import name. Get this
-        wrong and every launch reinstalls pywebview forever."""
+        """The one package whose pip name is not its import name."""
         try:
             import webview       # noqa: F401
         except ImportError:
@@ -151,8 +139,8 @@ class TestEnsureDeps(unittest.TestCase):
         self.assertIn("fastapi", argv)
 
     def test_the_proxy_variables_are_stripped_for_pip(self):
-        """v1's lesson: on the corporate network pip resolves through a proxy it
-        cannot authenticate to and hangs, where a direct connection works."""
+        """On the corporate network pip hangs against a proxy it cannot
+        authenticate to, where a direct connection works."""
         env_in = {"HTTPS_PROXY": "http://proxy:8080", "http_proxy": "http://p",
                   "PATH": "/usr/bin"}
         calls = iter([["fastapi"], []])
@@ -167,10 +155,8 @@ class TestEnsureDeps(unittest.TestCase):
         self.assertEqual(env["PATH"], "/usr/bin", "the rest of the env survives")
 
     def test_a_pinned_fatal_package_still_aborts(self):
-        """_FATAL lists distributions; `still` carries requirement lines. Compare
-        them raw and a pinned uvicorn stops counting as fatal, so a machine that
-        could not install it walks into the traceback this function exists to
-        prevent."""
+        """_FATAL lists distributions; `still` carries requirement lines.
+        Compared raw, a pinned uvicorn stops counting as fatal."""
         pinned = ["uvicorn>=0.52.4,<1.0"]
         with mock.patch.object(entry, "_missing", return_value=pinned),              mock.patch.object(entry.subprocess, "check_call",
                                side_effect=subprocess.CalledProcessError(1, "pip")):
@@ -184,8 +170,7 @@ class TestEnsureDeps(unittest.TestCase):
             self.assertFalse(entry._ensure_deps())
 
     def test_a_failed_install_of_an_optional_package_does_not(self):
-        """pywebview failing is survivable -- main() opens the browser instead.
-        Refusing to start over it would be worse than the thing it prevents."""
+        """pywebview failing is survivable -- main() opens the browser."""
         calls = iter([["pywebview"], ["pywebview"]])
         with mock.patch.object(entry, "_missing", side_effect=lambda p: next(calls)), \
              mock.patch.object(entry.subprocess, "check_call",
@@ -218,7 +203,7 @@ class TestRunBat(unittest.TestCase):
                         self.text.index("python -m app"))
 
     def test_it_does_not_ask_the_user_to_install_anything(self):
-        """The whole point of the change: no manual pip step anywhere."""
+        """No manual pip step anywhere."""
         self.assertNotIn("pip install -r", self.text)
 
     def test_it_pauses_so_a_double_clicked_window_does_not_vanish(self):

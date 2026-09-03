@@ -2,35 +2,26 @@
 
     python -m app.worker <path> [--target hmos|hms]
 
-WHY A SEPARATE PROCESS
-    androguard's AnalyzeAPK builds the full DEX xref graph in memory and does
-    not give it back. v1 measured a single-process batch dying four times over
-    the 43-app corpus, against 42/43 with zero failures and roughly half the
-    wall-clock when each APK got a fresh process. The worker exits, the OS
-    reclaims the memory, and a crash costs only the file in flight.
+A separate process because androguard's AnalyzeAPK builds the full DEX xref
+graph in memory and does not give it back. The worker exits, the OS reclaims
+the memory, and a crash costs only the file in flight.
 
-WHY IT IMPORTS THE ENGINE RATHER THAN SHELLING OUT TO analyzer.py
-    `import analyzer` runs the CLI's own bootstrap -- dependency install, the
-    loguru silencing that keeps a single APK from writing 31 MB of DEBUG, and
-    UTF-8 stdio -- and then exposes the very same bound functions the CLI calls.
-    So the output is produced by the same code path, and the in-memory result is
-    still here for the progress events and the side-car. Shelling out would mean
-    a 2 MB --json dump per app (10s of MB for the big ones) just to read back
-    what we already had.
+It IMPORTS the engine rather than shelling out to analyzer.py: `import
+analyzer` runs the CLI's own bootstrap (dependency install, loguru silencing,
+UTF-8 stdio) and exposes the same bound functions the CLI calls, so the output
+comes from the same code path and the in-memory result is still here for the
+progress events and the side-car. Being in-process is also what makes progress
+STRUCTURED: ui.terminal's print_info is patched before the engine modules bind
+it, so stages come from the engine's own phase calls.
 
-    Being in-process is also what makes progress STRUCTURED: ui.terminal's
-    print_info is patched before the engine modules bind it, so stages come from
-    the engine's own phase calls, not from parsing coloured console text.
+PROTOCOL -- one JSON object per line on stdout, nothing else:
 
-PROTOCOL -- one JSON object per line on stdout, nothing else
     {"stage": "loading"|"dex"|"scan"|"kits"|"api"|"render", "detail": "..."}
     {"stage": "log",   "level": "warn", "detail": "..."}
     {"stage": "done",  "result": {...row...}}
     {"stage": "error", "error": "..."}
 
-    Stages mirror the engine's real phases; they are not a timer. Files in this
-    corpus range from 1.8 s (packed DEX) to 1039 s (the heaviest bank app), so a
-    clock-driven bar would be wrong precisely when someone is watching it.
+Stages mirror the engine's real phases; they are not a timer.
 """
 
 import argparse
@@ -83,8 +74,7 @@ def _install_hooks():
     """Route the engine's console output into the JSONL stream.
 
     MUST run before the core modules are imported: they do
-    `from ui.terminal import print_info`, binding the name at import time, so
-    patching the module afterwards would have no effect on them.
+    `from ui.terminal import print_info`, binding the name at import time.
     """
     import ui.terminal as term
 
@@ -99,8 +89,7 @@ def _install_hooks():
 
     def warn(msg):
         clean = _ANSI.sub("", str(msg)).strip()
-        # Kept so a SystemExit can explain itself: the engine prints the reason
-        # and THEN exits, and sys.exit does not carry the message.
+        # Kept so a SystemExit can explain itself: sys.exit carries no message.
         _LAST_WARN.append(clean)
         emit({"stage": "log", "level": "warn", "detail": clean})
 
@@ -110,10 +99,7 @@ def _install_hooks():
 def _sidecar(result: dict, framework: dict) -> dict:
     """The minimum an aggregate workbook needs from one app.
 
-    run_batch builds its cross-app sheets from six things: the batch row, the
-    (namespace -> kit) pairs behind each match, the unmapped rows, the OHPM
-    rows, the package/app name for the Play lookup, and the framework. Storing
-    exactly those keeps a 43-app run's side-cars in the low megabytes; storing
+    Storing exactly these keeps a 43-app run's side-cars in the low megabytes;
     the whole result dict would be ~2 MB for a SMALL app, most of it
     detected_namespaces, which no sheet reads.
     """
@@ -142,13 +128,9 @@ def _sidecar(result: dict, framework: dict) -> dict:
 def resolve_mode(path: Path, target: str):
     """(mode, effective_target, output_stem) for one input.
 
-    Lifted out of _run so it can be tested without paying for an analysis, and
-    because getting it wrong silently produces a report under the wrong name --
-    which then makes skip_existing skip the wrong thing.
-
-    Only APK has a target choice: HMS is an Android concept, so an EXE or an IPA
-    is always analysed against HarmonyOS NEXT, exactly as engine/analyzer.py
-    decides it.
+    Getting it wrong silently produces a report under the wrong name, which
+    then makes skip_existing skip the wrong thing. Only APK has a target
+    choice: HMS is an Android concept, so an EXE or an IPA is always HarmonyOS.
     """
     sfx = path.suffix.lower()
     if path.is_dir():
@@ -168,15 +150,14 @@ def resolve_mode(path: Path, target: str):
 def _run(path: Path, target: str) -> dict:
     """Mirror engine/analyzer.py's single-file branch exactly.
 
-    The order and the filenames are lifted from it verbatim, because M2's
-    acceptance test is that the artifacts are byte-identical to the CLI's.
+    The order and the filenames are verbatim: the artifacts must be
+    byte-identical to the CLI's.
     """
     import analyzer as cli          # runs deps bootstrap + loguru silencing
     from app import config
 
     # config, not a hardcoded _ENGINE/"result": the worker is a child process, so
-    # it re-reads the environment, and a hardcoded path made MA_RESULT_DIR a lie
-    # -- the test suite would have written into the real output folder.
+    # it re-reads the environment, and a hardcoded path makes MA_RESULT_DIR a lie.
     result_dir = config.RESULT_DIR
     agent_dir = config.AGENT_DIR
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -221,8 +202,8 @@ def _run(path: Path, target: str) -> dict:
     if mode == "exe_folder":
         emit({"stage": "render"})
 
-    # Outputs BEFORE the "done" event. v1's ordering bug -- announcing a result
-    # before persisting it -- is exactly why that rule is written down.
+    # Outputs BEFORE the "done" event: never announce a result before it is
+    # persisted.
     output_html.write_text(html, encoding="utf-8")
     cli.write_agent_json(result, agent_path)
 
@@ -252,8 +233,7 @@ def _run(path: Path, target: str) -> dict:
         row["packer"] = (framework.get("detail") or {}).get("packer")
 
     # Coverage is NOT recomputed here. coverage_status() is the one source of
-    # truth the HTML card and the batch workbook already share; a fourth
-    # implementation is how they would start disagreeing.
+    # truth the HTML card and the batch workbook already share.
     if mode == "apk":
         from core.renderer import coverage_status
         pct, status = coverage_status(result)
@@ -270,8 +250,8 @@ def _run(path: Path, target: str) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    # stdout is ALWAYS a pipe here, which is the exact condition under which v1
-    # lost 11 of 26 apps to a UnicodeEncodeError on a CJK app name.
+    # stdout is ALWAYS a pipe here, the exact condition under which a CJK app
+    # name raises UnicodeEncodeError.
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -297,9 +277,7 @@ def main(argv: list[str]) -> int:
     except SystemExit as exc:
         # SystemExit is a BaseException, so `except Exception` does NOT catch it
         # -- and engine/core/exe_engine.py calls sys.exit(1) on an unreadable PE
-        # after printing the reason. Without this branch the worker exited 1
-        # having emitted no error event at all, and the UI showed "worker exited
-        # 1" instead of the engine's own explanation.
+        # after printing the reason.
         reason = _LAST_WARN[-1] if _LAST_WARN else f"the engine exited ({exc.code})"
         emit({"stage": "error", "error": reason})
         return int(exc.code) if isinstance(exc.code, int) and exc.code else 1

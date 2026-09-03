@@ -1,11 +1,9 @@
 """api: every endpoint, against a REAL server on a loopback port.
 
-A real server rather than a test client, for two reasons: it needs no extra
-dependency (starlette's TestClient wants httpx), and it exercises the actual
-startup path -- free port, uvicorn on a thread, static mount -- which is where
-M1's bugs would live.
-
-The server runs with the MA_* redirections, so it writes only into the temp dir.
+A real server rather than a test client: it needs no extra dependency, and it
+exercises the actual startup path -- free port, uvicorn on a thread, static
+mount. The server runs with the MA_* redirections, so it writes only into the
+temp dir.
 """
 
 import json
@@ -88,8 +86,7 @@ class ApiTest(IsolatedTest):
 
     def expect_status(self, path, code, timeout=30):
         """A GET that must fail. Closing the HTTPError matters: it holds the
-        socket, and an unclosed one shows up as a ResourceWarning later, in an
-        unrelated test."""
+        socket, and an unclosed one surfaces as a ResourceWarning elsewhere."""
         try:
             with urllib.request.urlopen(self.base + path, timeout=timeout):
                 self.fail(f"{path} unexpectedly succeeded")

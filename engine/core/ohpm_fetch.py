@@ -1,20 +1,16 @@
-"""OHPM registry fetcher — the second online capability in this tool.
+"""OHPM registry fetcher.
 
-Isolated for the same reason `play_meta.py` is: no engine, renderer or mapping
-code opens a socket. Everything here degrades to an empty/partial result rather
-than raising, and every request is bounded by `_TIMEOUT_SEC`.
+Isolated like play_meta.py: no engine, renderer or mapping code opens a socket.
+Everything here degrades to an empty/partial result rather than raising, and
+every request is bounded by `_TIMEOUT_SEC`. Needs no third-party dependency --
+plain JSON over stdlib urllib.
 
-Unlike `play_meta.py` this needs **no third-party dependency** — the OHPM API is
-plain JSON over stdlib `urllib`, so there is no `_ensure_*` hook and nothing to
-pip-install. It is a manually-run builder script in the mould of `api_index.py`:
+    python engine/core/ohpm_fetch.py            # resume/refresh the sweep
+    python engine/core/ohpm_fetch.py --force    # re-sweep from page 1
+    python engine/core/ohpm_fetch.py --check @ohos/lottie
 
-    python src/core/ohpm_fetch.py            # resume/refresh the sweep
-    python src/core/ohpm_fetch.py --force    # discard and re-sweep from page 1
-    python src/core/ohpm_fetch.py --check @ohos/lottie
-
-Endpoints (discovered by reading the SPA bundle `/assets/index-*.js`, which
-inlines the base-URL table `mP="/ohpmweb/registry"`, `Loe="/ohpm"`):
-
+Endpoints (from the SPA bundle `/assets/index-*.js`, which inlines the base-URL
+table `mP="/ohpmweb/registry"`, `Loe="/ohpm"`):
   search    GET /ohpmweb/registry/oh-package/openapi/v1/search
             ?condition=&pageNum=N&pageSize=100&sortedType=relevancy&isHomePage=false
             All five params are REQUIRED. `sortedType` must be the literal
@@ -69,10 +65,9 @@ _CACHE_SCHEMA   = "1.0"
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
-# Search-row fields kept per package. `description` is search-ONLY — the detail
-# endpoint does not return it — which is why the sweep harvests search rows and
-# not details. Conversely repository/downloads/readme URLs are detail-only and
-# are deliberately left to the Phase-2D shortlist rather than 3499 extra calls.
+# Search-row fields kept per package. `description` is search-ONLY -- the detail
+# endpoint does not return it -- which is why the sweep harvests search rows.
+# repository/downloads/readme are detail-only and deliberately left out.
 _PKG_FIELDS = (
     ("name",              "name"),
     ("org",               "org"),
@@ -234,9 +229,9 @@ def load_registry(cache_path: Path) -> dict:
 def _flatten_tech_map(payload) -> dict:
     """{packageName: "L1 > L2 > L3"} from the nested category tree.
 
-    Measured: 1062 packages, each appearing in exactly one category, so the
-    mapping is 1:1 and a later category wins nothing — but last-write-wins is
-    kept rather than asserted, since that is the API's guarantee to change.
+    Measured 1:1 -- each package appears in exactly one category -- but
+    last-write-wins is kept rather than asserted, since that is the API's
+    guarantee to change.
     """
     data = payload.get("data") if isinstance(payload, dict) else None
     cats = data.get("categories") if isinstance(data, dict) else None

@@ -27,7 +27,6 @@ KIT_DOC_URLS: dict[str, str] = {
     "@kit.CoreFileKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-file-kit-V5",
     "@kit.CoreSpeechKit":         "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-speech-kit-guide-V5",
     "@kit.CoreVisionKit":         "https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-vision-objectdetection",
-    # FIXED 2026-08-13: pointed at core-speech-kit-guide-V5 (copy-paste error).
     "@kit.CryptoArchitectureKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/crypto-architecture-kit",
     "@kit.DeviceCertificateKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/device-certificate-kit-V5",
     "@kit.DriverDevelopmentKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/driver-development-kit-V5",
@@ -55,18 +54,15 @@ KIT_DOC_URLS: dict[str, str] = {
     "@kit.TelephonyKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/telephony-kit-V5",
     "@kit.UniversalKeystoreKit":   "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/huks-kit-V5",
     "@kit.UserAuthenticationKit":  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/user-authentication-kit-V5",
-    # FIXED 2026-08-13: pointed at user-authentication-kit-V5 (copy-paste error).
     # Vision Kit has no single "About This Kit" landing page in the English docs;
     # this is its Card Recognition guide, the closest confirmed Vision-Kit page.
     # (core-vision-kit-guide belongs to @kit.CoreVisionKit, a different kit.)
     "@kit.VisionKit":              "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/vision-cardrecognition-V5",
 
-    # Added 2026-08-13 — the seven tokens used by mapping.json rows that had no
-    # entry, so those rows rendered with no "Official Docs" anchor. Every URL was
-    # confirmed present in the live docs index; note that developer.huawei.com is
-    # an SPA that returns an identical 1824-byte shell (HTTP 200) for ANY slug,
-    # including nonsense, so status codes prove nothing and these were verified
-    # through the search index instead.
+    # Every URL below was confirmed present in the live docs index. NOTE:
+    # developer.huawei.com is an SPA that returns an identical shell (HTTP 200)
+    # for ANY slug, including nonsense, so a status code proves nothing -- these
+    # were verified through the search index instead.
     "@kit.AVSessionKit":           "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/avsession-overview",
     "@kit.ArkTS":                  "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-utils-overview",
     "@kit.MediaLibraryKit":        "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/medialibrary-kit",
@@ -75,24 +71,13 @@ KIT_DOC_URLS: dict[str, str] = {
     # Best available: PDF Kit has no confirmed landing page, this is its
     # "Opening a Document" guide.
     "@kit.PDFKit":                 "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/pdf-open-document",
-    # REMOVED 2026-08-30: @kit.AnalyticsKit does not exist. The string
-    # "AnalyticsKit" appears nowhere in the 110 MB documentation corpus -- not as
-    # a kit token, not as a word -- and v1's own comment here already said no
-    # HarmonyOS page for it could be confirmed. It linked to an HMS PRODUCT page,
-    # which is a different platform. HarmonyOS's app-event facility is hiAppEvent
-    # under @kit.PerformanceAnalysisKit, and every row that used the phantom kit
-    # now points there.
     # CHINESE-ONLY, and correctly so: Payment Kit is a China-market kit (its
     # ecnyPaymentService module is digital-yuan payment) and has no /en/ guide.
-    # Real and attested — 27 @kit.PaymentKit imports in hmos_api_index.json.
-    # Added 2026-08-30 for the two kits this round's mappings introduce. Both
-    # URLs are attested VERBATIM inside docs-ref -- they are links the crawler
-    # preserved in the official pages, not slugs guessed from a path. Neither
-    # kit has a confirmable "About This Kit" landing, so these are the capability
-    # pages that match what the mapping rows point at: system-integrity checking
-    # for Device Security Kit (com.scottyab.rootbeer, HMS SafetyDetect) and the
-    # passkey introduction for Online Authentication Kit (android.credentials).
-    # Same "best available" precedent as @kit.PDFKit and @kit.AnalyticsKit.
+    #
+    # The two kits below have no confirmable "About This Kit" landing, so these
+    # are the capability pages the mapping rows point at. Both URLs are attested
+    # VERBATIM inside docs-ref -- links the crawler preserved in official pages,
+    # not slugs guessed from a path. Same "best available" precedent as PDFKit.
     "@kit.DeviceSecurityKit":      "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/devicesecurity-sysintegrity-check",
     "@kit.OnlineAuthenticationKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/onlineauthentication-passkey-intro",
     "@kit.PaymentKit":             "https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/payment-preparations",
@@ -154,12 +139,10 @@ def load_mapping(mapping_path: Path) -> dict:
 def load_ohpm_mapping(mapping_path: Path) -> dict | None:
     """Load the OHPM second-tier mapping. Returns None if unavailable.
 
-    Deliberately does NOT `sys.exit(1)` the way `load_mapping` does. The native
-    mapping is required — without it there is no analysis — but OHPM is an
-    optional second tier layered on top of it. A missing or corrupt
-    `ohpm_mapping.json` must degrade to "no OHPM tier", leaving every native
-    result byte-identical, rather than killing the run. Same containment rule as
-    `_ensure_play_scraper` vs `_ensure_deps`.
+    Deliberately does NOT sys.exit(1) the way load_mapping does. The native
+    mapping is required; OHPM is an optional tier layered on top, so a missing
+    or corrupt ohpm_mapping.json must degrade to "no OHPM tier" leaving every
+    native result byte-identical.
     """
     from ui.terminal import print_warn
     if not mapping_path.exists():
@@ -179,10 +162,8 @@ def load_ohpm_mapping(mapping_path: Path) -> dict | None:
 def build_ohpm_entries(ohpm_doc: dict | None) -> list:
     """Sort OHPM rows longest-prefix-first, mirroring the native matcher.
 
-    `apk_engine` sorts `namespace_mappings` by descending `android_namespace`
-    length and breaks on the first prefix hit; the second tier uses the exact
-    same shape so a longer OHPM prefix always beats a shorter one. Returns [] if
-    there is no usable mapping, which disables the tier at zero cost.
+    Returns [] if there is no usable mapping, which disables the tier at zero
+    cost.
     """
     if not ohpm_doc:
         return []

@@ -1,8 +1,8 @@
 """downloader: verification, bundle handling, and failure shapes.
 
-Nothing here touches the network. The source adapter is stubbed, so these tests
-run offline and cannot be flaky because a mirror is down -- which is the point,
-since the mirror WILL be down eventually and the failure paths are what matters.
+Nothing here touches the network. The source adapter is stubbed, so these run
+offline and cannot be flaky because a mirror is down -- and the failure paths
+are what matters, since a mirror will be down eventually.
 """
 
 import unittest
@@ -101,8 +101,8 @@ class TestVerification(IsolatedTest):
 
     @requires_apk
     def test_rejects_a_real_apk_under_the_wrong_name(self):
-        """The failure that poisoned v1's corpus: two files that were a
-        different app entirely. Automating downloads makes it MORE likely."""
+        """A real APK of a DIFFERENT app must be rejected. Automating downloads
+        makes that case more likely, not less."""
         from app.services import downloader as dl
         ok, _, why = dl._verify(SAMPLE_APK, "com.definitely.not.this")
         self.assertFalse(ok)

@@ -1,15 +1,13 @@
-"""Google Play app-metadata fetch — the only online capability in this tool.
+"""Google Play app-metadata fetch -- the only online capability in the engine.
 
-Deliberately isolated: no engine imports network code, and every failure mode
-here degrades to a placeholder string rather than raising. The batch's HTML
-reports, agent JSON and the other Excel sheets are produced identically whether
-this module succeeds, finds no internet, or is never able to import its
-optional dependency at all.
+Deliberately isolated: no engine code imports network code, and every failure
+mode here degrades to a placeholder string rather than raising. The reports,
+agent JSON and other sheets are produced identically whether this succeeds,
+finds no internet, or never imports its optional dependency.
 
 Two placeholder strings reach the sheet:
-  NO_INTERNET   — the connectivity probe failed; the whole phase is skipped.
-  NOT_AVAILABLE — internet is up but this one app could not be resolved in any
-                  of the storefronts in _REGIONS.
+  NO_INTERNET   -- the connectivity probe failed; the whole phase is skipped.
+  NOT_AVAILABLE -- internet is up but the app resolved in no storefront.
 Neither is ever cached, so both retry on the next online run.
 """
 
@@ -30,12 +28,10 @@ _CACHE_SCHEMA      = "1.0"
 
 # Storefronts tried per app, in order, stopping at the first hit.
 #
-# This is about data accuracy, NOT coverage: measured on the 43-app corpus, "us"
-# alone and this ladder both resolve 41/43 — the two misses are absent from Play
-# everywhere. What changes is the numbers. For apps listed in both stores, score
-# differed hk-vs-us for 10 of 11 sampled, and ratings/version/lastUpdatedOn for 3
-# each. "hk" first returns what HK users actually see, which is the figure that
-# matters for a HK/Macau migration assessment.
+# This is about data accuracy, NOT coverage: "us" alone and this ladder resolve
+# the same apps. What changes is the numbers -- score, ratings, version and
+# lastUpdatedOn differ between storefronts. "hk" first returns what HK users
+# actually see, which is the figure a HK/Macau assessment needs.
 _REGIONS = ("hk", "mo", "us")
 _LANG    = "en"
 
@@ -46,11 +42,9 @@ _META_FIELDS = [
 ]
 
 # Provenance, carried on every row. Without it a row served from a 29-day-old
-# cache is indistinguishable from one fetched seconds ago, and an "N/A" that
-# means "not on Play" is indistinguishable from one that means "we never asked".
-# The scraper is an unofficial HTML scrape that can start returning N/A without
-# warning (see Known gaps), so knowing WHEN and FROM WHERE a row came is the
-# difference between "this app has no rating" and "our data is stale".
+# cache is indistinguishable from one fetched seconds ago, and an "N/A" meaning
+# "not on Play" from one meaning "we never asked". The scraper is an unofficial
+# HTML scrape that can start returning N/A without warning.
 _PROV_FIELDS = ["store_region", "fetched_on", "data_source"]
 
 
@@ -111,11 +105,9 @@ def _placeholder_row(value: str, app_name_fallback: str = "") -> dict:
 def _stale_row(pkg: str, cache: dict):
     """Last-known data for an app we cannot reach right now, or None.
 
-    An entry past _CACHE_TTL_DAYS is stale, not worthless: month-old install
-    counts and ratings are far more useful than the string "No internet
-    connection", as long as the row says which it is. Only reached on the
-    offline path -- a fresh entry is served by the normal cache hit above, and
-    when we ARE online a stale entry is refetched rather than reused.
+    An entry past _CACHE_TTL_DAYS is stale, not worthless, as long as the row
+    says which it is. Only reached on the offline path: when we ARE online a
+    stale entry is refetched rather than reused.
     """
     entry = cache.get(pkg)
     if not isinstance(entry, dict) or not isinstance(entry.get("data"), dict):
@@ -174,13 +166,12 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
     """Fetch Play metadata for `apps`, serving from cache wherever possible.
 
     `apps` is a list of (package_name, apk_app_name) pairs in report order.
-    Returns an ordered {package_name: {field: value}} dict covering every input
-    app — no key is ever missing, so the sheet always has one row per APK.
+    Returns an ordered {package_name: {field: value}} covering every input app
+    -- no key is ever missing, so the sheet always has one row per APK.
 
     Each uncached app is tried against _REGIONS in order, stopping at the first
-    storefront that has it; the winning region is cached so a later run never
-    re-probes. A miss in all of them is NOT a connectivity failure and never
-    flips the offline switch.
+    storefront that has it; the winning region is cached. A miss in all of them
+    is NOT a connectivity failure and never flips the offline switch.
 
     Never raises. Never blocks longer than the socket timeout per read.
     """
@@ -245,10 +236,9 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
                     online_seen, hit_region = True, region
                     break
                 except GooglePlayScraperException:
-                    # The store answered "not here". That answer is itself proof
-                    # of connectivity, so region fallback can only ever start
-                    # AFTER the first call has settled the internet question —
-                    # an offline run never loops regions.
+                    # The store answered "not here", which is itself proof of
+                    # connectivity: region fallback can only start after the
+                    # first call has settled the internet question.
                     online_seen = True
                     continue
                 except Exception as exc:
@@ -275,9 +265,9 @@ def fetch_metadata(apps: list, cache_path: Path, ensure_dep=None) -> dict:
             now_iso = datetime.now().isoformat(timespec="seconds")
             results[pkg] = _extract(detail, apk_name)
             by_region[hit_region] = by_region.get(hit_region, 0) + 1
-            # Cached WITHOUT the provenance fields: they describe this fetch, not
-            # the data, and a later run must stamp its own ("cache" / "stale
-            # cache"). Writing them in would make every cached row claim "live".
+            # Cached WITHOUT the provenance fields: they describe this fetch,
+            # not the data, and a later run must stamp its own. Writing them in
+            # would make every cached row claim "live".
             cache[pkg] = {
                 "fetched_at": now_iso,
                 "region":     hit_region,

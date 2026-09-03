@@ -5,34 +5,22 @@
     runner.cancel(run_id)
     runner.get(run_id)
 
-BEHAVIOUR THAT IS NOT NEGOTIABLE, and why
+BEHAVIOUR THAT IS NOT NEGOTIABLE
 
-    Sequential, one worker at a time.
-        Parallelism is tempting and wrong here. androguard's peak commit on the
-        heaviest corpus file was ~30 GB against 15.8 GB of RAM; two at once
-        swaps the machine rather than halving the time. Revisiting this needs a
-        memory-aware scheduler, not a thread pool.
+    Sequential, one worker at a time. androguard's peak commit on the heaviest
+    corpus file was ~30 GB against 15.8 GB of RAM; two at once swaps the
+    machine. Revisiting this needs a memory-aware scheduler, not a thread pool.
 
-    Per-file isolation.
-        A worker that dies takes only its own file with it. The run continues
-        and records that file as failed, exactly as v1's batch loop does.
+    Per-file isolation. A worker that dies takes only its own file with it.
 
-    Reap with a timeout.
-        v1's heaviest file wrote all of its outputs, printed its completion
-        line, and then LINGERED holding 8-11 GB while burning CPU; everything
-        started afterwards ran 2-3x slower until it was killed by hand. So once
-        "done" has been seen, the child gets a short grace period and is then
-        terminated rather than waited on.
+    Reap with a timeout. Once "done" has been seen the child gets a short grace
+    period and is then terminated rather than waited on.
 
-    UTF-8 on the pipe.
-        stdout here is always a pipe, the exact condition under which v1 lost
-        11 of 26 apps to a UnicodeEncodeError on a CJK app name.
+    UTF-8 on the pipe. stdout here is always a pipe, the exact condition under
+    which a CJK app name raises UnicodeEncodeError.
 
-    Progress is forwarded, never invented.
-        The worker's stages come from the engine's own phase calls. Nothing
-        here synthesises a percentage from elapsed time: this corpus runs from
-        1.8 s to 1039 s per file, so a clock-driven bar is wrong exactly when
-        someone is watching it.
+    Progress is forwarded, never invented. Nothing here synthesises a
+    percentage from elapsed time.
 """
 
 import json
@@ -46,8 +34,7 @@ from pathlib import Path
 from app import config
 
 # Once the worker has emitted "done", how long the child may take to exit before
-# it is terminated. Generous enough for a normal interpreter teardown, short
-# enough that a lingering 10 GB process cannot slow down the next file.
+# it is terminated.
 _REAP_GRACE_SEC = 20
 
 
@@ -56,12 +43,10 @@ class Run:
         self.id = run_id
         self.paths = list(paths)
         # Package names to fetch before analysing. They become entries in
-        # self.paths as they arrive, so everything downstream -- the loop, the
-        # aggregate step, the manifest -- sees ordinary files.
+        # self.paths as they arrive, so everything downstream sees ordinary files.
         self.packages = list(packages or [])
         # Fixed at construction. A downloaded package is APPENDED to paths while
-        # it stays in packages, so counting both at read time double-counts it
-        # and the progress bar's denominator grows as the run succeeds.
+        # it stays in packages, so counting both at read time double-counts it.
         self.total = len(self.paths) + len(self.packages)
         self.target = target
         self.input_label = input_label
@@ -136,9 +121,8 @@ class JobRunner:
     def events(self, run_id, cursor: int, timeout: float = 20.0):
         """Block until there is something after `cursor`, or the timeout lapses.
 
-        Returning on a timeout with nothing is deliberate: it lets the SSE
-        endpoint emit a keep-alive so an idle proxy or a sleeping laptop does
-        not silently drop a connection during a 17-minute file.
+        Returning on a timeout with nothing lets the SSE endpoint emit a
+        keep-alive, so an idle proxy does not drop a long-running connection.
         """
         run = self._runs.get(run_id)
         if run is None:
@@ -177,8 +161,7 @@ class JobRunner:
         final = "cancelled" if run.cancelled.is_set() else "done"
 
         # The manifest is what makes the SQLite index disposable: it is the
-        # durable record of which apps belonged to which run, which nothing else
-        # on disk carries. See docs/decisions/0002 and app/store/index.py.
+        # durable record of which apps belonged to which run.
         try:
             from app.store import index as store_index
             store_index.write_manifest({**run.snapshot(), "status": final,
@@ -192,23 +175,17 @@ class JobRunner:
                   "ok": len(run.results), "failed": len(run.failures),
                   "workbooks": run.workbooks})
         # STATUS IS SET LAST, and it must stay that way. `finished` in events()
-        # is derived from it, so the SSE endpoint treats a non-running status
-        # with no pending events as "the stream is over" and closes. Setting it
-        # before the manifest write -- which takes hundreds of milliseconds --
-        # left a window where the reader closed the stream before run_finished
-        # was ever appended, and the UI's Start button stayed disabled forever.
+        # is derived from it, so setting it before the manifest write leaves a
+        # window where the reader closes the stream before run_finished is
+        # appended, and the UI's Start button stays disabled forever.
         run.status = final
 
     def _fetch_all(self, run: Run):
         """Download every requested package, then let the normal loop analyse it.
 
-        Downloading happens IN THIS THREAD rather than a worker subprocess: it is
-        network-bound, not memory-bound, so the reason the analysis is isolated
-        (androguard not returning its heap) does not apply. All the network code
-        still lives in one module, which is the rule that actually matters.
-
-        A package that cannot be fetched is recorded as a failure and the run
-        continues -- same per-file isolation as a corrupt APK.
+        Downloading happens IN THIS THREAD rather than a worker subprocess: it
+        is network-bound, not memory-bound. A package that cannot be fetched is
+        recorded as a failure and the run continues.
         """
         from app.services import downloader
 
@@ -223,9 +200,7 @@ class JobRunner:
                 if note:
                     run.push({"stage": "log", "level": "warn", "file": _pkg, "detail": note})
                     return
-                # Throttled: a 124 MB app at 256 KB a chunk is ~500 events, and
-                # every one of them goes down the SSE stream to a progress bar
-                # that cannot show that much detail anyway.
+                # Throttled: a 124 MB app at 256 KB a chunk is ~500 events.
                 now = time.monotonic()
                 if total and (now - _st["last"] > 0.4 or got >= total):
                     _st["last"] = now
@@ -248,21 +223,13 @@ class JobRunner:
     def _aggregate(self, run: Run):
         """The two batch workbooks, for a run that covered more than one file.
 
-        v1's run_batch accumulates these inside its analysis loop. This design
-        cannot: every file is analysed in a process that then exits. So the
-        workers leave side-cars and app/aggregate.py replays the same
-        aggregation over them, calling the REAL exporters -- reimplementing the
-        sheets would create a second thing that could disagree about the corpus.
-
-        Skipped files count: their side-car is still on disk from the earlier
-        run, so a resumed batch still produces complete workbooks. A run with
-        one file gets none, matching the CLI, where a single-file run has never
-        produced them either.
+        Every file is analysed in a process that then exits, so the workers
+        leave side-cars and app/aggregate.py replays the aggregation over them,
+        calling the REAL exporters. Skipped files count: their side-car is still
+        on disk, so a resumed batch still produces complete workbooks.
         """
         # Built in the ORDER THE FILES WERE GIVEN, and including failures as
-        # ERROR rows -- that is what v1's run_batch writes, and a file that was
-        # attempted and failed belongs in the summary. Omitting it would make a
-        # workbook that quietly disagrees with the run it came from.
+        # ERROR rows -- that is what the CLI's run_batch writes.
         by_name = {r.get("source_file"): r for r in run.results}
         failed = {f.get("source_file"): f for f in run.failures}
 
@@ -287,8 +254,7 @@ class JobRunner:
             else:
                 entries.append({"row": row, "sidecar": row.get("sidecar")})
 
-        # Fewer than two ANALYSED apps means there is nothing to aggregate --
-        # the CLI has never produced these workbooks for a single file either.
+        # Fewer than two ANALYSED apps means there is nothing to aggregate.
         if sum(1 for e in entries if e["row"].get("mode") != "error") < 2:
             return
 
@@ -329,8 +295,7 @@ class JobRunner:
                       "detail": "The workbook step did not exit - terminating it."})
             proc.terminate()
         finally:
-            # Both pipes, or the reader leaks a file handle per run -- surfaced
-            # as a ResourceWarning by the test suite.
+            # Both pipes, or the reader leaks a file handle per run.
             for stream in (proc.stdout, proc.stderr):
                 try:
                     stream.close()
@@ -351,9 +316,8 @@ class JobRunner:
     def _row_from_sidecar(row: dict, side_path: Path) -> dict:
         """A batch row for a file that was skipped this time round.
 
-        Everything the summary sheet needs was already written when the file was
-        analysed, so a resumed run is not missing rows -- which is the whole
-        point of being able to resume.
+        Everything the summary sheet needs was written when the file was
+        analysed, so a resumed run is not missing rows.
         """
         try:
             side = json.loads(Path(side_path).read_text(encoding="utf-8"))
@@ -405,8 +369,7 @@ class JobRunner:
                 ev = json.loads(line)
             except ValueError:
                 # Not protocol output. Something printed straight to stdout past
-                # the hooks; keep it visible as a log line rather than crashing
-                # the reader on it.
+                # the hooks; keep it visible rather than crashing the reader.
                 run.push({"stage": "log", "level": "raw", "detail": line[:500],
                           "index": index, "file": path.name})
                 continue
@@ -419,16 +382,14 @@ class JobRunner:
             run.push(ev)
             if stage in ("done", "error"):
                 # BOTH ARE TERMINAL BY PROTOCOL, AND BREAKING HERE IS LOAD-BEARING.
-                # `for line in proc.stdout` only ends when the child closes stdout,
-                # so a worker that announces its result and then lingers -- the
-                # exact v1 shape where the heaviest file held 8-11 GB after
-                # finishing -- would block this reader forever and the reap
-                # timeout below would never be reached. Found by the test that
-                # simulates precisely that.
+                # `for line in proc.stdout` only ends when the child closes
+                # stdout, so a worker that announces its result and then lingers
+                # would block this reader forever and the reap timeout below
+                # would never be reached.
                 break
 
-        # Reading is over, so the child can be reaped. Closing our end first
-        # means a child still writing gets a broken pipe instead of blocking.
+        # Closing our end first means a child still writing gets a broken pipe
+        # instead of blocking.
         try:
             proc.stdout.close()
         except Exception:

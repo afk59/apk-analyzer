@@ -1,17 +1,14 @@
 """The worker's artifacts must match what the v1 CLI produces.
 
-This is M2's acceptance criterion made permanent. If it ever fails, the UI has
-started doing the engine's job -- the single failure mode decisions/0003 exists
-to prevent, and the closest thing this project has to a regression net over
-7,100 lines of untested engine code.
+If this fails, the UI has started doing the engine's job -- the failure mode
+decisions/0003 exists to prevent.
 
 WHY THIS ONE TEST TOUCHES THE REAL OUTPUT FOLDER
 Everything else redirects through MA_RESULT_DIR. The ENGINE cannot: it is
 frozen v1 code that resolves `script_dir / "result"` from its own file location
-and knows nothing about the environment. `--output` moves the HTML but the agent
-JSON still lands in engine/result/agent_outputs. So comparing against the CLI
-means letting both sides write there -- and this file therefore backs up
-anything it would overwrite and restores it afterwards, including on failure.
+and knows nothing about the environment. So comparing against the CLI means
+letting both sides write there, and this file backs up anything it would
+overwrite and restores it afterwards, including on failure.
 
 Slow: it analyses a real APK several times. Set MA_SKIP_SLOW=1 to skip.
 """
@@ -33,7 +30,7 @@ skip_slow = unittest.skipIf(os.environ.get("MA_SKIP_SLOW") == "1", "MA_SKIP_SLOW
 ENGINE_RESULT = ROOT / "engine" / "result"
 
 # Values that are genuinely a measurement or a clock, so they differ between any
-# two runs. v1 scrubs exactly these before comparing, for the same reason.
+# two runs. The CLI scrubs exactly these before comparing.
 _VOLATILE = re.compile(
     r'\d+\.\d+s'
     r'|"generated_at":\s*"[^"]*"'

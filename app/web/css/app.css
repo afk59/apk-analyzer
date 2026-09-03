@@ -18,9 +18,8 @@ body {
   color: var(--accent-text);
   padding: var(--space-3) var(--space-5);
   display: flex; align-items: baseline; gap: var(--space-3);
-  /* The window has no title bar chrome of its own worth speaking of, so this
-     bar is the app's identity. Accent red stays reserved for HarmonyOS chrome,
-     exactly as in the HTML report. */
+  /* This bar is the app's identity; the window has no title chrome of its own.
+     Accent red stays reserved for HarmonyOS chrome, as in the HTML report. */
 }
 .topbar h1 { margin: 0; font-size: .95rem; font-weight: 700; letter-spacing: .01em; }
 .topbar .sub { font-size: .78rem; opacity: .85; }
@@ -149,9 +148,8 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 .bar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin-bottom: var(--space-4); }
 .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
 
-/* Stage pills. There is no percentage inside a stage on purpose: the engine
-   does not report one, and inventing it from elapsed time would be wrong
-   exactly on the long files. The active pill breathes instead. */
+/* Stage pills. No percentage inside a stage on purpose: the engine does not
+   report one. The active pill breathes instead. */
 .stages { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
 .stage {
   font-size: .72rem; padding: 4px 10px; border-radius: 999px;
@@ -224,9 +222,8 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 .theme-toggle:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.6); }
 .theme-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
-/* The header is accent red in every theme, so the toggle sits on red and is
-   styled against THAT, not against --surface. Using theme tokens here would
-   make it invisible in one of the two modes. */
+/* The header is accent red in every theme, so the toggle is styled against THAT,
+   not against --surface, which would make it invisible in one mode. */
 
 /* ------------------------------------------------------------ language */
 .lang-select {
@@ -240,7 +237,6 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 }
 .lang-select:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.6); }
 .lang-select:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-/* The closed control sits on the accent-red header, so it is styled against
-   THAT rather than --surface. The option list is drawn by the OS on its own
-   background and needs real theme colours instead. */
+/* The closed control sits on the accent-red header and is styled against THAT.
+   The option list is drawn by the OS and needs real theme colours instead. */
 .lang-select option { color: var(--text); background: var(--surface); }

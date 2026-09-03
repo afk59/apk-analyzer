@@ -2,8 +2,8 @@
 
 Getting the mode or the stem wrong does not crash -- it silently writes the
 report under a name nobody looks for, and then skip_existing skips the wrong
-file. So classification gets exhaustive cheap tests, and the expensive
-end-to-end case runs once against a real APK.
+file. Classification gets exhaustive cheap tests; the end-to-end case runs once
+against a real APK.
 """
 
 import json
@@ -53,8 +53,8 @@ class TestModeResolution(IsolatedTest):
         self.assertEqual(self.resolve("A.DLL")[0], "exe")
 
     def test_an_unknown_extension_falls_back_to_apk(self):
-        # The engine will reject it honestly; guessing another mode would be
-        # worse than trying the default and reporting the real failure.
+        # The engine rejects it honestly; guessing another mode would be worse
+        # than trying the default and reporting the real failure.
         self.assertEqual(self.resolve("mystery.bin")[0], "apk")
 
     def test_a_dotted_filename_keeps_its_package_style_stem(self):

@@ -1,16 +1,15 @@
-"""A native dialog in a throwaway process. `python -m app._dialog_proc file|folder`
+"""A native dialog in a throwaway process.
+
+    python -m app._dialog_proc file|folder
 
 Prints the chosen absolute path on stdout, or nothing when cancelled.
 
-WHY A SEPARATE PROCESS
-    Both tkinter and pywebview want the GUI main thread, and ours is already
-    owned by the webview window. Marshalling a dialog back onto it is possible
-    but fiddly and platform-specific; spawning a process that owns its own main
-    thread has no such problem, costs ~200 ms, and works identically whether the
-    app is running in a webview window or as a fallback browser tab.
+A separate process because both tkinter and pywebview want the GUI main
+thread, and ours is already owned by the webview window. A process that owns
+its own main thread has no such problem, costs ~200 ms, and works identically
+in a webview window or a fallback browser tab.
 
-    This is the safety net. app/services/dialogs.py tries pywebview's own dialog
-    first, because that one is parented to the app window.
+This is the safety net; app/services/dialogs.py tries pywebview's dialog first.
 """
 
 import sys
@@ -45,8 +44,7 @@ def main(argv: list[str]) -> int:
     root.destroy()
     if path:
         # stdout is a pipe here, so force UTF-8: a path under a CJK or Turkish
-        # user folder is otherwise a UnicodeEncodeError under the locale
-        # codepage, which is the same failure that cost v1 11 apps in one run.
+        # user folder is otherwise a UnicodeEncodeError under the locale codepage.
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         print(path)
     return 0

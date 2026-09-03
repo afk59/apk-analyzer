@@ -11,10 +11,9 @@ def _force_utf8_stdio():
     """Console output is UTF-8 regardless of the locale codepage.
 
     Without this, redirecting output to a pipe or a file drops Python to the
-    locale encoding (cp1254 on this machine) and the first CJK app name raises
-    UnicodeEncodeError. In run_batch that killed the whole app, not just the
-    line: 11 of 26 apps were lost to the except handler in one run. errors=
-    "replace" so an exotic glyph degrades to "?" instead of taking a run down.
+    locale encoding and the first CJK app name raises UnicodeEncodeError, which
+    in a batch takes the whole app down. errors="replace" so an exotic glyph
+    degrades to "?" instead of ending a run.
     """
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -64,13 +63,10 @@ _ensure_deps()
 def _ensure_play_scraper():
     """Best-effort install of google-play-scraper. NEVER exits.
 
-    Deliberately NOT part of _ensure_deps(): that list is load-bearing and
-    sys.exit(1)s when an install fails. google-play-scraper backs one additive,
-    online-only Excel sheet, so a failed install — which offline is the normal
-    outcome, since pypi is unreachable — must leave the batch fully working.
-
-    Called lazily from the metadata phase, only when there is something to
-    fetch, so offline and single-file runs never pay for it.
+    Deliberately NOT part of _ensure_deps(), which sys.exit(1)s on failure.
+    This backs one additive, online-only Excel sheet, so a failed install --
+    the normal outcome offline -- must leave the batch fully working. Called
+    lazily, only when there is something to fetch.
     """
     try:
         import google_play_scraper  # noqa: F401
@@ -96,14 +92,12 @@ def _ensure_play_scraper():
 def _silence_androguard_logs():
     """Drop loguru's default sink before any DEX parsing happens.
 
-    androguard logs every map_item it parses at DEBUG through loguru. Left on,
-    a single APK writes ~31 MB and a 42-app batch well over 10 GB. Must run
-    after _ensure_deps() (loguru arrives as an androguard dependency) and
-    before core.apk_engine's lazy `from androguard.misc import AnalyzeAPK`.
+    androguard logs every map_item it parses at DEBUG through loguru; left on,
+    a single APK writes ~31 MB. Must run after _ensure_deps() (loguru arrives
+    as an androguard dependency) and before core.apk_engine's lazy import.
 
-    NOTE: this removes *all* loguru sinks, not just androguard's. That is fine
-    today because androguard is the only loguru consumer in the dependency
-    tree; revisit if project code ever adopts loguru for its own logging.
+    NOTE: this removes *all* loguru sinks. Fine while androguard is the only
+    loguru consumer; revisit if project code ever adopts it.
     """
     try:
         from loguru import logger
@@ -137,7 +131,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
 
     # APKM/XAPK are ZIPs of split APKs, not APKs: androguard finds no manifest
     # and no dex in them, so they are deliberately not globbed. Say so, instead
-    # of leaving a file sitting in input/ that never appears in any output.
+    # of leaving a file in input/ that never appears in any output.
     bundles = sorted(input_dir.glob("*.apkm")) + sorted(input_dir.glob("*.xapk"))
     if bundles:
         print_warn(f"Skipping {len(bundles)} split-APK bundle(s) — extract and analyze base.apk:")
@@ -200,30 +194,27 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                 result = analyze_apk(str(file_path), apk_mapping, file_target,
                                      ohpm_mapping=ohpm_mapping)
                 # Descriptive only -- never read by mapping or matching. The
-                # namespace keys are handed over so the detector can tell a
-                # packed DEX from a genuinely native app.
+                # namespace keys let the detector tell a packed DEX from a
+                # genuinely native app.
                 result["framework"] = detect_framework(
                     str(file_path), package_name=result.get("package_name"),
                     namespaces=list(result.get("detected_namespaces", {}).keys()))
                 html   = render_html_apk(result, apk_mapping)
                 output_html.write_text(html, encoding="utf-8")
                 # Summary is printed at the END of the try block, after the row
-                # and the agent JSON exist. Printing here meant any failure in
-                # print_summary_apk -- historically a UnicodeEncodeError on a CJK
-                # app name -- dropped the whole app into the except handler and
-                # out of both workbooks, even though its HTML was already written.
+                # and the agent JSON exist. Printing here dropped the whole app
+                # into the except handler on a formatting failure, even though
+                # its HTML was already written.
                 _summary = print_summary_apk
                 rows.append({
                     "file_name":        file_path.name,
                     "app_name":         result.get("app_name") or "",
                     # Descriptive label for the Batch Summary "Platform" column.
-                    # Carried on the row because that sheet has no package_name to
-                    # look the `frameworks` dict up by.
+                    # Carried on the row because that sheet has no package_name.
                     "framework":        result["framework"],
                     # Coverage is derived, not stored: export_excel_batch calls
-                    # renderer.coverage_status() on the row, the same function the
-                    # HTML stat card uses, so both apply the packed / low-sample
-                    # rule identically.
+                    # renderer.coverage_status() on the row, the same function
+                    # the HTML stat card uses.
                     "total_detected_ns": result.get("total_detected_ns", 0),
                     "total_3p_ns":       result.get("total_3p_ns", 0),
                     "kit_count":        len(result["kit_matches"]),
@@ -301,10 +292,9 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     agg["apps"].append(file_path.name)
             print_ok(f"HTML report: {output_html}")
             write_agent_json(result, agent_path)
-            # Filename only, not str(agent_path): agent_summary.json lives in the
-            # same directory as the per-app files, so a bare name is unambiguous
-            # AND survives being handed to someone else. An absolute path resolves
-            # only on the machine that produced it.
+            # Filename only, not str(agent_path): the file lives in the same
+            # directory, so a bare name is unambiguous and survives being handed
+            # to someone else. An absolute path resolves only on one machine.
             agent_files.append({"source_file": file_path.name, "agent_json": agent_path.name,
                                  **build_agent_json(result)})
             _summary(result)

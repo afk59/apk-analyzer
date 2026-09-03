@@ -1,8 +1,7 @@
 """store: the schema, and the invariant that the index is disposable.
 
-The claim in docs/decisions/0002 is that deleting analyzer.db and rescanning
-reproduces the library exactly. That is the property most of this file exercises,
-because it is the one that stops the database quietly becoming a source of truth.
+docs/decisions/0002 claims that deleting analyzer.db and rescanning reproduces
+the library exactly. That is the property most of this file exercises.
 """
 
 import json
@@ -121,10 +120,11 @@ class TestRescan(IsolatedTest):
         self.assertEqual(statuses, ["done", "failed"])
 
     def test_artifacts_are_recorded_and_resolvable(self):
-        """Stored paths are repo-relative when the target is inside the repo and
-        absolute otherwise (rel_to_root's documented fallback). Under test the
-        result dir is a temp dir, i.e. outside -- so the contract to assert is
-        that every stored path still RESOLVES, not that it is relative."""
+        """Stored paths are repo-relative inside the repo and absolute otherwise.
+
+        Under test the result dir is a temp dir, i.e. outside -- so the contract
+        to assert is that every stored path RESOLVES, not that it is relative.
+        """
         from app.store import index
         from pathlib import Path
         self._one_run_on_disk()

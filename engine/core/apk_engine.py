@@ -10,16 +10,10 @@ from ui.terminal import print_info, print_ok, print_warn, _c, C
 
 # Every name here is attested in at least one of three sources: the permission
 # lists in engine/data/permissions/*.txt, the crawled HarmonyOS documentation,
-# or the SDK .d.ts @permission annotations (748 distinct names between them).
-#
-# CORRECTED 2026-08-30: four entries were not HarmonyOS permissions at all and
-# the gap suggester was recommending them to migrators --
-#   READ_MEDIA_IMAGES / READ_MEDIA_VIDEO / READ_MEDIA_AUDIO  are ANDROID names;
-#       HarmonyOS uses READ_IMAGEVIDEO and READ_AUDIO, both already listed here
-#   USE_BIOMETRIC   -> the real name is ACCESS_BIOMETRIC, also already listed
-#   ACCESS_NFC      -> the real name is NFC_TAG
-# Check any addition against those three sources before adding it: a suggestion
-# nobody can grant is worse than no suggestion.
+# or the SDK .d.ts @permission annotations. Check any addition against those
+# three before adding it: a suggestion nobody can grant is worse than none.
+# Android names are a common trap -- READ_MEDIA_IMAGES is Android, HarmonyOS
+# uses READ_IMAGEVIDEO.
 _OHOS_PERM_CATALOGUE = [
 
     "ohos.permission.INTERNET",
@@ -142,14 +136,10 @@ def _is_unresolvable(ns: str) -> bool:
         # Obfuscated package root. _is_obfuscated() cannot catch these: the
         # classes underneath are inner classes ("f.d.c.a.a0.a$a"), whose simple
         # name keeps the "$" and so misses _OBFUS_SIMPLE, while the namespace
-        # key is truncated to 4 segments and so never contains the "$" either.
-        # The result was an obfuscated package leaking into the report's
-        # "Unrecognized Third-Party Libraries" table as if it were a real
-        # library. Deliberately namespace-level, NOT class-level: a class like
+        # key is truncated to 4 segments and never contains the "$" either.
+        # Deliberately namespace-level, NOT class-level: a class like
         # "com.bumptech.glide.load.a$a" is obfuscated too, but its *package*
-        # still identifies the library, so it must stay attributed to Glide.
-        # Verified against all 415 patterns in mapping.json / hms_mapping.json /
-        # ohpm_mapping.json - none matches.
+        # still identifies the library and must stay attributed to Glide.
         or bool(_OBFUS_PKG.match(ns))
     )
 
@@ -157,18 +147,16 @@ def _is_unresolvable(ns: str) -> bool:
 _CTOR_SUFFIXES = (".<init>", ".<clinit>")
 # An R8-renamed trailing package segment: "m", "j", "b1", "e1", "a0".
 # Deliberately [A-Za-z][0-9]* and not [A-Za-z]{1,2}: two-LETTER segments are
-# overwhelmingly real ("com.huawei.hms.ui", "org.spongycastle.math.ec",
-# "com.tom_roush.pdfbox.io", "expo.modules.updates.db" -- 77 such namespaces in
-# the 43-app corpus) and must not be swept up.
+# overwhelmingly real ("com.huawei.hms.ui", "org.spongycastle.math.ec") and
+# must not be swept up.
 _OBFUS_TAIL = re.compile(r'^[A-Za-z][0-9]{0,3}$')
 
 
 def _is_synthetic_method(method: str) -> bool:
     """Compiler-generated bridge/lambda: access$000, $r8$lambda$x, -$$Nest$mfoo.
 
-    Note this tests the METHOD name only. A "$" in the class part is an ordinary
-    inner class ("com.facebook.hermes.intl.c$b.clone") and says nothing about the
-    method, which is the only thing the report renders.
+    Tests the METHOD name only. A "$" in the class part is an ordinary inner
+    class and says nothing about the method, which is all the report renders.
     """
     return "$" in method.split(".")[-1]
 
@@ -176,15 +164,11 @@ def _is_synthetic_method(method: str) -> bool:
 def _sample_methods(methods, limit: int = 5) -> list:
     """Pick sample methods worth showing.
 
-    Two kinds of noise crowd out real API surface in an R8 build:
-
-    * synthetic accessors (access$000, $r8$lambda$...) -- pure compiler
-      plumbing, dropped outright; they carried 3,004 of the corpus's unmapped
-      rows before this filter;
-    * "<init>"/"<clinit>", which only say "this class was constructed" (32% of
-      all methods under com.fairwood.app's unmapped namespaces). Held back
-      rather than dropped, so a namespace with nothing else still shows
-      something instead of a blank cell.
+    Two kinds of noise crowd out real API surface in an R8 build: synthetic
+    accessors (access$000, $r8$lambda$...), which are pure compiler plumbing and
+    are dropped outright; and "<init>"/"<clinit>", which only say "this class
+    was constructed" and are held back rather than dropped, so a namespace with
+    nothing else still shows something instead of a blank cell.
     """
     ordered = sorted(m for m in methods if not _is_synthetic_method(m))
     real    = [m for m in ordered if not m.endswith(_CTOR_SUFFIXES)]
@@ -204,17 +188,12 @@ def _is_obfuscated_pkg(ns: str, classes) -> bool:
     """An R8-renamed package segment, e.g. "com.google.firebase.m".
 
     _OBFUS_PKG only catches roots where EVERY segment is obfuscated; R8 also
-    renames a single segment under an intact vendor prefix, which then shows up
-    in the report as a library called "com.google.firebase.m" or
-    "com.facebook.i1.e1".
+    renames a single segment under an intact vendor prefix.
 
-    The trailing segment alone is not sufficient evidence -- it also matches real
-    packages ("org.spongycastle.asn1.x509", "com.dcloud.android.v4",
-    "com.zipow.videobox.I420", "com.ibm.security.x509"). What separates them is
-    the classes underneath: a real package keeps its class names
-    ("x509.AccessDescription"), an R8-renamed one does not ("m.c$b"). Measured
-    over the 43-app corpus this splits 82 candidates into 74 obfuscated and 8
-    real, with no false positive on either side.
+    The trailing segment alone is not sufficient evidence -- it also matches
+    real packages ("org.spongycastle.asn1.x509", "com.ibm.security.x509").
+    What separates them is the classes underneath: a real package keeps its
+    class names ("x509.AccessDescription"), an R8-renamed one does not ("m.c$b").
     """
     if not _OBFUS_TAIL.match(ns.split(".")[-1]):
         return False
@@ -268,9 +247,8 @@ def _warn_if_split_bundle(apk_path: str) -> None:
 def _match_ohpm(ns: str, ohpm_entries: list):
     """Longest-prefix match against the OHPM second tier.
 
-    Deliberately identical in shape to the native matcher in `analyze_apk`:
-    `ohpm_entries` arrives sorted longest-`android_namespace`-first, and the
-    first prefix hit wins. Returns the row dict or None.
+    Identical in shape to the native matcher in `analyze_apk`: `ohpm_entries`
+    arrives sorted longest-`android_namespace`-first and the first hit wins.
     """
     for entry in ohpm_entries:
         prefix = entry["android_namespace"]
@@ -282,14 +260,12 @@ def _match_ohpm(ns: str, ohpm_entries: list):
 def _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes) -> None:
     """Route a namespace that found no native kit into OHPM, else unmapped.
 
-    This is the ONLY place either bucket is filled, and it is only ever reached
-    from a branch where the native tier has already missed — which is what makes
-    "native behaviour is unchanged" true by construction rather than by testing.
+    The ONLY place either bucket is filled, and only ever reached from a branch
+    where the native tier has already missed -- which is what makes "native
+    behaviour is unchanged" true by construction.
 
     The noise gate (skip_prefixes + method_count >= 2) is applied FIRST, so the
-    second tier can never surface a namespace the native tier deliberately
-    suppresses. A namespace failing the gate is dropped entirely, exactly as
-    before.
+    second tier can never surface a namespace the native tier suppresses.
     """
     if (any(ns.startswith(p) for p in skip_prefixes)
             or ns_info["method_count"] < 2):
@@ -307,14 +283,11 @@ def _record_second_tier(ns, ns_info, result, ohpm_entries, skip_prefixes) -> Non
         # Last stop before the report: nothing maps this namespace, so if it is
         # an R8-renamed package it is pure noise and belongs in FILTERED.
         #
-        # This check MUST stay here, after both tiers have missed, and must never
-        # be hoisted into the pre-matching loop. Tried that first and it deleted
-        # a real result: com.facebook.login's only non-"$" namespace is
-        # "com.facebook.login.u0", so filtering it up front left the
-        # com.facebook.login pattern with no source at all and @kit.AccountKit
-        # vanished from an app that genuinely uses Facebook Login. A namespace
-        # that matches a mapping rule is evidence of a real library no matter how
-        # badly R8 mangled its name.
+        # This check MUST stay here, after both tiers have missed, and must
+        # never be hoisted into the pre-matching loop. Hoisted, it deletes real
+        # results: a library whose only non-"$" namespace is R8-renamed loses
+        # its mapping source entirely. A namespace that matches a mapping rule
+        # is evidence of a real library no matter how badly R8 mangled its name.
         if _is_obfuscated_pkg(ns, ns_info["classes"]):
             result["unresolvable_namespaces"].append({
                 "namespace":      ns,
@@ -394,8 +367,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
 
     result["permissions"] = sorted(a.get_permissions())
     # sorted(): androguard returns these in manifest-parse order, which is not
-    # stable between runs, so the Manifest Components table reshuffled on every
-    # re-analysis of the same APK.
+    # stable between runs, so the Manifest Components table reshuffled.
     result["activities"]  = sorted(a.get_activities())
     result["services"]    = sorted(a.get_services())
     result["receivers"]   = sorted(a.get_receivers())
@@ -437,15 +409,11 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 ns_data[ns_key]["methods"].add(f"{cc}.{call.name}")
 
     # sorted(): ns_data is filled in dx.get_classes() order, which is not stable
-    # between runs. Every DOWNSTREAM list was sorted by the 2026-08-13
-    # reproducibility fix, but the ITERATION was not -- and a kit entry takes its
-    # confidence / note / sample_url / harmony_import from whichever mapped
-    # namespace creates it first (`if kit not in matched_kits` below). So the same
-    # APK could render @kit.AbilityKit as "medium" on one run and "high" on the
-    # next, purely because android.content.pm or android.content.Intent happened
-    # to be reached first. Reproduced on com.storellet with identical code.
-    # Sorting here fixes the matching loop, the android_sources order and the
-    # serialized dict in one place.
+    # between runs, and a kit entry takes its confidence / note / sample_url /
+    # harmony_import from whichever mapped namespace creates it first (`if kit
+    # not in matched_kits` below). Without this the same APK could render a kit
+    # as "medium" on one run and "high" on the next. Sorting here fixes the
+    # matching loop, the android_sources order and the serialized dict at once.
     for ns, data in sorted(ns_data.items()):
         result["detected_namespaces"][ns] = {
             "classes":      sorted(data["classes"]),
@@ -529,18 +497,13 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                     matched_kits[kit]["harmony_import"] = best_match.get("harmony_import", kit)
             elif _CONF_RANK.get(best_match["confidence"], 3) <                  _CONF_RANK.get(matched_kits[kit]["confidence"], 3):
                 # WEAKEST CONTRIBUTOR WINS. One kit is often fed by several
-                # mapping rows whose confidences disagree -- measured over the
-                # 43-app corpus, 370 of 1,219 kit rows (30.4%). Taking the first
-                # row's value meant the badge depended on which namespace the
-                # loop reached first, which was arbitrary even after the
-                # iteration was made deterministic.
+                # mapping rows whose confidences disagree, and taking the first
+                # row's value made the badge depend on iteration order.
                 #
                 # min, not max, because this is a migration RISK tool: a kit
                 # badged "Supported" while one of the libraries feeding it is
-                # only "Should Confirm" understates the work. Cost measured on
-                # the corpus: high 821 -> 554, medium 358 -> 570, low 40 -> 95.
-                # note / import / links move with the confidence so the row
-                # stays internally coherent rather than mixing two entries.
+                # only "Should Confirm" understates the work. note / import /
+                # links move with the confidence so the row stays coherent.
                 _weakest = matched_kits[kit]
                 _weakest["confidence"]  = best_match["confidence"]
                 _weakest["note"]        = best_match["note"]
@@ -610,8 +573,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     result["total_detected_ns"] = len(matched_ns)
     # OHPM matches are counted here even though they are not native matches.
     # Before the second tier existed they sat in unmapped_namespaces, so leaving
-    # them out would SHRINK this denominator and silently inflate the native
-    # coverage percentage. total_3p_ns must stay exactly what it was.
+    # them out would SHRINK this denominator and inflate native coverage.
     result["total_3p_ns"] = (len(matched_ns)
                              + len(result["unmapped_namespaces"])
                              + len(result["ohpm_matches"]))
@@ -631,8 +593,7 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     result["missed_match_count"] = len(unmatched_perms)
 
     # Tie-break on namespace: method_count alone leaves equal-count rows in
-    # detected_namespaces order, which varies per run. unresolvable_namespaces
-    # was never sorted at all.
+    # detected_namespaces order, which varies per run.
     _by_count = lambda x: (-x["method_count"], x["namespace"])
     result["unmapped_namespaces"].sort(key=_by_count)
     result["ohpm_matches"].sort(key=_by_count)
@@ -646,29 +607,21 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
     for ns_info in result["detected_namespaces"].values():
         all_methods.extend(ns_info["methods"])
     # Sorted, because match_methods() de-duplicates by SIMPLE method name and
-    # keeps the FIRST occurrence. Unsorted, the winner depends on the order of
-    # detected_namespaces, which follows androguard's dx.get_classes() and varies
-    # between runs — so which class "owns" a shared name like getApplicationInfo
-    # was arbitrary, and the resulting api_matches (hence every kit row's
-    # inner_methods, and the HTML/Excel built from them) differed run-to-run for
-    # the same APK. Sorting makes the dedup deterministic and reports reproducible.
+    # keeps the FIRST occurrence. Unsorted, which class "owns" a shared name like
+    # getApplicationInfo follows androguard's dx.get_classes() order and varies
+    # between runs, making api_matches -- and every report built from them --
+    # differ run-to-run for the same APK.
     result["api_matches"] = match_methods(sorted(all_methods))
 
 
-    # NO CONFIDENCE BOOSTING HERE -- and there never effectively was any.
+    # NO CONFIDENCE BOOSTING HERE, and there never effectively was any. The old
+    # block compared km["kit_name"] ("@kit.AbilityKit") against the index's `kit`
+    # field, which is a DOCUMENTATION CATEGORY ("Ability Kit", "ArkUI"), so the
+    # intersection was always empty and the boost never fired.
     #
-    # Sprint 7 added a block that bumped a kit one level whenever an api_match
-    # carried the same kit. It compared km["kit_name"] ("@kit.AbilityKit") against
-    # the index's `kit` field, which is a DOCUMENTATION CATEGORY ("Ability Kit",
-    # "ArkUI", "Application Framework") -- 0 of the 16,167 index entries hold a
-    # "@kit.*" token, so the intersection was always empty and the boost never
-    # fired for any app in any run. Measured on the 43-app corpus: empty set.
-    #
-    # It is deleted rather than repaired because repairing it would ENABLE a boost
-    # driven by matches that are mostly wrong: api_matcher keys on the bare simple
-    # method name, so "Intent.clone" resolves to ArrayList (@kit.ArkTS) and
-    # "MediaBrowserService.onBind" to NodeController (@kit.ArkUI). Confidence stays
-    # mapping-derived, which is what every report has actually shown to date.
+    # Deleted rather than repaired: repairing it would ENABLE a boost driven by
+    # matches that are mostly wrong, because api_matcher keys on the bare simple
+    # method name. Confidence stays mapping-derived.
 
 
     _status_map = {"high": "Supported", "medium": "Replaceable", "low": "Should Confirm"}
@@ -688,15 +641,11 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
                 for am in result["api_matches"]:
                     m = am.get("android_method", "")
                     imp = am.get("import_statement") or ""
-                    # Two gates, both necessary. The namespace gate was already
-                    # here; the kit gate is new. api_matcher matches on the bare
-                    # simple method name, so a namespace-scoped hit still lands on
-                    # an unrelated kit most of the time -- measured across the 43
-                    # corpus reports, 58.8% of these rows suggested an API from a
-                    # DIFFERENT kit than the row claims and a further 23.4% had no
-                    # import statement at all, leaving 17.8% self-consistent.
-                    # Requiring the suggested import to name this very kit is what
-                    # separates them.
+                    # Two gates, both necessary. api_matcher matches on the bare
+                    # simple method name, so a namespace-scoped hit still lands
+                    # on an unrelated kit most of the time. Requiring the
+                    # suggested import to name this very kit is what separates a
+                    # useful suggestion from a coincidence.
                     if not imp or km["kit_name"] not in imp:
                         continue
                     if m.startswith(ns_prefix) and m not in seen:

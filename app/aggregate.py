@@ -1,21 +1,17 @@
-"""Build the two batch workbooks from a finished run. `python -m app.aggregate <plan.json>`
+"""Build the two batch workbooks from a finished run.
 
-v1's run_batch accumulates its cross-app sheets inside the analysis loop, which
-this design cannot do -- each file is analysed in its own process and that
-process exits (docs/decisions/0005). So each worker writes a compact side-car
-and this step replays exactly the same aggregation over them, then calls the
-REAL export_excel_batch / export_excel_batch_unmapped.
+    python -m app.aggregate <plan.json>
 
-Calling the real exporters is the point. Re-implementing the sheets would mean
-two things that could disagree about the same corpus, and the whole reason
-coverage_status() was extracted in v1 was to stop precisely that.
+Each file is analysed in its own process and that process exits
+(docs/decisions/0005), so cross-app sheets cannot be accumulated in the loop
+the way the CLI does. Each worker writes a compact side-car and this step
+replays the same aggregation over them, then calls the REAL
+export_excel_batch / export_excel_batch_unmapped. Re-implementing the sheets
+would mean two things that could disagree about the same corpus.
 
-Runs in its own process for two reasons: openpyxl holds the whole workbook in
-memory and gives it back on exit, and this is where the Play Store fetch
-happens -- the only network call in an analysis run, which must never block the
-UI thread.
-
-Emits the same JSONL protocol as the worker so the UI can show it as a stage.
+Runs in its own process: openpyxl holds the whole workbook in memory, and this
+is where the Play Store fetch happens -- the only network call in an analysis
+run. Emits the same JSONL protocol as the worker.
 """
 
 import json
@@ -55,8 +51,8 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
                 side = {}
 
         if row.get("mode") == "error":
-            # Matches run_batch's own failure row exactly: named, counted as
-            # attempted, and contributing to no aggregate sheet.
+            # Matches run_batch's own failure row: named, counted as attempted,
+            # and contributing to no aggregate sheet.
             rows.append({
                 "file_name": file_name, "app_name": "ERROR", "framework": {},
                 "total_detected_ns": 0, "total_3p_ns": 0,
@@ -88,9 +84,8 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
             apk_apps.append((pkg, side.get("app_name") or ""))
             frameworks[pkg] = side.get("framework") or {}
 
-        # Values are SETS, so an App Count is a number of distinct apps and
-        # never a number of occurrences -- the same counting the Common sheets
-        # have always used.
+        # Values are SETS, so an App Count is a number of distinct apps and never
+        # a number of occurrences.
         for m in side.get("mapped", []):
             mapped_ns_apps.setdefault(m["namespace"], set()).add(file_name)
             mapped_ns_kit.setdefault(m["namespace"], m["kit"])
@@ -124,8 +119,8 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
     if apk_apps:
         emit({"stage": "metadata", "detail": f"Looking up {len(apk_apps)} app(s) on Google Play"})
         # Never fatal and never slow when offline: fetch_metadata probes once,
-        # commits to a mode, and fills the rest with a placeholder. The whole
-        # phase runs AFTER every report is already on disk.
+        # commits to a mode, and fills the rest with a placeholder. This phase
+        # runs AFTER every report is already on disk.
         play_metadata = fetch_metadata(apk_apps, cache_path_for(_ENGINE),
                                        ensure_dep=cli._ensure_play_scraper)
 
@@ -170,8 +165,7 @@ def main(argv: list[str]) -> int:
     if str(_ENGINE) not in sys.path:
         sys.path.insert(0, str(_ENGINE))
 
-    # Same reason as the worker: the engine prints, and stdout here is the
-    # protocol stream.
+    # The engine prints, and stdout here is the protocol stream.
     import ui.terminal as term
     term.print_info = lambda m: emit({"stage": "log", "level": "info", "detail": str(m)})
     term.print_ok = lambda m: emit({"stage": "log", "level": "ok", "detail": str(m)})

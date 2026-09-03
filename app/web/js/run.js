@@ -1,10 +1,9 @@
 /* Starting a run, and showing progress while it happens.
    Uses $, escapeHtml, toast, showPanel, openPath and `state` from main.js. */
 
-/* The stages the engine actually reports, in the order it reports them. There
-   is no synthetic percentage inside a stage: androguard gives no progress
-   signal, and a bar driven by elapsed time would be most wrong on the long
-   files -- this corpus runs from 1.8 s to 17 minutes per file. */
+/* The stages the engine reports, in the order it reports them. There is no
+   synthetic percentage inside a stage: androguard gives no progress signal, and
+   a bar driven by elapsed time would be most wrong on the long files. */
 /* Labels resolve through t() at draw time, so switching language redraws them
    and the stage machinery needs to know nothing about i18n. */
 const STAGE_KEYS = ['loading', 'dex', 'scan', 'imports', 'kits', 'api', 'render'];

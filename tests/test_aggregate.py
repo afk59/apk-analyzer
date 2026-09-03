@@ -1,9 +1,9 @@
 """aggregate: rebuilding the cross-app sheets from side-cars.
 
-The workbook writers themselves are the engine's and are not re-tested here.
-What IS tested is the aggregation that replaces run_batch's in-loop
-accumulation: set-based app counts, ERROR rows, missing side-cars, and the fact
-that the real exporters get called with the shape they expect.
+The workbook writers are the engine's and are not re-tested here. What IS
+tested is the aggregation that replaces run_batch's in-loop accumulation:
+set-based app counts, ERROR rows, missing side-cars, and that the real
+exporters get called with the shape they expect.
 """
 
 import json
@@ -123,8 +123,7 @@ class TestAggregation(IsolatedTest):
         self.assertEqual(data[0][1], 2, "App Count should be distinct apps")
 
     def test_offline_metadata_does_not_stop_the_workbooks(self):
-        """The guarantee Sprint 11 built, now that the fetch lives in its own
-        process: no network means one warning and every other sheet intact."""
+        """No network means one warning and every other sheet intact."""
         import os
         for name in ("a", "b"):
             self.make_report(name)

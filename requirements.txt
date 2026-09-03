@@ -1,31 +1,22 @@
-# Analysis engine — inherited from v1. These four are what engine/analyzer.py
+# Analysis engine -- inherited from v1. These four are what engine/analyzer.py
 # hard-requires; a failure to install any of them is fatal and always was.
 #
-# PINNED EXACTLY, and that is the point. The engine is behaviour-frozen: the
-# reports and workbooks it produces are what the business consumes, and a
-# silent minor bump in the library that parses the APK is a way for that output
-# to change without anyone deciding it should. These are the versions the
-# 192-test suite passes against and the versions the 43-app corpus was analysed
-# with. Bumping one is a deliberate act with a re-run behind it.
+# PINNED EXACTLY. The engine is behaviour-frozen, so a silent minor bump in the
+# library that parses the APK is an undecided change to what the reports say.
 androguard==4.1.3
 openpyxl==3.1.5
 pefile==2024.8.26
 macholib==1.16.4
 
-# v2 shell. Floored at the verified version, capped below the next major.
-# These three never touch analysis output — they serve a local page — so being
-# able to take a security fix without a corpus re-run is worth more here than
-# byte-reproducibility. The floor is what was actually tested, not a guess at
-# how far back it would work.
+# v2 shell. Floored at the tested version, capped below the next major: these
+# never touch analysis output, so a security fix should not need a corpus re-run.
 fastapi>=0.141.1,<1.0
 uvicorn>=0.52.4,<1.0
-pywebview>=6.2.1,<7.0      # Edge WebView2 on Windows 11 — no extra runtime to install
+pywebview>=6.2.1,<7.0      # Edge WebView2 on Windows 11 -- no extra runtime
 
 # ---------------------------------------------------------------- optional
-# Deliberately NOT listed as hard requirements. Each backs one additive feature
-# and its install failing is a NORMAL offline outcome, so it must never abort a
-# run. v1 learned this the hard way: _ensure_deps() calls sys.exit(1), which is
-# right for the four above and wrong for anything optional.
+# Deliberately NOT hard requirements. Each backs one additive feature and its
+# install failing is a NORMAL offline outcome, so it must never abort a run.
 #
 #   google-play-scraper   App Info sheet (unofficial HTML scraper, see 0006)
 #   httpx                 downloader, if urllib proves insufficient

@@ -2,13 +2,11 @@
 
 ISOLATION IS THE FIRST REQUIREMENT. Every test that writes anything redirects
 engine/result, the SQLite file and engine/input into a temp directory through
-MA_RESULT_DIR / MA_DB_PATH / MA_INPUT_DIR, so a test run can never touch real
-analysis output. `app.config` is reloaded per test because it resolves those at
-import time.
+MA_RESULT_DIR / MA_DB_PATH / MA_INPUT_DIR. `app.config` is reloaded per test
+because it resolves those at import time.
 
-What is deliberately NOT redirected: ENGINE_DIR, WEB_DIR, DOCS_REF_DIR. Those
-locate code and reference material; a test that pointed them elsewhere would be
-testing something other than this application.
+Deliberately NOT redirected: ENGINE_DIR, WEB_DIR, DOCS_REF_DIR. Those locate
+code and reference material.
 """
 
 import importlib
@@ -27,12 +25,10 @@ if str(ROOT) not in sys.path:
 
 
 def _silence_androguard():
-    """androguard logs every AXML header it parses at DEBUG through loguru.
+    """Silence androguard, which logs every AXML header it parses at DEBUG.
 
-    v1 measured this at ~31 MB for a single APK and over 10 GB for a batch, and
-    silencing it is part of the engine's own bootstrap. A test that touches
-    androguard directly bypasses that bootstrap, so it has to be done here too
-    or the suite's output is unreadable.
+    Part of the engine's own bootstrap; a test that touches androguard directly
+    bypasses that bootstrap and has to do it here.
     """
     try:
         from loguru import logger
@@ -47,10 +43,8 @@ _silence_androguard()
 def find_sample_apk():
     """A real APK, for the few tests that need androguard to parse one.
 
-    Synthetic zips cover every shape check, but "this really is package X"
-    needs a real binary AndroidManifest.xml, which cannot be faked cheaply.
     Corpus binaries are gitignored, so those tests skip on a clean clone rather
-    than failing -- a missing corpus is not a broken build.
+    than failing.
     """
     env = os.environ.get("MA_TEST_APK")
     if env and Path(env).exists():
@@ -85,8 +79,8 @@ class IsolatedTest(unittest.TestCase):
         os.environ["MA_INPUT_DIR"] = str(self.tmp / "input")
 
         self.config = importlib.reload(importlib.import_module("app.config"))
-        # Reload consumers too: they hold `from app import config`, which is the
-        # module object, but any module-level constant computed from it is stale.
+        # Reload consumers too: they hold the config module object, but any
+        # module-level constant computed from it is stale.
         for name in ("app.store.db", "app.store.index", "app.services.jobs",
                      "app.services.downloader", "app.aggregate"):
             if name in sys.modules:

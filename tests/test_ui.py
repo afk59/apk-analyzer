@@ -1,9 +1,8 @@
 """The frontend, loaded in a real webview window.
 
 Static checks on the HTML would pass while the page was broken at runtime, so
-this drives the actual renderer: it starts the server, opens the window, waits
-for the scripts, and asks the page about itself. A JS error anywhere in load
-fails the test.
+this drives the actual renderer and asks the page about itself. A JS error
+anywhere in load fails the test.
 
 Skipped when there is no webview backend (headless CI, no WebView2).
 """
@@ -250,8 +249,7 @@ class TestFrontend(IsolatedTest):
 class TestThemeStates(IsolatedTest):
     """Light, dark and system are three distinct, persisted states.
 
-    Shares TestFrontend's single window session rather than inheriting from it:
-    subclassing re-ran every load test under a second name.
+    Shares TestFrontend's single window session rather than inheriting from it.
     """
 
     def _themes(self):
@@ -298,9 +296,7 @@ class TestLanguages(IsolatedTest):
     """English, Turkish and Simplified Chinese.
 
     What is translated is the CHROME. Kit tokens, permission names, package
-    names and the reports themselves are identifiers and deliverables, not
-    prose -- a report that read differently per viewer could not be compared or
-    forwarded, and "@kit.ArkUI" is not a phrase.
+    names and the reports are identifiers and deliverables, not prose.
     """
 
     def _langs(self):

@@ -8,32 +8,25 @@ and it never raises -- every failure becomes a Result with a reason attached.
 
 Sources are tried in order and the first that resolves wins. A source that
 raises is recorded and skipped, never fatal, and the failure names every source
-that was tried -- "failed" alone sends someone looking for logs that do not
-exist.
+that was tried.
 
 WHAT IS VERIFIED BEFORE THE FILE IS HANDED ON
 
   1. It is really an APK: the ZIP contains classes.dex AND AndroidManifest.xml.
      Otherwise it is a split bundle, an HTML error page saved with a .apk name,
-     or a stub. v1's corpus contained exactly that case and it analysed to
-     nothing while LOOKING analysed.
+     or a stub -- all of which analyse to nothing while LOOKING analysed.
 
-  2. The manifest package equals the package that was requested. v1's corpus
-     holds two files that are the wrong app entirely -- one is Aptoide, one is
-     Uptodown, both store apps saved instead of the target -- and every
-     conclusion drawn about those two apps was really about a store app.
-     Automating the download makes that failure MORE likely, not less, so this
-     check is mandatory and a mismatch is a hard failure.
+  2. The manifest package equals the package that was requested. A mismatch is
+     a hard failure: analysing the wrong app draws every conclusion about the
+     wrong app, and automating the download makes that MORE likely, not less.
 
 A failed verification deletes the file. Leaving a wrong or truncated APK in the
 input folder is how it ends up analysed by the next folder run.
 
-NOTE ON EXPECTATIONS
-Every adapter is a third-party mirror and will change without notice, the same
-standing caveat v1 records for google-play-scraper. Availability is best-effort:
-enterprise, internal and delisted apps are not on public mirrors, just as 2 of
-43 corpus apps are on no Play storefront in any region. Use only for apps the
-team is authorised to analyse; mirrors carry their own terms of use.
+Every adapter is a third-party mirror and will change without notice.
+Availability is best-effort: enterprise, internal and delisted apps are not on
+public mirrors. Use only for apps the team is authorised to analyse; mirrors
+carry their own terms of use.
 """
 
 import shutil
@@ -82,13 +75,9 @@ class ApkPure:
     """d.apkpure.com's direct endpoint. No HTML parsing, so nothing to break
     when they restyle the site -- and a missing package answers 404 outright.
 
-    Requests /b/APK/ and never /b/XAPK/, which always serves a bundle.
-
-    /b/APK/ does NOT guarantee a single APK. For some apps it does -- a 124 MB
-    app that publishes both forms returned a real APK here -- but for one
-    published as an App Bundle it returns the bundle at this path anyway
-    (measured: com.foodgulu, 143.9 MB, base.apk plus 3 config splits). fetch()
-    unwraps that case; see _extract_base.
+    Requests /b/APK/ and never /b/XAPK/, which always serves a bundle. /b/APK/
+    does NOT guarantee a single APK either: for an app published as an App
+    Bundle it returns the bundle anyway. fetch() unwraps that; see _extract_base.
     """
 
     name = "apkpure"
@@ -101,8 +90,7 @@ class ApkPure:
                     return None
                 ctype = (r.headers.get("Content-Type") or "").lower()
                 if "html" in ctype:
-                    # An HTML body here is an interstitial or an error page, not
-                    # an APK. Treat it as "this source does not have it".
+                    # An HTML body here is an interstitial or an error page.
                     return None
                 size = r.headers.get("Content-Length")
                 return Candidate(package, url, self.name,
@@ -134,8 +122,8 @@ def _download(candidate: Candidate, dest: Path, on_progress=None) -> Path:
             got += len(chunk)
             if on_progress:
                 on_progress(got, total)
-    # Move into place only once the body is complete, so an interrupted
-    # download can never be mistaken for a finished file by a later folder run.
+    # Move into place only once the body is complete, so an interrupted download
+    # cannot be mistaken for a finished file by a later folder run.
     tmp.replace(dest)
     return dest
 
@@ -143,19 +131,14 @@ def _download(candidate: Candidate, dest: Path, on_progress=None) -> Path:
 def _extract_base(path: Path):
     """A split bundle in, base.apk out. Returns (ok, note).
 
-    APKPure's /b/APK/ endpoint does NOT always serve a single APK: for an app
-    published as an App Bundle it hands over the bundle, and that is now the
-    default on Play. Measured here on a 143.9 MB download that turned out to
-    hold base.apk plus split_config.* members.
+    APKPure's /b/APK/ endpoint does not always serve a single APK: for an app
+    published as an App Bundle -- now the default on Play -- it hands over the
+    bundle. Extracting base.apk is not a degraded case in practice; most corpus
+    apps are base splits with no lib/ directory at all.
 
-    Extracting base.apk is what v1's own notes prescribe for this shape, and it
-    is not a degraded case in practice: 27 of the 43 apps in v1's corpus are
-    base splits with no lib/ directory at all, which is exactly why
-    framework_detect was built asset-first rather than around .so names.
-
-    What IS lost is whatever lives only in the config splits -- native libraries
-    and some resources -- so the caller reports it rather than quietly swapping
-    the file.
+    What IS lost is whatever lives only in the config splits: native libraries
+    and some resources. The caller reports it rather than quietly swapping the
+    file.
     """
     try:
         with zipfile.ZipFile(path) as z:
@@ -255,9 +238,8 @@ def fetch(package: str, dest_dir: Path, on_progress=None) -> Result:
             return Result(package, "failed", tried=tried,
                           error=f"{source.name}: download failed ({type(exc).__name__}: {exc})")
 
-        # An App Bundle is a normal answer from this endpoint, not a failure --
-        # it is simply how the app is published. Unwrap it before verifying, and
-        # tell the caller, because the config splits do not survive.
+        # An App Bundle is a normal answer from this endpoint, not a failure.
+        # Unwrap it before verifying, and tell the caller: the splits are lost.
         note = None
         try:
             with zipfile.ZipFile(dest) as z:

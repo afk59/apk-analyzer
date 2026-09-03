@@ -1,18 +1,15 @@
-"""HTTP surface. M1: pickers, opening a result, listing what is on disk.
+"""HTTP surface: pickers, opening a result, listing what is on disk.
 
-Two endpoints here have consequences beyond returning JSON:
+Two endpoints have consequences beyond returning JSON:
 
     POST /api/pick   opens a NATIVE dialog and returns a real absolute path.
-                     A browser cannot produce one -- see docs/decisions/0001.
 
-    POST /api/open   asks the OS to open a file. GUARDED: the path must resolve
-                     to somewhere inside engine/result/. The window will open
-                     whatever it is handed, so the refusal has to live here, and
-                     the path must be RESOLVED before comparing -- a naive
-                     prefix test lets "result/../../../anything" through.
+    POST /api/open   asks the OS to open a file. GUARDED: the path must RESOLVE
+                     to somewhere inside engine/result/. A naive prefix test
+                     lets "result/../../../anything" through.
 
-Nothing in this module computes coverage, confidence or matching. That is the
-engine's job and duplicating it is how a report and the UI start disagreeing.
+Nothing here computes coverage, confidence or matching. That is the engine's
+job, and duplicating it is how a report and the UI start disagreeing.
 """
 
 import json
@@ -45,10 +42,9 @@ class OpenRequest(BaseModel):
 class RunRequest(BaseModel):
     input: str
     target: str = "hmos"
-    # Batch runs default to skipping files that already have a report: an
-    # interrupted 40-app run then costs only the file it was on, which is what
-    # made v1's per-process runner usable at all. A single file picked by hand
-    # is an explicit "analyse this now", so it is never skipped.
+    # Batch runs default to skipping files that already have a report, so an
+    # interrupted run costs only the file it was on. A single file picked by
+    # hand is an explicit "analyse this now", so it is never skipped.
     skip_existing: bool | None = None
 
 
@@ -74,16 +70,15 @@ def pick(req: PickRequest):
 
     info = {"path": str(path), "name": path.name}
     if req.kind == "folder":
-        # Say what is in there before anything is analysed. A folder with no
-        # supported files should be a message in the UI, not a silent no-op.
+        # A folder with no supported files should be a message, not a no-op.
         files = [p for p in sorted(path.glob("*"))
                  if p.suffix.lower() in config.SUPPORTED_INPUTS]
         bundles = [p for p in sorted(path.glob("*"))
                    if p.suffix.lower() in config.BUNDLE_INPUTS]
         info["file_count"] = len(files)
         info["files"] = [p.name for p in files]
-        # APKM/XAPK are ZIPs of split APKs with no dex of their own. The engine
-        # refuses them honestly; the UI should not pretend they were included.
+        # APKM/XAPK are ZIPs of split APKs with no dex of their own; the engine
+        # refuses them, and the UI should not pretend they were included.
         info["skipped_bundles"] = [p.name for p in bundles]
     return info
 
@@ -115,8 +110,7 @@ def _inputs_for(target_path: Path):
     """(files to analyse, human label). A folder expands; a file is itself."""
     if target_path.is_dir():
         # A directory of .exe/.dll is one logical application (exe_folder mode),
-        # not a batch of unrelated binaries -- that distinction is the engine's,
-        # and re-deciding it here would produce a different report than the CLI.
+        # not a batch of unrelated binaries. That distinction is the engine's.
         binaries = [p for p in sorted(target_path.glob("*"))
                     if p.suffix.lower() in (".exe", ".dll")]
         others = [p for p in sorted(target_path.glob("*"))
@@ -158,16 +152,15 @@ class DownloadRequest(BaseModel):
 def start_download(req: DownloadRequest):
     """Fetch one or more packages by name, then analyse them in the same run.
 
-    It is one run, not a download followed by a separate analysis, so the UI
-    shows a single progress stream and a failed download is isolated exactly
-    like a corrupt file -- see docs/decisions/0006.
+    One run, not a download followed by an analysis, so the UI shows a single
+    progress stream and a failed download is isolated like a corrupt file.
     """
     names = [p.strip() for p in req.packages.replace(",", "\n").splitlines()]
     names = [n for n in names if n]
     if not names:
         raise HTTPException(400, "Give at least one package name.")
     # A package name has no separators and no spaces. Rejecting them here keeps
-    # a path from ever reaching the downloader, which builds a filename from it.
+    # a path from reaching the downloader, which builds a filename from it.
     bad = [n for n in names if "/" in n or "\\" in n or " " in n]
     if bad:
         raise HTTPException(400, f"Not package names: {', '.join(bad[:3])}")
@@ -200,9 +193,8 @@ def cancel_run(run_id: int):
 def run_events(run_id: int, cursor: int = 0):
     """SSE. Forwards worker events verbatim, plus queue-level ones.
 
-    A keep-alive comment goes out whenever the wait lapses with nothing new: a
-    single file in this corpus can take 17 minutes, and a silent connection for
-    that long is one an intermediary is entitled to drop.
+    A keep-alive goes out whenever the wait lapses: a single file can take
+    minutes, and a silent connection that long is one an intermediary may drop.
     """
     if runner.get(run_id) is None:
         raise HTTPException(404, "No such run")
@@ -233,11 +225,9 @@ def run_events(run_id: int, cursor: int = 0):
 def results():
     """The library: runs newest first, each with its apps.
 
-    Served from the SQLite index. The index is only ever a copy of what is on
-    disk -- run manifests in engine/result/.runs plus the agent JSON beside each
-    report -- so /api/rescan can rebuild it from nothing (docs/decisions/0002).
-    It self-heals on an empty database, which is what happens on a first run and
-    after someone deletes the file.
+    Served from the SQLite index, which is only ever a copy of what is on disk,
+    so /api/rescan can rebuild it from nothing. It self-heals on an empty
+    database, which is what happens on a first run.
     """
     from app.store import index as store_index
     data = store_index.library()

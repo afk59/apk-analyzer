@@ -1,37 +1,25 @@
 """Which framework was this APK built with? Descriptive metadata only.
 
-Nothing here feeds mapping or matching. `analyze_apk` stores the result under
-result["framework"] and every consumer treats it as a label, exactly like
-package_name or version_name. No mapping file is read and none is written.
+Nothing here feeds mapping or matching. Every consumer treats the result as a
+label, like package_name or version_name. No mapping file is read or written.
 
-Isolation follows play_meta.py / ohpm_fetch.py: this module is imported by the
-engine but imports nothing from it, opens no socket, and never raises -- any
-failure degrades to {"framework": "Unknown", ...} so a malformed APK can never
-take down an analysis run.
+Isolation follows play_meta.py / ohpm_fetch.py: imported by the engine but
+imports nothing from it, opens no socket, and never raises -- any failure
+degrades to {"framework": "Unknown", ...}.
 
 WHY THE SIGNATURE TABLE IS ASSET-FIRST
---------------------------------------
-The obvious signatures are native libraries (libflutter.so, libreactnativejni.so)
-and that is what the published detectors key on. Measured against this project's
-43-app corpus, **27 of 43 APKs (63%) contain no lib/ directory at all** -- they
-are the base split of an App Bundle, and every .so lives in a sibling
-split_config.*.apk that is not part of the file being analysed. All ten Flutter
-apps in the corpus are in that group: not one carries libflutter.so.
+The obvious signatures are native libraries (libflutter.so,
+libreactnativejni.so), and that is what published detectors key on. But most
+APKs in a real corpus are the base split of an App Bundle, where every .so
+lives in a sibling split_config.*.apk that is not part of the file being
+analysed. So asset-path signatures are primary and .so names corroborate.
 
-So asset-path signatures are primary and .so names are corroboration. That
-inversion is the difference between detecting 34 of 43 apps and detecting 16.
-
-TWO FALSE POSITIVES THAT SHAPED THE MATCHING RULES
---------------------------------------------------
-* Substring matching is unsafe. Probing for "dcloud" flagged a Capacitor app as
-  uni-app because it shipped `assets/public/svg/logo-soundcloud.svg` -- "soun|dcloud".
-  Every signature here is matched anchored (exact name, path prefix, or basename),
-  never as a bare substring.
-* `res/xml/config.xml` is NOT Cordova evidence. Capacitor emits it too, and using
-  it alone misclassified com.secmenu.chineselearning, which has no cordova.js at
-  all. Cordova requires assets/www/cordova.js or cordova_plugins.js. For the same
-  reason `assets/www/` alone proves nothing -- the Flutter app com.tamjai.android
-  ships one.
+TWO MATCHING RULES, EACH FROM A FALSE POSITIVE
+* Anchored matching only, never a bare substring. Probing for "dcloud" flagged
+  a Capacitor app as uni-app because of "soun|dcloud" in an asset filename.
+* `res/xml/config.xml` is NOT Cordova evidence -- Capacitor emits it too.
+  Cordova requires assets/www/cordova.js or cordova_plugins.js, and
+  `assets/www/` alone proves nothing either.
 """
 
 import re
@@ -119,8 +107,7 @@ _SIGS = [
 ]
 
 # Primary-framework tie-break when scores are equal. A container/shell framework
-# outranks the UI toolkit it hosts, and Expo is never primary -- it is a React
-# Native distribution, so an Expo app is a React Native app.
+# outranks the UI toolkit it hosts, and Expo is never primary.
 _PRIORITY = [
     "uni-app/DCloud", "mPaaS (Alipay)", "APICloud", "Flutter", "React Native",
     "Unity", "Unreal Engine", "Xamarin/MAUI", "NativeScript", "Weex",
@@ -129,17 +116,15 @@ _PRIORITY = [
 
 # ---------------------------------------------------------------- packers
 # A DEX packer encrypts the real classes and unpacks them at runtime. Under one,
-# "no cross-platform signature was found" says nothing at all -- the classes that
-# would carry the signature were never in the file we read.
+# "no cross-platform signature was found" says nothing: the classes that would
+# carry the signature were never in the file we read.
 #
-# Detected from the archive and, when the caller supplies it, from the namespace
-# list the engine already built. Both are needed: com.wlb.android shows a packer
-# in the ZIP (libDexHelper.so, assets/bangcle_*) while mo.gov.safp.portal shows
-# one only in the DEX (com.antsafe.sec.wrapper).
+# Detected from the archive AND, when the caller supplies it, from the namespace
+# list. Both are needed: some apps show a packer only in the ZIP, others only in
+# the DEX.
 #
 # libmpaas*.so is deliberately NOT here. It is the mPaaS *framework* signature;
-# listing it as a packer would report "packer: mPaaS", which is simply untrue.
-# Both mPaaS apps in the corpus are still caught, by the markers above.
+# listing it as a packer would report "packer: mPaaS", which is untrue.
 _PACKER_ZIP = [
     ("360 Jiagu",  "re",     r"^assets/libjiagu[^/]*\.so$"),
     ("360 Jiagu",  "re",     r"^lib/[^/]+/libjiagu[^/]*\.so$"),
@@ -158,9 +143,8 @@ _PACKER_NS = [
     ("Qihoo",        "com.qihoo.util"),
     ("Tencent Legu", "com.tencent.StubShell"),
 ]
-# A marker alone is not enough. com.ctm carries com.bangcle.andJni.JniLib* and
-# still exposes 19,156 namespaces -- that is a JNI helper, not an encrypted DEX.
-# Packing is only concluded when the visible DEX is also effectively empty.
+# A marker alone is not enough -- a JNI helper is not an encrypted DEX. Packing
+# is only concluded when the visible DEX is also effectively empty.
 _PACKED_NS_LIMIT = 500
 
 _HERMES_MAGIC = bytes.fromhex("c61fbc03c103191f")
@@ -202,9 +186,8 @@ def _read(z, name, limit=None):
 def _react_native_engine(z, names, lib_bases):
     """Hermes vs JSC, decided by the bundle's own magic number.
 
-    The bundle is authoritative: hk.ust.student ships BOTH libhermes.so and
-    libjscinstance.so, so a library-presence test cannot separate them, while the
-    bundle header settles it in 12 bytes.
+    The bundle is authoritative: an app can ship BOTH libhermes.so and
+    libjscinstance.so, so a library-presence test cannot separate them.
     """
     detail, engine = {}, "N/A"
     if "assets/index.android.bundle" in names:
@@ -212,9 +195,8 @@ def _react_native_engine(z, names, lib_bases):
         if head[:8] == _HERMES_MAGIC:
             engine = "Hermes"
             if len(head) >= 12:
-                # Reported as the raw bytecode version. It is NOT mapped to a
-                # React Native release: that table is not derivable from the file
-                # and guessing it would be inventing a version.
+                # Reported as the raw bytecode version, NOT mapped to a React
+                # Native release: that table is not derivable from the file.
                 detail["hermes_bytecode_version"] = int.from_bytes(head[8:12], "little")
         elif head:
             engine = "JSC"
@@ -257,9 +239,8 @@ def _capacitor_detail(z, names):
 def _uniapp_detail(z, names):
     """The __UNI__ id and the project version, from the app's own manifest.
 
-    Deliberately NOT reported as `version`: this is the *app* version compiled by
-    uni-app, not the uni-app framework version, and conflating them would be a
-    lie in a field named "version".
+    Deliberately NOT reported as `version`: this is the *app* version compiled
+    by uni-app, not the uni-app framework version.
     """
     rx = re.compile(r"^assets/apps/(__UNI__[A-Za-z0-9]+)/www/manifest\.json$")
     for n in names:
@@ -280,9 +261,8 @@ def _uniapp_detail(z, names):
 def _flutter_version(z, names, lib_bases):
     """Engine commit hash out of libflutter.so, when the .so is in this APK.
 
-    Not derivable otherwise: NOTICES.Z holds only licence text (checked -- no
-    engine hash, no version), and no other flutter_assets member carries one. In
-    a base-split APK there is no libflutter.so, so this is honestly N/A.
+    Not derivable otherwise: NOTICES.Z holds only licence text. In a base-split
+    APK there is no libflutter.so, so this is honestly N/A.
     """
     path = lib_bases.get("libflutter.so")
     if not path:
@@ -332,25 +312,25 @@ def _find_packer(names, lib_bases, namespaces):
         return None, False
     # Without a namespace list there is no way to tell an encrypted DEX from a
     # packer's helper library, so the marker is reported but packing is not
-    # asserted. Claiming it on a marker alone is what the com.ctm case rules out.
+    # asserted.
     packed = namespaces is not None and len(namespaces) < _PACKED_NS_LIMIT
     return marker, packed
 
 
 def detect_framework(apk_path: str, names=None, package_name=None,
                      namespaces=None) -> dict:
-    """Identify the build framework. Never raises; returns _UNKNOWN on any failure.
+    """Identify the build framework. Never raises; returns _UNKNOWN on failure.
 
-    `names` lets a caller that already listed the archive hand the list over; the
-    zip is still opened here because engine/version extraction has to read a few
-    small members (12 bytes of the RN bundle, cordova.js, a manifest).
+    `names` lets a caller that already listed the archive hand the list over;
+    the zip is still opened here because engine/version extraction reads a few
+    small members.
 
-    `package_name` is optional and used only to tell an app's OWN framework from
-    one bundled inside a third-party SDK -- see _EMBEDDED_NOTE.
+    `package_name` is optional and used only to tell an app's OWN framework
+    from one bundled inside a third-party SDK -- see _EMBEDDED_NOTE.
 
     `namespaces` is the engine's detected_namespaces keys, when the caller has
-    them. Data flows one way -- this module still imports nothing from the engine
-    -- and it buys the packed-DEX test, which cannot be done from the ZIP alone.
+    them. Data flows one way, and it buys the packed-DEX test, which cannot be
+    done from the ZIP alone.
     """
     try:
         return _detect(apk_path, names, package_name, namespaces)
@@ -358,12 +338,11 @@ def detect_framework(apk_path: str, names=None, package_name=None,
         return dict(_UNKNOWN)
 
 
-# A Capacitor/Cordova config declares the appId of whatever shipped it. When that
-# id is not the APK's own package, the web runtime belongs to an embedded SDK, not
-# to the app: com.fairwood.app is a React Native app whose capacitor.config.json
-# reads "com.aigens.sdk" (an ordering SDK). Scoring alone called it Capacitor,
-# because the SDK contributes three signature files against React Native's one
-# bundle. The id comparison is evidence, not a guess, so it decides.
+# A Capacitor/Cordova config declares the appId of whatever shipped it. When
+# that id is not the APK's own package, the web runtime belongs to an embedded
+# SDK, not to the app -- scoring alone gets this wrong, because an SDK can
+# contribute more signature files than the app's own framework. The id
+# comparison is evidence, not a guess, so it decides.
 _EMBEDDED_NOTE = "config appId %r is not the app package -- embedded SDK, not the app's own framework"
 
 
@@ -373,11 +352,9 @@ def _detect(apk_path, names, package_name=None, namespaces=None):
             names = z.namelist()
         name_set = set(names)
 
-        # An APKM/XAPK renamed to .apk is a ZIP OF APKs, not an APK. It gets past
-        # the extension check, androguard then finds no manifest and no dex, and
-        # the scoring below sees no signature at all -- which would be reported as
-        # "Native (Java/Kotlin)", an assertion drawn from an empty file. Same
-        # test apk_engine._warn_if_split_bundle uses.
+        # An APKM/XAPK renamed to .apk is a ZIP OF APKs. It gets past the
+        # extension check, androguard finds no manifest and no dex, and the
+        # scoring below would report "Native (Java/Kotlin)" from an empty file.
         if "classes.dex" not in name_set and "AndroidManifest.xml" not in name_set:
             inner = sorted(n for n in names if n.lower().endswith(".apk"))
             if inner:
@@ -408,10 +385,8 @@ def _detect(apk_path, names, package_name=None, namespaces=None):
         strong = {fw: s for fw, s in scores.items() if s >= 2}
         if not strong:
             # "Native" here is an inference from absence, and under a packed DEX
-            # the absence is an artefact of the packer, not a property of the app.
-            # Two corpus apps (com.huayuan.namkwong 33 namespaces / 360 Jiagu,
-            # hk.gov.ogcio.iamsmart 52 / SecNeo) would otherwise be asserted
-            # Native on no evidence whatsoever.
+            # the absence is an artefact of the packer, not a property of the
+            # app.
             if packed:
                 return {**_UNKNOWN, "framework": "Unknown", "confidence": "none",
                         "detail": {"packer": packer,
@@ -469,9 +444,8 @@ def _detect(apk_path, names, package_name=None, namespaces=None):
 
         def conf(fw):
             c = "high" if strong[fw] >= 3 else "medium"
-            # A real signature file still proves the framework is linked in, but
-            # with the DEX encrypted nothing corroborates it, so it stops being a
-            # high-confidence claim.
+            # A signature file still proves the framework is linked in, but with
+            # the DEX encrypted nothing corroborates it.
             if packed and c == "high":
                 return "medium"
             return c

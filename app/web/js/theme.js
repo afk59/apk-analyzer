@@ -1,16 +1,12 @@
 /* Theme: system / light / dark.
 
-   tokens.css already defines all three states -- light on bare :root, dark
-   under both `prefers-color-scheme` and `[data-theme="dark"]`. All this does is
-   let the user override the system, and remember the choice.
-
-   THREE states, not two. "System" has to stay reachable: dropping it would mean
-   an app that ignores the OS setting forever after one stray click, and the
-   stamped attribute is exactly what stops prefers-color-scheme applying.
+   tokens.css defines all three states; this only lets the user override the
+   system and remembers the choice. THREE states, not two: "system" has to stay
+   reachable, and the stamped attribute is what stops prefers-color-scheme
+   applying.
 
    Loaded FIRST in index.html and applied synchronously, so the attribute is on
-   <html> before the stylesheet paints. Doing it after would show one frame of
-   the wrong theme on every start. */
+   <html> before the stylesheet paints. */
 
 const THEME_KEY = 'ma.theme';
 const THEMES = ['system', 'light', 'dark'];

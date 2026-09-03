@@ -1,8 +1,5 @@
-"""Paths and constants. The single place that knows the layout on disk.
-
-Everything is derived from the repo root so a moved or shared checkout still
-resolves, and so `app` never assumes a working directory -- run.bat, `python -m
-app` from a shell, and a spawned worker all start somewhere different.
+"""Paths and constants. Everything is derived from the repo root, so a moved
+or shared checkout still resolves and nothing assumes a working directory.
 """
 
 import os
@@ -13,13 +10,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def _env_dir(name: str, default: Path) -> Path:
-    """Let a caller redirect where DATA is written, never where code lives.
+    """Redirect where DATA is written, never where code lives.
 
-    The test suite points these at a temp directory so it can exercise the real
-    modules without writing into engine/result/ or over the real analyzer.db.
-    ENGINE_DIR, WEB_DIR and DOCS_REF_DIR are deliberately NOT overridable: they
-    locate code and reference material, and a test that redirected them would
-    be testing something other than this application.
+    ENGINE_DIR, WEB_DIR and DOCS_REF_DIR are deliberately NOT overridable.
     """
     raw = os.environ.get(name)
     return Path(raw).expanduser().resolve() if raw else default
@@ -36,14 +29,11 @@ DB_PATH  = _env_dir("MA_DB_PATH", ROOT / "app" / "store" / "analyzer.db")
 WEB_DIR  = ROOT / "app" / "web"
 
 # Loopback only, and a free port picked at startup. Never bind 0.0.0.0: this
-# server can open local files and pick paths through native dialogs, so it must
-# not be reachable from the network.
+# server opens local files and drives native dialogs.
 HOST = "127.0.0.1"
 
 SUPPORTED_INPUTS = (".apk", ".exe", ".dll", ".ipa")
 # Recognised but never analysed -- ZIPs of split APKs with no dex of their own.
-# The engine reports these honestly; the UI should say so too rather than
-# silently ignoring a file the user put in the folder.
 BUNDLE_INPUTS = (".apkm", ".xapk")
 
 
@@ -53,12 +43,7 @@ def ensure_dirs() -> None:
 
 
 def rel_to_root(path) -> str:
-    """A repo-root-relative, forward-slashed path.
-
-    Everything the UI and the index store is written this way, so a moved or
-    shared checkout still resolves. Falls back to the absolute path when the
-    target genuinely lives outside the repo.
-    """
+    """A repo-root-relative, forward-slashed path; absolute when outside the repo."""
     try:
         return str(Path(path).resolve().relative_to(ROOT)).replace("\\", "/")
     except ValueError:
@@ -66,11 +51,9 @@ def rel_to_root(path) -> str:
 
 
 def is_inside_result(path: Path) -> bool:
-    """Guard for POST /api/open.
+    """Guard for POST /api/open: refuse anything outside the result tree.
 
-    The window can ask the OS to open any path it is handed, so the server must
-    refuse anything outside the result tree. Resolve first -- otherwise
-    `result/../../../etc/passwd` passes a naive prefix check.
+    Resolve first -- `result/../../../etc/passwd` passes a naive prefix check.
     """
     try:
         return RESULT_DIR.resolve() in path.resolve().parents

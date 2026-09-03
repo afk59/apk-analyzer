@@ -60,16 +60,15 @@ def tui_select(prompt: str, options: list) -> int:
         HAS_MSVCRT = False
 
     # Scrolling viewport: drawing more lines than the terminal has rows makes it
-    # scroll, which invalidates the cursor-up count and smears the menu. Fixed
-    # once up front -- a per-render value would desync from the lines already
-    # drawn. -4 leaves room for the prompt and the surrounding blank lines.
+    # scroll, which invalidates the cursor-up count. Fixed once up front -- a
+    # per-render value would desync from the lines already drawn.
     try:
         _rows = shutil.get_terminal_size().lines
     except Exception:
         _rows = 24
-    # Order matters: floor the *terminal height* at 3 for tiny windows, THEN cap
-    # by the option count. Flooring last (max(3, min(len, rows-4))) yields view=3
-    # for a 2-option menu and _render walks off the end of `options`.
+    # Order matters: floor the *terminal height* at 3, THEN cap by the option
+    # count. Flooring last yields view=3 for a 2-option menu and _render walks
+    # off the end of `options`.
     view = min(len(options), max(3, _rows - 4))
 
     def _clamp():
@@ -83,8 +82,8 @@ def tui_select(prompt: str, options: list) -> int:
     def _render():
         _clamp()
         counter = f"   [{selected + 1}/{len(options)}]" if len(options) > view else ""
-        # \033[K clears to end of line: without it a short option leaves the tail
-        # of the longer one that was previously drawn on that row.
+        # \033[K clears to end of line: without it a short option leaves the
+        # tail of the longer one previously drawn on that row.
         sys.stdout.write(f"  {_c(prompt, C.BOLD, C.WHITE)}{_c(counter, C.GRAY)}\033[K\n")
         for i in range(top, top + view):
             opt = options[i]
