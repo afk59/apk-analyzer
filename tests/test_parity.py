@@ -16,6 +16,7 @@ anything it would overwrite and restores it afterwards, including on failure.
 Slow: it analyses a real APK several times. Set MA_SKIP_SLOW=1 to skip.
 """
 
+import base64
 import hashlib
 import os
 import re
@@ -25,6 +26,8 @@ import sys
 import unittest
 import zipfile
 from pathlib import Path
+
+from openpyxl import load_workbook
 
 from tests.support import IsolatedTest, ROOT, SAMPLE_APK, requires_apk
 
@@ -38,7 +41,14 @@ _VOLATILE = re.compile(
     r'\d+\.\d+s'
     r'|"generated_at":\s*"[^"]*"'
     r'|"analysis_time_sec":\s*[0-9.]+'
-    r'|\d{4}-\d\d-\d\d[ T][\d:]+')
+    r'|\d{4}-\d\d-\d\d[ T][\d:]+'
+    # The report carries the workbook the tool wrote, base64. It cannot be
+    # byte-stable across runs -- the workbook holds the analysis date in a cell
+    # and the zip stamps an mtime on every member -- so it is scrubbed here for
+    # the same reason the dates above are. What it actually CONTAINS is checked
+    # against the written workbook by test_the_report_carries_the_same_workbook,
+    # which is a stronger guarantee than this hash could give.
+    r'|const WORKBOOK_B64 = "[A-Za-z0-9+/=]*";')
 
 
 def digest(path: Path) -> str:
@@ -150,6 +160,54 @@ class TestWorkerMatchesCli(ParityTest):
 
 @requires_apk
 @skip_slow
+class TestEmbeddedWorkbook(ParityTest):
+    """The report's Export to Excel button hands over the tool's own workbook.
+
+    It used to rebuild the sheets in the browser with SheetJS, which cannot
+    write cell styles and needs a CDN. The two exports drifted apart, which is
+    the whole reason for embedding the real one.
+    """
+
+    @skip_slow
+    @requires_apk
+    def test_the_report_carries_the_same_workbook(self):
+        self.run_worker()
+        blob = self._embedded_b64()
+        self.assertTrue(blob, "the report carries no workbook")
+
+        embedded = self.tmp / "embedded.xlsx"
+        embedded.write_bytes(base64.b64decode(blob))
+        written = load_workbook(self.xlsx)
+        carried = load_workbook(embedded)
+
+        self.assertEqual(written.sheetnames, carried.sheetnames)
+        styled = 0
+        for name in written.sheetnames:
+            wa, wb = written[name], carried[name]
+            self.assertEqual((wa.max_row, wa.max_column),
+                             (wb.max_row, wb.max_column), f"{name} differs in size")
+            for row_a, row_b in zip(wa.iter_rows(), wb.iter_rows()):
+                # The Overview sheet carries the analysis date and duration, and
+                # those are the two cells that legitimately differ.
+                label = str(row_a[0].value or "").strip().lower()
+                for ca, cb in zip(row_a, row_b):
+                    if ca.fill.fill_type == "solid":
+                        styled += 1
+                    self.assertEqual(ca.font.bold, cb.font.bold,
+                                     f"{name}!{ca.coordinate} lost its font")
+                    self.assertEqual(ca.fill.fill_type, cb.fill.fill_type,
+                                     f"{name}!{ca.coordinate} lost its fill")
+                    if label not in ("date", "time (s)"):
+                        self.assertEqual(ca.value, cb.value,
+                                         f"{name}!{ca.coordinate} differs")
+        self.assertGreater(styled, 0, "the workbook came through with no styling")
+
+    def _embedded_b64(self) -> str:
+        text = self.html.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r'const WORKBOOK_B64 = "([A-Za-z0-9+/=]*)";', text)
+        return m.group(1) if m else ""
+
+
 class TestEngineIsDeterministic(ParityTest):
     """v1 spent two commits making reports reproducible. This keeps them so."""
 
