@@ -54,7 +54,12 @@ nav.side .navnote {
 }
 
 main { padding: var(--space-5); overflow: auto; }
-.panel[hidden] { display: none; }
+/* [hidden] is a UA-stylesheet rule, so ANY author rule setting `display` on the
+   element beats it. `nav.side button` sets `display: flex`, which left the
+   Progress tab on screen and clickable before a run existed. One global guard
+   rather than a rule per component, because the next `display` will do the
+   same thing. */
+[hidden] { display: none !important; }
 h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 .lede { color: var(--text2); margin: 0 0 var(--space-5); max-width: 60ch; line-height: 1.6; }
 

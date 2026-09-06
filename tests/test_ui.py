@@ -105,6 +105,10 @@ LOAD_PROBE = r"""
                         .filter(function (p) { return !p.hidden; }).length,
     startDisabled: document.getElementById('start').disabled,
     progressHidden: document.getElementById('nav-run').hidden,
+    // The PROPERTY being true is not the same as the button being gone:
+    // [hidden] is a UA-stylesheet rule and any author `display` beats it.
+    progressRendered: getComputedStyle(
+        document.getElementById('nav-run')).display !== 'none',
     status: document.getElementById('status').textContent,
     accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
   });
@@ -234,6 +238,19 @@ class TestFrontend(IsolatedTest):
     def test_progress_is_hidden_before_the_first_run(self):
         p = self._run_probe()["load"]
         self.assertTrue(p["progressHidden"])
+
+    def test_the_progress_tab_is_not_drawn_before_the_first_run(self):
+        """The attribute being set is not enough, and asserting it was the gap.
+
+        [hidden] lives in the UA stylesheet, so any author rule that sets
+        `display` on the element wins over it. `nav.side button` sets
+        `display: flex`, which left the tab on screen and clickable with no run
+        behind it -- the panel then showed its static markup: an empty box
+        headed "Running" with a Cancel button.
+        """
+        p = self._run_probe()["load"]
+        self.assertFalse(p["progressRendered"],
+                         "the Progress tab is still rendered before any run")
 
     def test_the_backend_reports_a_ready_engine(self):
         p = self._run_probe()["load"]
