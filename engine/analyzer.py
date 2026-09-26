@@ -217,6 +217,7 @@ def run_batch(input_dir: Path, result_dir: Path, script_dir: Path, target: str =
                     # the HTML stat card uses.
                     "total_detected_ns": result.get("total_detected_ns", 0),
                     "total_3p_ns":       result.get("total_3p_ns", 0),
+                    "total_ohpm_ns":     result.get("total_ohpm_ns", 0),
                     "kit_count":        len(result["kit_matches"]),
                     "unmapped_count":   len(result.get("unmapped_namespaces", [])),
                     "permission_count": len(result.get("permissions", [])),

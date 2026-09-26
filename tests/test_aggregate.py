@@ -68,6 +68,29 @@ class TestAggregation(IsolatedTest):
         self.assertTrue((self.config.RESULT_DIR / "batch_summary.xlsx").exists())
         self.assertTrue((self.config.RESULT_DIR / "batch_unmapped.xlsx").exists())
 
+    def test_summary_coverage_counts_ohpm_matches(self):
+        """The workbook's Coverage column goes through the same coverage_status()
+        as the stat card, so it must see total_ohpm_ns from the side-car."""
+        import openpyxl
+        for name, ohpm in (("a.apk", 10), ("b.apk", 0)):
+            stem = Path(name).stem
+            self.make_report(stem)
+            self.make_sidecar(stem, package=f"com.{stem}", detected=80, total=100,
+                              ohpm_ns=ohpm)
+        entries = [{"row": self._row(n),
+                    "sidecar": str(self.config.RESULT_DIR / ".sidecars" / f"{Path(n).stem}_hmos.json")}
+                   for n in ("a.apk", "b.apk")]
+        proc, _ = self.run_aggregate(entries)
+        self.assertEqual(proc.returncode, 0, proc.stderr[-800:])
+        ws = openpyxl.load_workbook(self.config.RESULT_DIR / "batch_summary.xlsx")["Batch Summary"]
+        rows = list(ws.iter_rows(values_only=True))
+        hdr_i = next(i for i, r in enumerate(rows) if r and "Coverage %" in r)
+        col = rows[hdr_i].index("Coverage %")
+        by_app = {r[rows[hdr_i].index("File")]: r[col]
+                  for r in rows[hdr_i + 1:] if r and r[col] is not None}
+        self.assertEqual(by_app.get("a.apk"), 90.0)
+        self.assertEqual(by_app.get("b.apk"), 80.0)
+
     def test_error_rows_are_included_but_contribute_nothing(self):
         for name in ("a.apk", "b.apk"):
             stem = Path(name).stem

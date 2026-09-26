@@ -118,12 +118,14 @@ class IsolatedTest(unittest.TestCase):
         return self.make_zip(path, members)
 
     def make_report(self, stem: str, mode="apk", target="hmos",
-                    detected=90, total=100, framework=None) -> Path:
-        """A report carrying the embedded report_data the index reads back."""
-        payload = {
-            "mode": mode, "total_detected_ns": detected, "total_3p_ns": total,
-            "framework": framework or {},
-        }
+                    detected=90, total=100, framework=None, ohpm=None) -> Path:
+        """A report carrying the embedded report_data the index reads back.
+
+        ohpm=None writes an older report, which has no total_ohpm_ns."""
+        payload = {"mode": mode, "total_detected_ns": detected, "total_3p_ns": total}
+        if ohpm is not None:
+            payload["total_ohpm_ns"] = ohpm
+        payload["framework"] = framework or {}
         path = self.config.RESULT_DIR / f"{stem}_{mode}_{target}_report.html"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -157,6 +159,7 @@ class IsolatedTest(unittest.TestCase):
             "permissions": kw.get("permissions", 5),
             "total_detected_ns": kw.get("detected", 90),
             "total_3p_ns": kw.get("total", 100),
+            "total_ohpm_ns": kw.get("ohpm_ns", 0),
             "mapped": kw.get("mapped", [{"namespace": "okhttp3", "kit": "@kit.NetworkKit"}]),
             "unmapped": kw.get("unmapped", [{
                 "namespace": "com.example.unknown", "class_count": 2,

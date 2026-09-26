@@ -571,12 +571,12 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
 
     result["kit_matches"] = sorted(matched_kits.values(), key=lambda x: x["kit_name"])
     result["total_detected_ns"] = len(matched_ns)
-    # OHPM matches are counted here even though they are not native matches.
-    # Before the second tier existed they sat in unmapped_namespaces, so leaving
-    # them out would SHRINK this denominator and inflate native coverage.
+    # OHPM matches count in the denominator and, via total_ohpm_ns, in the
+    # numerator: a namespace with an OHPM port has a migration path.
+    result["total_ohpm_ns"] = len(result["ohpm_matches"])
     result["total_3p_ns"] = (len(matched_ns)
                              + len(result["unmapped_namespaces"])
-                             + len(result["ohpm_matches"]))
+                             + result["total_ohpm_ns"])
 
     for perm in result["permissions"]:
         if perm in perm_lookup:

@@ -110,6 +110,7 @@ def _sidecar(result: dict, framework: dict) -> dict:
         "permissions":   len(result.get("permissions") or []),
         "total_detected_ns": result.get("total_detected_ns", 0),
         "total_3p_ns":       result.get("total_3p_ns", 0),
+        "total_ohpm_ns":     result.get("total_ohpm_ns", 0),
         "mapped": [
             {"namespace": src["android_namespace"], "kit": km["kit_name"]}
             for km in result.get("kit_matches", [])

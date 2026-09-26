@@ -6,6 +6,7 @@ the library exactly. That is the property most of this file exercises.
 
 import json
 import sqlite3
+import sys
 import unittest
 
 from tests.support import IsolatedTest
@@ -162,6 +163,27 @@ class TestRescan(IsolatedTest):
         app = index.library()["runs"][0]["apps"][0]
         self.assertEqual(app["coverage_status"], "ok")
         self.assertAlmostEqual(app["coverage_pct"], 87.3, places=1)
+
+    def test_coverage_counts_ohpm_matches_as_covered(self):
+        """A namespace with an OHPM port has a migration path. 800 kit + 73 OHPM
+        of 1000 is 87.3%, not the kit-only 80.0%."""
+        from app.store import index
+        self.make_report("ohpm", detected=800, total=1000, ohpm=73)
+        self.make_agent_json("ohpm")
+        index.rescan()
+        app = index.library()["runs"][0]["apps"][0]
+        self.assertEqual(app["coverage_status"], "ok")
+        self.assertAlmostEqual(app["coverage_pct"], 87.3, places=1)
+
+    def test_a_report_without_the_ohpm_count_keeps_its_published_figure(self):
+        """Reports written before total_ohpm_ns existed are not re-rated."""
+        if str(self.config.ENGINE_DIR) not in sys.path:
+            sys.path.insert(0, str(self.config.ENGINE_DIR))
+        from core.renderer import coverage_status
+        self.assertEqual(coverage_status({"total_detected_ns": 800, "total_3p_ns": 1000}),
+                         (80.0, "ok"))
+        self.assertEqual(coverage_status({"total_detected_ns": 800, "total_3p_ns": 1000,
+                                          "total_ohpm_ns": 73}), (87.3, "ok"))
 
     def test_a_packed_app_gets_no_percentage(self):
         from app.store import index
