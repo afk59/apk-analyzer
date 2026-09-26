@@ -166,7 +166,7 @@ class IsolatedTest(unittest.TestCase):
             "total_detected_ns": kw.get("detected", 90),
             "total_3p_ns": kw.get("total", 100),
             "total_ohpm_ns": kw.get("ohpm_ns", 0),
-            "mapped":kw.get("mapped", [{"namespace": "okhttp3", "kit": "@kit.NetworkKit"}]),
+            "mapped": kw.get("mapped", [{"namespace": "okhttp3", "kit": "@kit.NetworkKit"}]),
             "unmapped": kw.get("unmapped", [{
                 "namespace": "com.example.unknown", "class_count": 2,
                 "method_count": 7, "sample_methods": ["a", "b"]}]),

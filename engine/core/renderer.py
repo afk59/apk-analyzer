@@ -1572,7 +1572,7 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "total_detected_ns":       result.get("total_detected_ns", 0),
         "total_3p_ns":             result.get("total_3p_ns", 0),
         "total_ohpm_ns":           result.get("total_ohpm_ns", 0),
-        "ohpm_matches":           result.get("ohpm_matches", []),
+        "ohpm_matches":            result.get("ohpm_matches", []),
         "framework":               result.get("framework") or {},
     }
 
