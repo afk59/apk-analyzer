@@ -498,3 +498,22 @@ Boş venv'de doğrulandı: androguard bu sefer 4.1.4 değil **4.1.3** geldi.
 Düzeltmeden önce ölçüldü: hasar yok — blob ile çalışma ağacı bayt bayt aynı (ikisinde
 de 80.837 CR), yani dönüşüm zaten olmuyordu. Düzeltmeden sonra `git check-attr` kuralı
 görüyor ve hiçbir dosya "değişmiş" görünmüyor. **Düzeltildi.**
+
+## 2026-09-24 — coverage artık OHPM eşleşmelerini de sayıyor
+
+İki uygulama (botim `im.thebot.messenger` 4.17.0, SHEIN `com.zzkko` 15.4.2)
+indirilip batch olarak koşuldu; çıktı `24-9/` altında (git'e eklenmedi). İkisi de
+APKPure'dan App Bundle olarak geldi, `base.apk` analiz edildi.
+
+**Bakımcı kararı — çıktıyı değiştiren değişiklik.** Coverage eskiden
+`kit'e eşlenen / (kit + eşlenmeyen + OHPM)` idi: OHPM paydadaydı ama payda değildi,
+yani HarmonyOS portu olan bir kütüphane "karşılığı yok" ile aynı sayılıyordu.
+Yeni formül `(kit + OHPM) / (kit + eşlenmeyen + OHPM)`. Payda değişmedi.
+
+- Motor `total_ohpm_ns` alanını yazıyor (`apk_engine.py`); `coverage_status()` payına
+  ekliyor. Alan beş besleme noktasına taşındı: `report_data`, `run_batch` satırı,
+  worker side-car'ı, `aggregate.py`, index'in rapordan okuyan regex'i.
+- Alanı taşımayan eski raporlar 0 kabul ediliyor → yayımlandıkları oran korunuyor,
+  rescan onları sessizce yeniden puanlamıyor.
+- Etki bu iki uygulamada küçük: botim %84,1 → %84,4, SHEIN %64,2 → %65,6.
+- +3 test (store ×2, aggregate ×1): 207 → 210.

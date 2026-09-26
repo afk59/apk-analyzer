@@ -608,13 +608,14 @@ def analyze_apk(apk_path: str, mapping: dict, target: str,
 
     result["kit_matches"] = sorted(matched_kits.values(), key=lambda x: x["kit_name"])
     result["total_detected_ns"] = len(matched_ns)
-    # OHPM matches are counted here even though they are not native matches.
-    # Before the second tier existed they sat in unmapped_namespaces, so leaving
-    # them out would SHRINK this denominator and silently inflate the native
-    # coverage percentage. total_3p_ns must stay exactly what it was.
+    # OHPM matches are part of the denominator AND, via total_ohpm_ns, of the
+    # numerator: a namespace with a HarmonyOS port on OHPM has a migration path,
+    # and counting it as uncovered understated every app that uses one.
+    # Maintainer decision 2026-09-24. total_3p_ns itself is unchanged.
+    result["total_ohpm_ns"] = len(result["ohpm_matches"])
     result["total_3p_ns"] = (len(matched_ns)
                              + len(result["unmapped_namespaces"])
-                             + len(result["ohpm_matches"]))
+                             + result["total_ohpm_ns"])
 
     for perm in result["permissions"]:
         if perm in perm_lookup:

@@ -71,6 +71,7 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
             "framework":         side.get("framework") or {},
             "total_detected_ns": side.get("total_detected_ns", 0),
             "total_3p_ns":       side.get("total_3p_ns", 0),
+            "total_ohpm_ns":     side.get("total_ohpm_ns", 0),
             "kit_count":         row.get("kit_count", 0),
             "unmapped_count":    row.get("unmapped_count", 0),
             "permission_count":  row.get("permission_count", 0),

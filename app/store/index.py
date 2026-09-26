@@ -84,7 +84,9 @@ def _from_agent(report: Path) -> dict:
     return out
 
 
-_NS_RE = re.compile(rb'"total_detected_ns":\s*(\d+).{0,40}?"total_3p_ns":\s*(\d+)', re.S)
+# total_ohpm_ns is optional: reports written before 2026-09-24 lack it.
+_NS_RE = re.compile(rb'"total_detected_ns":\s*(\d+).{0,40}?"total_3p_ns":\s*(\d+)'
+                    rb'(?:,\s*"total_ohpm_ns":\s*(\d+))?', re.S)
 
 
 def _coverage_from_report(report: Path, framework):
@@ -111,6 +113,7 @@ def _coverage_from_report(report: Path, framework):
     payload = {
         "total_detected_ns": int(m.group(1)),
         "total_3p_ns": int(m.group(2)),
+        "total_ohpm_ns": int(m.group(3) or 0),
         "framework": framework or {},
     }
     try:

@@ -92,7 +92,7 @@ _LOW_SAMPLE_NS = 50
 
 
 def coverage_status(result: dict) -> tuple:
-    """(percent, status) for native namespace coverage.
+    """(percent, status) for namespace coverage: kit OR OHPM over all third-party.
 
     ONE source of truth, deliberately: the HTML stat card and the batch sheet's
     Coverage column both call this, so a report and the workbook can never
@@ -105,9 +105,12 @@ def coverage_status(result: dict) -> tuple:
     the packed app read BETTER than the real one.
 
     Accepts anything carrying total_detected_ns / total_3p_ns / framework, which
-    is true of both a result dict and a batch row.
+    is true of both a result dict and a batch row. total_ohpm_ns is optional:
+    a report written before 2026-09-24 lacks it and keeps the kit-only figure
+    it was published with, rather than being silently re-rated.
     """
-    matched = result.get("total_detected_ns", 0) or 0
+    matched = ((result.get("total_detected_ns", 0) or 0)
+               + (result.get("total_ohpm_ns", 0) or 0))
     total   = result.get("total_3p_ns", 0) or 0
     detail  = (result.get("framework") or {}).get("detail") or {}
     if "packed" in (detail.get("note") or "").lower():
@@ -1568,7 +1571,8 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "obfuscated_count":        result.get("obfuscated_count", 0),
         "total_detected_ns":       result.get("total_detected_ns", 0),
         "total_3p_ns":             result.get("total_3p_ns", 0),
-        "ohpm_matches":            result.get("ohpm_matches", []),
+        "total_ohpm_ns":           result.get("total_ohpm_ns", 0),
+        "ohpm_matches":           result.get("ohpm_matches", []),
         "framework":               result.get("framework") or {},
     }
 

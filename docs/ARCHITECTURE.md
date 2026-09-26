@@ -85,6 +85,9 @@ Rules:
   Nothing that only exists in the database may ever be a business output.
 - `coverage_pct` / `coverage_status` come from `engine.core.renderer.coverage_status()` — the
   same single source of truth the report and the workbook already share. Never recompute.
+  Since 2026-09-24 the formula is `(total_detected_ns + total_ohpm_ns) / total_3p_ns` — a
+  namespace with an OHPM port counts as covered. A report without `total_ohpm_ns` (written
+  earlier) keeps the kit-only figure it was published with.
 - Paths are stored **relative to the repo root** so a moved or shared folder still resolves.
 
 ## Frontend
