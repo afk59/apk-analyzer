@@ -61,7 +61,7 @@ function doneRow(row, failed) {
   el.className = 'result' + (failed ? ' fail' : '');
   if (failed) {
     el.innerHTML = '<div class="grow"><div class="name">' + escapeHtml(row.source_file) +
-      '</div><div class="meta">' + escapeHtml(row.error || 'failed') + '</div></div>';
+      '</div><div class="meta">' + escapeHtml(row.error || t('msg.failed')) + '</div></div>';
     $('#run-done').appendChild(el);
     return;
   }
@@ -120,7 +120,7 @@ function handleEvent(ev) {
     case 'download_failed':
       run.done++; updateBar();
       doneRow({ source_file: ev.file, error: ev.error }, true);
-      logLine('DOWNLOAD FAILED ' + ev.file + ' — ' + ev.error, 'err');
+      logLine(t('msg.downloadFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
       break;
     case 'file_started':
       run.seen = new Set();
@@ -131,7 +131,7 @@ function handleEvent(ev) {
       break;
     case 'file_skipped':
       run.done++; updateBar();
-      logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + ev.reason, 'ok');
+      logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + t('msg.alreadyAnalysed'), 'ok');
       break;
     case 'file_done':
       run.done++; updateBar(); doneRow(ev.result, false);
@@ -140,7 +140,28 @@ function handleEvent(ev) {
     case 'file_failed':
       run.done++; updateBar();
       doneRow({ source_file: ev.file, error: ev.error }, true);
-      logLine('FAILED ' + ev.file + ' — ' + ev.error, 'err');
+      logLine(t('msg.fileFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
+      break;
+    /* The batch workbook step, after the last file. It can take a while --
+       it includes the Google Play lookup -- and without these the panel sat on
+       the last file's name looking stuck. */
+    case 'aggregating':
+      run.seen = new Set(); run.fileStart = Date.now();
+      $('#run-file').textContent = t('run.aggregating');
+      renderStages(null);
+      logLine('── ' + t('run.aggregating'));
+      break;
+    case 'metadata':
+    case 'workbooks':
+      if (ev.detail) logLine('  ' + ev.detail);
+      break;
+    case 'aggregate_done':
+      logLine(t('msg.workbooksWritten'), 'ok');
+      break;
+    case 'error':
+      // A worker's error is followed by its own file_failed; only the
+      // workbook step's (which names no file) needs saying here.
+      if (!ev.file) logLine(t('msg.workbooksFailed') + ' — ' + ev.error, 'err');
       break;
     case 'run_finished':
       finishRun(ev);
@@ -165,6 +186,7 @@ function finishRun(ev) {
   run.seen = new Set();
   renderStages(null);
   $('#run-bar').style.width = '100%';
+  showWorkbooks(ev.workbooks);
   if (!run.quiet) {
     toast(ev.status === 'cancelled'
       ? t('msg.cancelled')
@@ -175,6 +197,25 @@ function finishRun(ev) {
   // Not unconditionally enabled: after a reload nothing is picked, and Start
   // with no input is a button that does nothing.
   $('#start').disabled = !(state.file || state.folder);
+}
+
+/* The two batch workbooks, once written: the same buttons Results shows, so
+   the run's main deliverable is one click away where the run ended. */
+function showWorkbooks(wb) {
+  const paths = Object.values(wb || {}).filter(
+    (v) => typeof v === 'string' && v.toLowerCase().endsWith('.xlsx'));
+  if (!paths.length) return;
+  const box = document.createElement('div');
+  box.className = 'workbooks';
+  box.innerHTML = '<span class="label">' + t('results.workbooks') + '</span>';
+  paths.forEach((p) => {
+    const b = document.createElement('button');
+    b.className = 'btn ghost';
+    b.textContent = p.split(/[\\/]/).pop();
+    b.addEventListener('click', () => openPath(p));
+    box.appendChild(b);
+  });
+  $('#run-done').prepend(box);
 }
 
 /* Shared by "Start analysis" and "Download & analyse": both create a run and
@@ -229,7 +270,9 @@ async function startRun() {
   if (!input) return;
   $('#start').disabled = true;
   try {
-    const res = await API.startRun(input, $('#target').value, null);
+    // null lets the server decide for a single file, which it never skips.
+    const skip = state.folder ? $('#skip-existing').checked : null;
+    const res = await API.startRun(input, $('#target').value, skip);
     beginRun(res);
   } catch (e) {
     toast(e.message, true);

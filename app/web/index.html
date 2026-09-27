@@ -86,6 +86,12 @@
             <option value="hms">HMS Core</option>
           </select>
         </label>
+        <!-- Folder runs only. A file picked by hand is always analysed: that
+             is an explicit "analyse this now". -->
+        <label id="skip-wrap" hidden style="font-size:.82rem;color:var(--text2)">
+          <input type="checkbox" id="skip-existing" checked>
+          <span data-i18n="analyze.skip">Skip files that already have a report</span>
+        </label>
         <span id="start-hint" style="color:var(--text3);font-size:.8rem"
               data-i18n="analyze.hint">pick a file or a folder first</span>
       </p>

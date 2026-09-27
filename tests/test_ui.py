@@ -120,6 +120,7 @@ LOAD_PROBE = r"""
     visiblePanels: Array.from(document.querySelectorAll('.panel'))
                         .filter(function (p) { return !p.hidden; }).length,
     startDisabled: document.getElementById('start').disabled,
+    skipHidden: document.getElementById('skip-wrap').hidden,
     progressHidden: document.getElementById('nav-run').hidden,
     // The PROPERTY being true is not the same as the button being gone:
     // [hidden] is a UA-stylesheet rule and any author `display` beats it.
@@ -139,7 +140,12 @@ RELOAD_PROBE = r"""
     rows: document.querySelectorAll('#run-done .result').length,
     // A finished run is re-attached quietly: the page stays where it was.
     analyzeVisible: !document.getElementById('panel-analyze').hidden,
-    startDisabled: document.getElementById('start').disabled
+    startDisabled: document.getElementById('start').disabled,
+    // The workbook step names itself instead of leaving the last file's name.
+    aggregating: (function () {
+      handleEvent({ stage: 'aggregating', detail: 'x' });
+      return document.getElementById('run-file').textContent;
+    })()
   });
 })()
 """
@@ -285,6 +291,15 @@ class TestFrontend(IsolatedTest):
     def test_the_backend_reports_a_ready_engine(self):
         p = self._run_probe()["load"]
         self.assertEqual(p["status"], "engine ready")
+
+    def test_the_skip_toggle_waits_for_a_folder(self):
+        """It only means something for a folder run; a picked file is always
+        analysed."""
+        self.assertTrue(self._run_probe()["load"]["skipHidden"])
+
+    def test_the_workbook_step_is_shown(self):
+        p = self._run_probe()["reload"]
+        self.assertEqual(p["aggregating"], "Building the batch workbooks")
 
     def test_a_reload_re_attaches_to_the_last_run(self):
         """Run state lives in the server; a reload used to drop the Progress

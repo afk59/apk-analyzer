@@ -57,6 +57,7 @@ function renderPicked(kind, res) {
   if (kind === 'folder') state.file = null; else state.folder = null;
   $('#picked-file').hidden   = !state.file;
   $('#picked-folder').hidden = !state.folder;
+  $('#skip-wrap').hidden     = !state.folder;
   const input = state.file || state.folder;
   $('#start').disabled = !input;
   $('#start-hint').textContent = input ? '' : t('analyze.hint');
@@ -116,7 +117,7 @@ function appRow(a) {
 
   row.innerHTML = '<div class="grow"><div class="name">' +
     escapeHtml(a.app_name || a.source_file) + '</div><div class="meta">' +
-    escapeHtml(a.status === 'failed' ? (a.error || 'failed') : bits.join('  ·  ')) +
+    escapeHtml(a.status === 'failed' ? (a.error || t('msg.failed')) : bits.join('  ·  ')) +
     '</div></div>';
 
   // A failed app gets no chips and nothing to open. The caller appends it --
@@ -160,7 +161,7 @@ function runGroup(r) {
   const bad = r.apps.length - ok;
   const head = document.createElement('div');
   head.className = 'runhead';
-  head.innerHTML = '<span class="title">' + escapeHtml(r.input_path || 'Run ' + r.id) + '</span>' +
+  head.innerHTML = '<span class="title">' + escapeHtml(r.input_path || t('msg.run') + ' ' + r.id) + '</span>' +
     '<span class="when">' + escapeHtml(when) + '</span>' +
     '<span class="chip">' + ok + ' ' + t('msg.apps') +
     (bad ? ' · ' + bad + ' ' + t('msg.failed') : '') +
@@ -168,7 +169,7 @@ function runGroup(r) {
     // like it did nothing. The skipped files belong to the run that produced
     // them, so they are counted here but listed there.
     (r.skipped_count ? ' · ' + r.skipped_count + ' ' + t('msg.reused') : '') + '</span>' +
-    (r.status === 'cancelled' ? '<span class="chip packed">cancelled</span>' : '');
+    (r.status === 'cancelled' ? '<span class="chip packed">' + t('run.cancelled') + '</span>' : '');
   wrap.appendChild(head);
 
   const body = document.createElement('div');
@@ -236,4 +237,5 @@ function onLanguageChanged() {
   $('#start-hint').textContent = input ? '' : t('analyze.hint');
   if (!$('#panel-results').hidden) loadResults();
   if (typeof redrawStages === 'function') redrawStages();
+  if (typeof setTheme === 'function' && typeof storedTheme === 'function') setTheme(storedTheme());
 }

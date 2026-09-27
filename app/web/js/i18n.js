@@ -90,6 +90,19 @@ const STRINGS = {
     'stage.kits': 'Matching kits',
     'stage.api': 'Matching APIs',
     'stage.render': 'Rendering',
+
+    'analyze.skip': 'Skip files that already have a report',
+    'run.aggregating': 'Building the batch workbooks',
+    'msg.downloadFailed': 'DOWNLOAD FAILED',
+    'msg.fileFailed': 'FAILED',
+    'msg.alreadyAnalysed': 'already analysed',
+    'msg.workbooksWritten': 'Batch workbooks written.',
+    'msg.workbooksFailed': 'Could not build the batch workbooks',
+    'msg.run': 'Run',
+    'theme.title': 'Theme',
+    'theme.system': 'Auto',
+    'theme.light': 'Light',
+    'theme.dark': 'Dark',
   },
 
   tr: {
@@ -164,6 +177,19 @@ const STRINGS = {
     'stage.kits': 'Kit eşleştirme',
     'stage.api': 'API eşleştirme',
     'stage.render': 'Rapor üretimi',
+
+    'analyze.skip': 'Raporu olan dosyaları atla',
+    'run.aggregating': 'Toplu çalışma kitapları oluşturuluyor',
+    'msg.downloadFailed': 'İNDİRME BAŞARISIZ',
+    'msg.fileFailed': 'BAŞARISIZ',
+    'msg.alreadyAnalysed': 'zaten analiz edilmiş',
+    'msg.workbooksWritten': 'Toplu çalışma kitapları yazıldı.',
+    'msg.workbooksFailed': 'Toplu çalışma kitapları oluşturulamadı',
+    'msg.run': 'Koşu',
+    'theme.title': 'Tema',
+    'theme.system': 'Otomatik',
+    'theme.light': 'Açık',
+    'theme.dark': 'Koyu',
   },
 
   zh: {
@@ -238,6 +264,19 @@ const STRINGS = {
     'stage.kits': '匹配 kit',
     'stage.api': '匹配 API',
     'stage.render': '生成报告',
+
+    'analyze.skip': '跳过已有报告的文件',
+    'run.aggregating': '正在生成批量工作簿',
+    'msg.downloadFailed': '下载失败',
+    'msg.fileFailed': '失败',
+    'msg.alreadyAnalysed': '已分析过',
+    'msg.workbooksWritten': '批量工作簿已写入。',
+    'msg.workbooksFailed': '无法生成批量工作簿',
+    'msg.run': '运行',
+    'theme.title': '主题',
+    'theme.system': '自动',
+    'theme.light': '浅色',
+    'theme.dark': '深色',
   },
 };
 
