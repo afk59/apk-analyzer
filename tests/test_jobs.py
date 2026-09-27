@@ -296,29 +296,32 @@ class TestAggregateEntries(JobsTest):
     """_aggregate builds the list the workbooks are made from."""
 
     def test_failures_appear_as_error_rows_in_input_order(self):
-        self.use_stub(STUB_OK)
-        run = self.runner.get(self.runner.submit(
-            self.touch_inputs("a.apk", "bad.apk", "c.apk"), "hmos"))
+        jobs = self.use_stub(STUB_OK)
+        run = jobs.Run(1, self.touch_inputs("a.apk", "bad.apk", "c.apk"), "hmos", "t")
         run.results = [{"source_file": "a.apk", "sidecar": None},
                        {"source_file": "c.apk", "sidecar": None}]
         run.failures = [{"source_file": "bad.apk", "error": "boom"}]
-        captured = {}
-        self.runner._aggregate = lambda r: captured.setdefault("run", r)
-
-        # Rebuild the entry list exactly as _aggregate does.
-        from app.services import jobs
-        real = jobs.JobRunner._aggregate
-        entries = []
-        by_name = {r.get("source_file"): r for r in run.results}
-        failed = {f.get("source_file"): f for f in run.failures}
-        for p in run.paths:
-            if p.name in failed:
-                entries.append({"row": {"source_file": p.name, "mode": "error"}})
-            elif p.name in by_name:
-                entries.append({"row": by_name[p.name]})
+        entries = self.runner._entries(run)
         self.assertEqual([e["row"]["source_file"] for e in entries],
                          ["a.apk", "bad.apk", "c.apk"])
         self.assertEqual(entries[1]["row"]["mode"], "error")
+
+    def test_a_skipped_file_links_the_report_for_its_own_target(self):
+        """A resumed HMS run once looked for "_apk_hmos_" and lost the report
+        link of every file it skipped."""
+        jobs = self.use_stub(STUB_OK)
+        run = jobs.Run(1, self.touch_inputs("a.apk"), "hms", "t")
+        run.results = [{"source_file": "a.apk", "skipped": True}]
+        side_dir = self.config.RESULT_DIR / ".sidecars"
+        side_dir.mkdir(parents=True, exist_ok=True)
+        (side_dir / "a_hms.json").write_text(
+            json.dumps({"app_name": "A", "mapped": [], "unmapped": []}), encoding="utf-8")
+        hms = self.config.RESULT_DIR / "a_apk_hms_report.html"
+        hms.write_text("x", encoding="utf-8")
+        (self.config.RESULT_DIR / "a_apk_hmos_report.html").write_text("x", encoding="utf-8")
+
+        [entry] = self.runner._entries(run)
+        self.assertEqual(entry["row"]["report"], str(hms))
 
     def test_no_workbooks_for_a_single_analysed_app(self):
         """The CLI has never produced them for one file either."""

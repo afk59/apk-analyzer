@@ -259,33 +259,7 @@ class JobRunner:
         one file gets none, matching the CLI, where a single-file run has never
         produced them either.
         """
-        # Built in the ORDER THE FILES WERE GIVEN, and including failures as
-        # ERROR rows -- that is what v1's run_batch writes, and a file that was
-        # attempted and failed belongs in the summary. Omitting it would make a
-        # workbook that quietly disagrees with the run it came from.
-        by_name = {r.get("source_file"): r for r in run.results}
-        failed = {f.get("source_file"): f for f in run.failures}
-
-        entries = []
-        for path in run.paths:
-            name = path.name
-            if name in failed:
-                entries.append({"row": {
-                    "source_file": name, "mode": "error", "app_name": "ERROR",
-                    "kit_count": 0, "unmapped_count": 0, "permission_count": 0,
-                    "report": None,
-                }, "sidecar": None})
-                continue
-            row = by_name.get(name)
-            if row is None:
-                continue
-            if row.get("skipped"):
-                side = self._sidecar_for(name, run.target)
-                if side is None:
-                    continue
-                entries.append({"row": self._row_from_sidecar(row, side), "sidecar": str(side)})
-            else:
-                entries.append({"row": row, "sidecar": row.get("sidecar")})
+        entries = self._entries(run)
 
         # Fewer than two ANALYSED apps means there is nothing to aggregate --
         # the CLI has never produced these workbooks for a single file either.
@@ -341,6 +315,41 @@ class JobRunner:
         except OSError:
             pass
 
+    def _entries(self, run: Run) -> list:
+        """The rows the two workbooks are built from.
+
+        Built in the ORDER THE FILES WERE GIVEN, and including failures as
+        ERROR rows -- that is what v1's run_batch writes, and a file that was
+        attempted and failed belongs in the summary. Omitting it would make a
+        workbook that quietly disagrees with the run it came from.
+        """
+        by_name = {r.get("source_file"): r for r in run.results}
+        failed = {f.get("source_file"): f for f in run.failures}
+
+        entries = []
+        for path in run.paths:
+            name = path.name
+            if name in failed:
+                entries.append({"row": {
+                    "source_file": name, "mode": "error", "app_name": "ERROR",
+                    "kit_count": 0, "unmapped_count": 0, "permission_count": 0,
+                    "report": None,
+                }, "sidecar": None})
+                continue
+            row = by_name.get(name)
+            if row is None:
+                continue
+            if row.get("skipped"):
+                side = self._sidecar_for(name, run.target)
+                if side is None:
+                    continue
+                entries.append({"row": self._row_from_sidecar(
+                                    row, side, self._report_for(path, run.target)),
+                                "sidecar": str(side)})
+            else:
+                entries.append({"row": row, "sidecar": row.get("sidecar")})
+        return entries
+
     @staticmethod
     def _sidecar_for(source_file: str, target: str):
         stem = Path(source_file).stem
@@ -348,7 +357,7 @@ class JobRunner:
         return p if p.exists() else None
 
     @staticmethod
-    def _row_from_sidecar(row: dict, side_path: Path) -> dict:
+    def _row_from_sidecar(row: dict, side_path: Path, report: Path) -> dict:
         """A batch row for a file that was skipped this time round.
 
         Everything the summary sheet needs was already written when the file was
@@ -359,8 +368,6 @@ class JobRunner:
             side = json.loads(Path(side_path).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             side = {}
-        stem = Path(row.get("source_file", "")).stem
-        report = config.RESULT_DIR / f"{stem}_apk_hmos_report.html"
         return {
             "source_file": row.get("source_file", ""),
             "mode": "apk",
@@ -372,14 +379,17 @@ class JobRunner:
         }
 
     @staticmethod
+    def _report_for(path: Path, target: str) -> Path:
+        """Where the worker writes this input's report. The worker's own naming,
+        not a copy of it: a resumed HMS run once looked for "_apk_hmos_" and
+        lost every report link for the files it skipped."""
+        from app.worker import resolve_mode
+        mode, eff, stem = resolve_mode(path, target)
+        return config.RESULT_DIR / f"{stem}_{mode}_{eff}_report.html"
+
+    @staticmethod
     def _outputs_exist(path: Path, target: str) -> bool:
-        sfx = path.suffix.lower()
-        mode = ("exe_folder" if path.is_dir() else
-                "ipa" if sfx == ".ipa" else
-                "exe" if sfx in (".exe", ".dll") else "apk")
-        stem = path.name if mode == "exe_folder" else path.stem
-        eff = target if mode == "apk" else "hmos"
-        return (config.RESULT_DIR / f"{stem}_{mode}_{eff}_report.html").exists()
+        return JobRunner._report_for(path, target).exists()
 
     def _run_one(self, run: Run, path: Path, index: int):
         cmd = [sys.executable, "-u", "-m", "app.worker", str(path), "--target", run.target]
