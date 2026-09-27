@@ -143,6 +143,7 @@ RELOAD_PROBE = r"""
     startDisabled: document.getElementById('start').disabled,
     // The workbook step names itself instead of leaving the last file's name.
     aggregating: (function () {
+      setLang('en');     // the language probe ran earlier and left it on zh
       handleEvent({ stage: 'aggregating', detail: 'x' });
       return document.getElementById('run-file').textContent;
     })()
