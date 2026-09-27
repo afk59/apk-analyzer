@@ -140,6 +140,7 @@ def rescan() -> dict:
     """Rebuild the whole index from disk. Safe to run at any time."""
     conn = connect()
     try:
+        conn.execute("DELETE FROM downloads")
         conn.execute("DELETE FROM artifacts")
         conn.execute("DELETE FROM apps")
         conn.execute("DELETE FROM runs")
@@ -176,6 +177,17 @@ def rescan() -> dict:
                     "INSERT INTO apps (run_id, source_file, status, error)"
                     " VALUES (?,?,?,?)",
                     (run_id, fail.get("source_file", "?"), "failed", fail.get("error")))
+            for dl in snap.get("downloads", []):
+                conn.execute(
+                    "INSERT INTO downloads (run_id, package_name, source, state,"
+                    " file_path, version, size, requested_at, error, note)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (run_id, dl.get("package_name", "?"), dl.get("source"),
+                     dl.get("state", "failed"),
+                     rel(Path(dl["file_path"])) if dl.get("file_path") else None,
+                     dl.get("version"), dl.get("size"),
+                     dl.get("requested_at") or snap.get("started_at") or "",
+                     dl.get("error"), dl.get("note")))
 
         # Anything on disk that no manifest claims -- v1 CLI output, or a run
         # whose manifest was removed. It is real work and must not vanish from
@@ -201,6 +213,7 @@ def rescan() -> dict:
             "runs": conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0],
             "apps": conn.execute("SELECT COUNT(*) FROM apps").fetchone()[0],
             "artifacts": conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0],
+            "downloads": conn.execute("SELECT COUNT(*) FROM downloads").fetchone()[0],
             "manifests": len(manifests),
             "orphans": len(orphans),
         }
@@ -249,6 +262,10 @@ def library() -> dict:
                 }
                 apps.append(app)
             run["apps"] = apps
+            run["downloads"] = [
+                {k: d[k] for k in d.keys() if k not in ("id", "run_id")} for d in
+                conn.execute("SELECT * FROM downloads WHERE run_id=? ORDER BY id", (r["id"],))
+            ]
             # The two batch workbooks are per-result-directory, not per-app, so
             # they hang off the run rather than off any one row.
             runs.append(run)

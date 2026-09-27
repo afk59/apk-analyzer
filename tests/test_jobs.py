@@ -268,6 +268,23 @@ class TestSkipAndCancel(JobsTest):
         self.assertFalse(self.runner.cancel(99999))
 
 
+class TestDownloads(JobsTest):
+
+    def test_every_fetch_is_recorded_in_the_manifest(self):
+        """ADR 0006 rule 3: source and version, for success and failure alike."""
+        self.use_stub(STUB_OK)
+        from app.services import downloader
+        downloader.fetch = lambda pkg, dest, progress=None: downloader.Result(
+            pkg, "failed", tried=["apkpure"], error="blocked by a filter")
+        run = self.wait(self.runner.submit([], "hmos", packages=["com.q"]))
+        [dl] = run.snapshot()["downloads"]
+        self.assertEqual((dl["package_name"], dl["state"], dl["error"]),
+                         ("com.q", "failed", "blocked by a filter"))
+        manifest = json.loads(next((self.config.RESULT_DIR / ".runs").glob("run-*.json"))
+                              .read_text(encoding="utf-8"))
+        self.assertEqual(manifest["downloads"], [dl])
+
+
 class TestEvents(JobsTest):
 
     def test_events_are_readable_by_cursor(self):

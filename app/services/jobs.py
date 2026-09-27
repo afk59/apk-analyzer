@@ -73,6 +73,9 @@ class Run:
         self.failures = []
         self.current = None
         self.workbooks = None            # set by the aggregate step, if it ran
+        # Provenance of every package fetched, kept in the manifest so the
+        # index can rebuild it (docs/decisions/0006, rule 3).
+        self.downloads = []
         self.cancelled = threading.Event()
         self.proc = None
         self.lock = threading.Lock()
@@ -94,6 +97,7 @@ class Run:
             "current": self.current,
             "results": self.results, "failures": self.failures,
             "workbooks": self.workbooks,
+            "downloads": self.downloads,
         }
 
 
@@ -215,6 +219,7 @@ class JobRunner:
         for package in run.packages:
             if run.cancelled.is_set():
                 break
+            requested_at = datetime.now().isoformat(timespec="seconds")
             run.push({"stage": "download_started", "file": package})
 
             state = {"last": 0.0}
@@ -233,6 +238,14 @@ class JobRunner:
                               "got": got, "total": total})
 
             result = downloader.fetch(package, config.INPUT_DIR, progress)
+            run.downloads.append({
+                "package_name": package, "source": result.source,
+                "state": result.state,
+                "file_path": str(result.path) if result.path else None,
+                "version": result.version, "size": result.size,
+                "requested_at": requested_at, "error": result.error,
+                "note": result.note,
+            })
 
             if result.state == "ready":
                 run.paths.append(result.path)

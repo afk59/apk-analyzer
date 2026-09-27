@@ -206,6 +206,33 @@ class TestRescan(IsolatedTest):
         self.assertEqual(app["coverage_status"], "low")
         self.assertIsNone(app["coverage_pct"])
 
+    def test_downloads_are_rebuilt_from_the_manifest(self):
+        """ADR 0006: a result must trace to where its binary came from. The
+        manifest carries it, so it survives deleting the database."""
+        from app.store import index
+        apk = self.config.INPUT_DIR / "com.a.apk"
+        index.write_manifest({
+            "id": 3, "status": "done", "target": "hmos", "input": "2 packages",
+            "started_at": "2026-08-30T03:00:00", "file_count": 2,
+            "results": [], "failures": [{"source_file": "com.b", "error": "x"}],
+            "downloads": [
+                {"package_name": "com.a", "source": "apkpure", "state": "ready",
+                 "file_path": str(apk), "version": "1.2.3", "size": 10,
+                 "requested_at": "2026-08-30T03:00:01", "error": None, "note": None},
+                {"package_name": "com.b", "source": None, "state": "failed",
+                 "file_path": None, "version": None, "size": None,
+                 "requested_at": "2026-08-30T03:00:05", "error": "blocked", "note": None},
+            ],
+        })
+        self.assertEqual(index.rescan()["downloads"], 2)
+        [run] = index.library()["runs"]
+        by_pkg = {d["package_name"]: d for d in run["downloads"]}
+        self.assertEqual(by_pkg["com.a"]["source"], "apkpure")
+        self.assertEqual(by_pkg["com.a"]["version"], "1.2.3")
+        from app.store.db import rel
+        self.assertEqual(by_pkg["com.a"]["file_path"], rel(apk))   # stored like every path
+        self.assertEqual(by_pkg["com.b"]["error"], "blocked")
+
     def test_skipped_files_count_but_are_not_listed_twice(self):
         from app.store import index
         report = self.make_report("com.a")
