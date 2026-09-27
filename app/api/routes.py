@@ -181,6 +181,20 @@ def start_download(req: DownloadRequest):
             "skip_existing": False}
 
 
+# Declared BEFORE /api/runs/{run_id}, which would otherwise claim "latest" and
+# answer 422 for it not being an integer.
+@app.get("/api/runs/latest")
+def latest_run():
+    """The most recent run since the server started, or null.
+
+    Run state lives in this process, not in the page: a reload used to lose the
+    Progress view of a run that was still going. The page asks here on load and
+    re-attaches to the event stream.
+    """
+    run = runner.latest()
+    return {"run": run.snapshot() if run else None}
+
+
 @app.get("/api/runs/{run_id}")
 def run_state(run_id: int):
     run = runner.get(run_id)

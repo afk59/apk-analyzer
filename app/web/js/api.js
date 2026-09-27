@@ -36,6 +36,7 @@ const API = (() => {
     startRun:  (input, target, skipExisting) =>
                        post('/api/runs', { input, target, skip_existing: skipExisting }),
     runState:  (id)  => call('/api/runs/' + id),
+    latestRun: ()    => call('/api/runs/latest'),
     cancelRun: (id)  => post('/api/runs/' + id + '/cancel', {}),
     rescan:    ()    => post('/api/rescan', {}),
     download:  (packages, target) => post('/api/downloads', { packages, target }),

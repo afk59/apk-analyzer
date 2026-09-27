@@ -222,6 +222,18 @@ class TestRunEndpoint(ApiTest):
         self.assertEqual(body["file_count"], 1)
         self.post(f"/api/runs/{body['run_id']}/cancel")
 
+    def test_latest_is_null_before_any_run_and_the_run_after_one(self):
+        """A reloaded page re-attaches through this; "latest" must not be
+        swallowed by /api/runs/{run_id} as a malformed integer."""
+        self.start_server()
+        self.assertEqual(self.get("/api/runs/latest"), (200, {"run": None}))
+        d = self.tmp / "one"
+        d.mkdir()
+        self.make_fake_apk(d / "a.apk")
+        _, body = self.post("/api/runs", {"input": str(d)})
+        _, latest = self.get("/api/runs/latest")
+        self.assertEqual(latest["run"]["id"], body["run_id"])
+
     def test_unknown_run_id_is_404(self):
         self.start_server()
         self.expect_status("/api/runs/99999", 404)

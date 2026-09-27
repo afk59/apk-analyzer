@@ -124,6 +124,12 @@ class JobRunner:
     def get(self, run_id):
         return self._runs.get(run_id)
 
+    def latest(self):
+        """The most recent run this process started, running or not. What a
+        reloaded page re-attaches to."""
+        with self._lock:
+            return self._runs[max(self._runs)] if self._runs else None
+
     def cancel(self, run_id) -> bool:
         run = self._runs.get(run_id)
         if not run or run.status != "running":

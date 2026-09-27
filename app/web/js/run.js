@@ -14,6 +14,7 @@ const stageLabel = (key) => t('stage.' + key);
 const run = {
   id: null, total: 0, done: 0, source: null,
   fileStart: 0, timer: null, seen: new Set(),
+  quiet: false,   // replaying a run that had already finished: no toast
 };
 
 function renderStages(active) {
@@ -164,16 +165,21 @@ function finishRun(ev) {
   run.seen = new Set();
   renderStages(null);
   $('#run-bar').style.width = '100%';
-  toast(ev.status === 'cancelled'
-    ? t('msg.cancelled')
-    : t('msg.finished') + ' — ' + ev.ok + ' ' + t('msg.ok') + ', ' +
-      ev.failed + ' ' + t('msg.failed') + '.', ev.failed > 0);
-  $('#start').disabled = false;
+  if (!run.quiet) {
+    toast(ev.status === 'cancelled'
+      ? t('msg.cancelled')
+      : t('msg.finished') + ' — ' + ev.ok + ' ' + t('msg.ok') + ', ' +
+        ev.failed + ' ' + t('msg.failed') + '.', ev.failed > 0);
+  }
+  run.quiet = false;
+  // Not unconditionally enabled: after a reload nothing is picked, and Start
+  // with no input is a button that does nothing.
+  $('#start').disabled = !(state.file || state.folder);
 }
 
 /* Shared by "Start analysis" and "Download & analyse": both create a run and
    then watch the same event stream. */
-function beginRun(res) {
+function beginRun(res, show = true) {
   run.id = res.run_id; run.total = res.file_count; run.done = 0; run.seen = new Set();
   $('#nav-run').hidden = false;
   $('#run-done').innerHTML = '';
@@ -181,7 +187,7 @@ function beginRun(res) {
   $('#run-cancel').disabled = false;
   $('#run-file').textContent = res.input;
   updateBar();
-  showPanel('run');
+  if (show) showPanel('run');
   if (res.skip_existing) logLine(t('msg.skipping'), 'ok');
 
   run.source = new EventSource('/api/runs/' + res.run_id + '/events');
@@ -201,6 +207,22 @@ function beginRun(res) {
   clearInterval(run.timer);
   run.timer = setInterval(tickElapsed, 1000);
 }
+
+/* A reload (F5, or the webview re-navigating) wipes everything above, but the
+   run lives on in the server. Re-attach to it: replaying its stream from the
+   first event into an emptied panel rebuilds exactly what was on screen. */
+async function resumeLatestRun() {
+  let res;
+  try { res = await API.latestRun(); } catch { return; }
+  const r = res && res.run;
+  if (!r || run.id !== null) return;
+  const running = r.status === 'running';
+  run.quiet = !running;
+  if (running) $('#start').disabled = true;
+  beginRun({ run_id: r.id, file_count: r.file_count, input: r.input }, running);
+}
+
+resumeLatestRun();
 
 async function startRun() {
   const input = state.file || state.folder;

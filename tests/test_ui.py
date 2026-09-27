@@ -72,6 +72,22 @@ def probe(window):
             OUT.setdefault("langs", {})[lang] = json.loads(window.evaluate_js(LANG_PROBE))
         OUT["errors"] = json.loads(window.evaluate_js(
             "JSON.stringify(window.__errs || [])"))
+
+        # LAST, because it leaves a run behind and reloads the page: a run that
+        # finished while the page was away must come back on a reload.
+        import os
+        from pathlib import Path
+        from app.services.jobs import runner
+        fake = Path(os.environ["MA_INPUT_DIR"]) / "reload" / "a.apk"
+        fake.parent.mkdir(parents=True, exist_ok=True)
+        fake.write_bytes(b"not an apk")
+        run = runner.get(runner.submit([fake], "hmos"))
+        deadline = time.monotonic() + 120
+        while run.status == "running" and time.monotonic() < deadline:
+            time.sleep(0.2)
+        window.evaluate_js("location.reload()")
+        time.sleep(3.0)
+        OUT["reload"] = json.loads(window.evaluate_js(RELOAD_PROBE))
     except Exception as exc:
         OUT["error"] = f"{type(exc).__name__}: {exc}"
     finally:
@@ -111,6 +127,19 @@ LOAD_PROBE = r"""
         document.getElementById('nav-run')).display !== 'none',
     status: document.getElementById('status').textContent,
     accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+  });
+})()
+"""
+
+RELOAD_PROBE = r"""
+(function () {
+  return JSON.stringify({
+    progressRendered: getComputedStyle(
+        document.getElementById('nav-run')).display !== 'none',
+    rows: document.querySelectorAll('#run-done .result').length,
+    // A finished run is re-attached quietly: the page stays where it was.
+    analyzeVisible: !document.getElementById('panel-analyze').hidden,
+    startDisabled: document.getElementById('start').disabled
   });
 })()
 """
@@ -179,6 +208,7 @@ class TestFrontend(IsolatedTest):
         body = ("ROOT = " + repr(str(ROOT)) + "\n"
                 + "LOAD_PROBE = " + repr(LOAD_PROBE) + "\n"
                 + "RESULTS_PROBE = " + repr(RESULTS_PROBE) + "\n"
+                + "RELOAD_PROBE = " + repr(RELOAD_PROBE) + "\n"
                 + "THEME_PROBE = " + repr(THEME_PROBE) + "\n"
                 + "LANG_PROBE = " + repr(LANG_PROBE) + "\n"
                 + PROBE_SCRIPT)
@@ -224,7 +254,7 @@ class TestFrontend(IsolatedTest):
         self.assertEqual(
             set(p["api"]),
             {"health", "pick", "open", "results", "startRun", "runState",
-             "cancelRun", "rescan", "download"})
+             "latestRun", "cancelRun", "rescan", "download"})
 
     def test_exactly_one_panel_is_visible_at_a_time(self):
         p = self._run_probe()["load"]
@@ -255,6 +285,15 @@ class TestFrontend(IsolatedTest):
     def test_the_backend_reports_a_ready_engine(self):
         p = self._run_probe()["load"]
         self.assertEqual(p["status"], "engine ready")
+
+    def test_a_reload_re_attaches_to_the_last_run(self):
+        """Run state lives in the server; a reload used to drop the Progress
+        view entirely. The replay must not double-count either."""
+        p = self._run_probe()["reload"]
+        self.assertTrue(p["progressRendered"], "Progress tab gone after a reload")
+        self.assertEqual(p["rows"], 1)
+        self.assertTrue(p["analyzeVisible"])
+        self.assertTrue(p["startDisabled"], "Start enabled with nothing picked")
 
     def test_switching_panels_works_and_shows_the_empty_state(self):
         p = self._run_probe()["results"]
