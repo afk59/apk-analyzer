@@ -12,7 +12,7 @@ Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
 | App | Working. `run.bat` → window, pickers, analysis with live progress, results library, APK download by package name. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **202**, `python -m unittest discover -s tests -t .`, ~3 min when nothing else is running. |
+| Tests | **219**, `python -m unittest discover -s tests -t .`. Measured 2026-09-27 at ~21 min on this machine; the old "~3 min" figure is no longer what it takes. |
 | `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 

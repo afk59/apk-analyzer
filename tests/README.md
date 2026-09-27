@@ -1,7 +1,7 @@
 # Tests
 
 ```
-python -m unittest discover -s tests -t .          # everything (~2.5 min)
+python -m unittest discover -s tests -t .          # everything (~21 min measured 2026-09-27)
 python -m unittest tests.test_store                # one module
 MA_SKIP_SLOW=1 python -m unittest discover -s tests -t .   # skip real analyses
 MA_SKIP_UI=1   python -m unittest discover -s tests -t .   # skip the webview

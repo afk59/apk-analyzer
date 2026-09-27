@@ -14,7 +14,7 @@
 │  engine/             v1 analysis code — FROZEN                  │
 │    core/apk_engine   androguard → namespaces → kits             │
 │    core/renderer     HTML report + Excel workbooks              │
-│    data/mappings     THE PRODUCT: 279 native + 15 OHPM rows     │
+│    data/mappings     THE PRODUCT: see MAPPING_DISCIPLINE.md     │
 │    data/reference    API index, OHPM registry, Play cache       │
 ├─────────────────────────────────────────────────────────────────┤
 │  docs-ref/           HarmonyOS SDK .d.ts + official docs        │
@@ -58,8 +58,9 @@ UI: "Analyze"           → POST /api/runs        → run_id
 worker stdout (JSONL)   → SSE /api/runs/{id}/events
                         → UI progress bar + per-stage animation
 worker finishes         → HTML + XLSX + agent JSON written to result/  (unchanged)
-                        → row inserted into SQLite
-UI: results list        → GET /api/runs/{id}    → app cards with coverage/framework
+run finishes            → manifest in result/.runs/ → SQLite rebuilt from disk
+UI: results list        → GET /api/results      → app cards with coverage/framework
+UI: page reloaded       → GET /api/runs/latest  → re-attach to the run's event stream
 UI: click a card        → POST /api/open        → os.startfile(path)   → Excel/browser opens
 ```
 
@@ -72,12 +73,16 @@ workbook, and `<input type=file>` never yields a real path. Both are solved by t
 the UI can list, filter and compare without re-reading every file on disk.
 
 ```sql
-runs      (id, started_at, finished_at, mode, target, status, input_path, file_count)
-apps      (id, run_id, package_name, app_name, version, framework, engine_name,
-           coverage_pct, coverage_status, kit_count, unmapped_count, ohpm_count,
-           permission_count, packer, analysis_time_sec)
+-- SCHEMA_VERSION 3. The authoritative definition is app/store/db.py.
+runs      (id, started_at, finished_at, mode, target, status, input_path, file_count,
+           skipped_count)
+apps      (id, run_id, source_file, package_name, app_name, version, framework,
+           engine_name, packer, coverage_pct, coverage_status, kit_count,
+           unmapped_count, ohpm_count, permission_count, analysis_time_sec,
+           status, error)
 artifacts (id, app_id, kind, path)            -- kind: html | xlsx | agent_json
-downloads (package_name, source, state, file_path, requested_at, error)
+downloads (id, run_id, package_name, source, state, file_path, version, size,
+           requested_at, error, note)         -- one row per fetch attempt (ADR 0006)
 ```
 
 Rules:
@@ -98,7 +103,11 @@ framework would cost more than it saves.
 
 - `app/web/index.html` — shell, one page, panel-based navigation
 - `app/web/css/` — design tokens first, then components; light/dark both defined
-- `app/web/js/` — one module per panel, plus `sse.js` and `api.js`
+- `app/web/js/` — `main.js` (panels, pickers, results), `run.js` (a run and its SSE
+  stream), `api.js` (fetch wrapper), `i18n.js`, `theme.js`
+
+The SSE stream gives every event its position as `id:`, and the endpoint honours
+`Last-Event-ID`, so EventSource's own reconnect resumes instead of replaying.
 
 The report's visual language (accent red `#c8002a` for HarmonyOS chrome, slate for third-party,
 green/amber/blue status badges) carries over, so a report opened from the app does not look like

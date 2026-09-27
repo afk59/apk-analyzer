@@ -517,3 +517,49 @@ Yeni formül `(kit + OHPM) / (kit + eşlenmeyen + OHPM)`. Payda değişmedi.
   rescan onları sessizce yeniden puanlamıyor.
 - Etki bu iki uygulamada küçük: botim %84,1 → %84,4, SHEIN %64,2 → %65,6.
 - +3 test (store ×2, aggregate ×1): 207 → 210.
+
+## 2026-09-27 — v2 incelemesindeki doğrulanan sorunlar düzeltildi
+
+Kod okunarak yapılan bir incelemedeki iddialar tek tek doğrulandı; doğrulananlar
+öncelik sırasıyla düzeltildi. Her biri ayrı commit; **çıktıyı değiştiren tek
+commit ayrı tutuldu** (8453fe78).
+
+1. **Devam ettirilen HMS batch'inde rapor linki kayboluyordu** — ÇIKTI DEĞİŞİKLİĞİ.
+   `_row_from_sidecar` rapor adını hedeften bağımsız `_apk_hmos_` diye kuruyordu;
+   HMS koşusunda atlanan her dosya `batch_summary.xlsx`'e linksiz yazılıyordu.
+   Artık yol worker'ın kendi `resolve_mode`'undan geliyor.
+2. **SSE yeniden bağlanınca olaylar baştan geliyordu** (sayaç iki kez artıyordu).
+   Her olay `id:` taşıyor, `Last-Event-ID` okunuyor.
+3. **Web filtresi engeli "bulunamadı" görünüyordu.** HTML sayfa artık bir hata
+   (`Unusable`), vardığı URL ile birlikte; bir kaynak hata verdiyse sonuç
+   `not_found` değil `failed` ve "uygulamanın olmadığını göstermez" diyor.
+4. **`downloads` tablosuna hiç yazılmıyordu** (ADR 0006 madde 3). Kayıt artık run
+   manifest'ine giriyor, rescan tabloyu oradan kuruyor — ADR 0002'nin "DB silinir,
+   rescan aynı kütüphaneyi verir" kuralı korunuyor. Tablo artık deneme başına bir
+   satır (run_id ile); SCHEMA_VERSION 2 → 3.
+5. **Sayfa yenilenince İlerleme kayboluyordu.** `GET /api/runs/latest` + sayfa
+   açılışta son koşuya yeniden bağlanıyor.
+6. **Arayüz:** klasör seçilince skip_existing kutusu; toplu çalışma kitabı aşaması
+   görünüyor ve bitince iki kitabın düğmeleri çıkıyor; kalan sabit İngilizce
+   metinler (DOWNLOAD FAILED, FAILED, "already analysed", tema düğmesi…) çevrildi.
+7. **Dokümanlar:** test sayısı, şema, `sse.js`, `/api/results`.
+
+**Düzeltilmeyenler, bakımcı kararı bekliyor:**
+
+- *Toplu Excel'lerin üzerine yazılması* — v1'in `run_batch`'i de aynı sabit adları
+  kullanıyor; değiştirmek çıktı değişikliği.
+- *Yetim worker* — pencere kapanınca worker Windows'ta öldürülmüyor; bir sonraki
+  `emit()`'te kırık pipe ile büyük olasılıkla ölüyor, ama androguard'ın sessiz
+  DEX aşamasında dakikalarca bellek tutabilir. Ölçülmedi.
+- *Atlanan IPA/EXE dosyaları devam ettirilen batch'in çalışma kitabından düşüyor* —
+  side-car yalnızca APK için yazılıyor, `_entries` side-car'sız atlanan dosyayı
+  sessizce çıkarıyor. İncelemede "mode alanı yanlış" diye raporlanmıştı; o yanlıştı,
+  sorun satırın hiç yazılmaması.
+
+Testler 210 → 219. Paketin bu makinede ~21 dk sürdüğü ölçüldü; HANDOFF'taki
+"~3 dk" düzeltildi.
+
+Tam paket iki kez koşuldu: birincide `test_the_backend_reports_a_ready_engine`
+düştü (sayfa 2,5 sn sonra hâlâ "connecting…"), ikincide 219/219 geçti; `test_ui`
+tek başına üç kez temiz geçti. Probe sabit bir 2,5 sn bekliyor — yük altında
+kırılgan olabilir. Yeniden görülürse probe'u beklemek yerine koşula bağlamak gerek.
