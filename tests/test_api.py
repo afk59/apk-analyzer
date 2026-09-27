@@ -319,6 +319,38 @@ class TestEventStream(ApiTest):
         # must still finish. Per-file isolation is the property being checked.
         self.assertIn("file_failed", stages)
 
+    def test_a_reconnect_resumes_after_the_last_event_id(self):
+        """EventSource reconnects to the same URL and sends the last id it saw.
+        Without ids, the replay counted every finished file twice in the UI."""
+        self.start_server()
+        d = self.tmp / "one"
+        d.mkdir()
+        self.make_fake_apk(d / "a.apk")
+        _, body = self.post("/api/runs", {"input": str(d)})
+        url = f"{self.base}/api/runs/{body['run_id']}/events"
+
+        def read(req):
+            got = []
+            with urllib.request.urlopen(req, timeout=180) as r:
+                ev_id = None
+                for raw in r:
+                    line = raw.decode("utf-8", "replace").strip()
+                    if line.startswith("id: "):
+                        ev_id = int(line[4:])
+                    elif line.startswith("data: "):
+                        got.append((ev_id, json.loads(line[6:]).get("stage")))
+                    elif line.startswith("event: end"):
+                        break
+            return got
+
+        first = read(url)
+        ids = [i for i, _ in first]
+        self.assertEqual(ids, list(range(len(first))), "ids must be positions")
+        self.assertIn("run_finished", [s for _, s in first])
+
+        req = urllib.request.Request(url, headers={"Last-Event-ID": str(ids[1])})
+        self.assertEqual(read(req), first[2:])
+
     def test_events_for_an_unknown_run_are_404(self):
         self.start_server()
         self.expect_status("/api/runs/12345/events", 404)

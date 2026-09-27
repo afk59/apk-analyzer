@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -197,25 +197,34 @@ def cancel_run(run_id: int):
 
 
 @app.get("/api/runs/{run_id}/events")
-def run_events(run_id: int, cursor: int = 0):
+def run_events(run_id: int, cursor: int = 0,
+               last_event_id: str | None = Header(None, alias="Last-Event-ID")):
     """SSE. Forwards worker events verbatim, plus queue-level ones.
 
     A keep-alive comment goes out whenever the wait lapses with nothing new: a
     single file in this corpus can take 17 minutes, and a silent connection for
     that long is one an intermediary is entitled to drop.
+
+    Every event carries its position as its SSE id. EventSource reconnects on
+    its own, to the SAME URL, sending the last id it saw -- without ids that
+    reconnect replayed the run from the start and the UI counted every
+    finished file twice.
     """
     if runner.get(run_id) is None:
         raise HTTPException(404, "No such run")
+    if last_event_id is not None and last_event_id.strip().isdigit():
+        cursor = max(cursor, int(last_event_id) + 1)
 
     def stream():
         pos = cursor
         while True:
+            start = pos
             events, pos, finished = runner.events(run_id, pos, timeout=15.0)
             if events is None:
                 break
-            for ev in events:
+            for i, ev in enumerate(events):
                 payload = json.dumps(ev, ensure_ascii=False, default=str)
-                yield f"data: {payload}\n\n"
+                yield f"id: {start + i}\ndata: {payload}\n\n"
             if finished and not events:
                 yield "event: end\ndata: {}\n\n"
                 break
