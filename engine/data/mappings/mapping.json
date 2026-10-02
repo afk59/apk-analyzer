@@ -1,5 +1,5 @@
 {
-  "version": "1.12.0",
+  "version": "1.13.0",
   "last_updated": "2026-10",
   "namespace_mappings": [
     {
@@ -2681,6 +2681,78 @@
       "harmony_import": "@kit.ArkGraphics2D",
       "confidence": "medium",
       "note": "Bitmap transformations for Picasso (blur, grayscale, colour filter, crop, mask). `effectKit.createEffect(pixelMap)` with blur/brightness/grayscale/invert/setColorMatrix (api/@ohos.effectKit.d.ts, exported by kits/@kit.ArkGraphics2D.d.ts); crop is PixelMap.crop in @kit.ImageKit. Shape masks and GPU filter chains are hand work."
+    },
+    {
+      "android_namespace": "io.realm",
+      "android_display": "Realm (Java)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "medium",
+      "note": "Local object database. Storage is `import { relationalStore } from '@kit.ArkData'` (kits/@kit.ArkData.d.ts), as androidx.room. Realm's live objects, schema migrations and Atlas Device Sync have no counterpart. @ohos/realm-core exists but is only the C++ core, not an SDK - pointing at it would overstate it."
+    },
+    {
+      "android_namespace": "org.reactnative.camera",
+      "android_display": "react-native-camera",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "RN camera module: preview, capture, recording. `import { camera } from '@kit.CameraKit'` (createCameraInput, createPreviewOutput). Its barcode half is @kit.ScanKit and face detection is @kit.CoreVisionKit, as org.reactnative.facedetector already is."
+    },
+    {
+      "android_namespace": "com.lwansbrough.RCTCamera",
+      "android_display": "react-native-camera (legacy RCTCamera)",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "The older react-native-camera module; same row as org.reactnative.camera."
+    },
+    {
+      "android_namespace": "com.alibaba.android.arouter",
+      "android_display": "ARouter",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Page routing. ArkUI Navigation + NavPathStack (component/navigation.d.ts), as androidx.navigation. ARouter's annotation-generated route table, interceptors and service discovery are not built in."
+    },
+    {
+      "android_namespace": "com.amap.api.maps",
+      "android_display": "AMap 3D Map SDK",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "note": "Map display, camera, overlays -> `import { map, mapCommon, MapComponent } from '@kit.MapKit'`. The data is Petal Maps, not AMap's. AMap publishes its own HarmonyOS SDK, @amap/amap_lbs_map3d (publisher 高德开放平台), for an app that must stay on AMap data and keys."
+    },
+    {
+      "android_namespace": "com.amap.api.location",
+      "android_display": "AMap Location SDK",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "medium",
+      "note": "Positioning -> `geoLocationManager` (kits/@kit.LocationKit.d.ts). AMap's own HarmonyOS SDK is @amap/amap_lbs_location (publisher 高德开放平台) when AMap coordinates/services are required."
+    },
+    {
+      "android_namespace": "com.amap.api.services",
+      "android_display": "AMap Search SDK",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "note": "POI search, geocoding, routing -> `import { site } from '@kit.MapKit'` (harmonyos-guides/application-services/map-kit/place-search). AMap's own HarmonyOS SDK is @amap/amap_lbs_search (publisher 高德开放平台)."
+    },
+    {
+      "android_namespace": "com.igexin",
+      "android_display": "Getui Push SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Push delivery -> `import { pushService } from '@kit.PushKit'` (harmonyos-guides/application-services/push-kit). Getui's targeting backend is the vendor's: its HarmonyOS SDK is @getui/push (publisher getui), which itself rides on Push Kit."
+    },
+    {
+      "android_namespace": "cn.jpush",
+      "android_display": "JPush SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Push delivery -> `import { pushService } from '@kit.PushKit'`. JPush's own HarmonyOS SDK is @jg/push (publisher 极光推送), on Push Kit. cn.jiguang (shared core/analytics) is not claimed."
     }
   ],
   "permission_mappings": [
