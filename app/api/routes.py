@@ -11,6 +11,11 @@ Two endpoints here have consequences beyond returning JSON:
                      the path must be RESOLVED before comparing -- a naive
                      prefix test lets "result/../../../anything" through.
 
+    POST /api/results/delete   removes a report from disk AND from the run
+                     manifests, then rebuilds the index. Same guard as /open,
+                     for the same reason: it must only ever touch the result
+                     tree.
+
 Nothing in this module computes coverage, confidence or matching. That is the
 engine's job and duplicating it is how a report and the UI start disagreeing.
 """
@@ -50,6 +55,17 @@ class RunRequest(BaseModel):
     # made v1's per-process runner usable at all. A single file picked by hand
     # is an explicit "analyse this now", so it is never skipped.
     skip_existing: bool | None = None
+    # A folder holding EXE/DLL files only -- a PC program folder. "batch" gives
+    # every binary its own report and the two batch workbooks; "combined" is
+    # the engine's exe_folder mode, one merged report for the whole program.
+    pc_mode: str = "batch"
+    # Program folders keep binaries in subfolders (plugins/, x64/, runtimes/),
+    # so a program-folder batch looks into them unless told not to.
+    recursive: bool | None = None
+    # .NET satellite assemblies: *.resources.dll, one per UI language, holding
+    # translated strings and no code. ShareX alone ships ~850 of them next to
+    # 56 real binaries. Left out unless asked for.
+    include_resources: bool = False
 
 
 # --------------------------------------------------------------- health
@@ -74,17 +90,38 @@ def pick(req: PickRequest):
 
     info = {"path": str(path), "name": path.name}
     if req.kind == "folder":
-        # Say what is in there before anything is analysed. A folder with no
-        # supported files should be a message in the UI, not a silent no-op.
-        files = [p for p in sorted(path.glob("*"))
-                 if p.suffix.lower() in config.SUPPORTED_INPUTS]
-        bundles = [p for p in sorted(path.glob("*"))
-                   if p.suffix.lower() in config.BUNDLE_INPUTS]
-        info["file_count"] = len(files)
-        info["files"] = [p.name for p in files]
+        info.update(folder_info(path))
+    return info
+
+
+def folder_info(path: Path) -> dict:
+    """What a picked folder holds, before anything is analysed.
+
+    A folder with no supported files should be a message in the UI, not a
+    silent no-op -- and for a program folder, the UI needs every count its
+    options can produce (subfolders or not, resource assemblies or not), so
+    the number on screen is the number that will run.
+    """
+    files = [p for p in sorted(path.glob("*"))
+             if p.suffix.lower() in config.SUPPORTED_INPUTS]
+    bundles = [p for p in sorted(path.glob("*"))
+               if p.suffix.lower() in config.BUNDLE_INPUTS]
+    info = {
+        "file_count": len(files),
+        "files": [p.name for p in files],
         # APKM/XAPK are ZIPs of split APKs with no dex of their own. The engine
         # refuses them honestly; the UI should not pretend they were included.
-        info["skipped_bundles"] = [p.name for p in bundles]
+        "skipped_bundles": [p.name for p in bundles],
+    }
+    if _is_program_folder(path):
+        top = _binaries(path, recursive=False, include_resources=True)
+        deep = _binaries(path, recursive=True, include_resources=True)
+        info["program"] = {
+            "top": sum(1 for p in top if not _is_resources(p)),
+            "top_resources": sum(1 for p in top if _is_resources(p)),
+            "all": sum(1 for p in deep if not _is_resources(p)),
+            "all_resources": sum(1 for p in deep if _is_resources(p)),
+        }
     return info
 
 
@@ -111,22 +148,52 @@ def open_path(req: OpenRequest):
 
 
 # --------------------------------------------------------------- runs
-def _inputs_for(target_path: Path):
-    """(files to analyse, human label). A folder expands; a file is itself."""
+_PE = (".exe", ".dll")
+
+
+def _is_resources(p: Path) -> bool:
+    return p.name.lower().endswith(".resources.dll")
+
+
+def _binaries(folder: Path, recursive: bool, include_resources: bool):
+    """Every EXE/DLL under `folder`, in a stable order: top level first, then
+    each subfolder, so the run walks a program the way its tree reads."""
+    found = folder.rglob("*") if recursive else folder.glob("*")
+    out = [p for p in found if p.is_file() and p.suffix.lower() in _PE
+           and (include_resources or not _is_resources(p))]
+    return sorted(out, key=lambda p: (len(p.relative_to(folder).parts),
+                                      p.relative_to(folder).as_posix().lower()))
+
+
+def _is_program_folder(folder: Path) -> bool:
+    """EXE/DLL at the top level and no APK/IPA beside them. A mixed folder is a
+    corpus of unrelated inputs and keeps the flat batch it always had."""
+    top = [p.suffix.lower() for p in folder.glob("*") if p.is_file()]
+    return any(s in _PE for s in top) and not any(s in (".apk", ".ipa") for s in top)
+
+
+def _inputs_for(target_path: Path, pc_mode: str = "batch", recursive=None,
+                include_resources: bool = False):
+    """(files to analyse, human label, root). A folder expands; a file is itself.
+
+    `root` is the folder the labels are relative to -- set only when a run can
+    contain files from subfolders.
+    """
     if target_path.is_dir():
-        # A directory of .exe/.dll is one logical application (exe_folder mode),
-        # not a batch of unrelated binaries -- that distinction is the engine's,
-        # and re-deciding it here would produce a different report than the CLI.
-        binaries = [p for p in sorted(target_path.glob("*"))
-                    if p.suffix.lower() in (".exe", ".dll")]
-        others = [p for p in sorted(target_path.glob("*"))
-                  if p.suffix.lower() in (".apk", ".ipa")]
-        if binaries and not others:
-            return [target_path], f"{target_path.name} (folder)"
-        return ([p for p in sorted(target_path.glob("*"))
-                 if p.suffix.lower() in config.SUPPORTED_INPUTS],
-                f"{target_path.name} ({len(others) + len(binaries)} files)")
-    return [target_path], target_path.name
+        if _is_program_folder(target_path):
+            if pc_mode == "combined":
+                # The engine's exe_folder mode: every binary's imports merged
+                # into ONE report. Same report the CLI writes for a folder.
+                return [target_path], f"{target_path.name} (folder)", None
+            # Each binary its own report. A program folder is analysed through
+            # its subfolders by default -- that is where plugins live.
+            deep = True if recursive is None else bool(recursive)
+            files = _binaries(target_path, deep, include_resources)
+            return files, f"{target_path.name} ({len(files)} files)", target_path
+        files = [p for p in sorted(target_path.glob("*"))
+                 if p.suffix.lower() in config.SUPPORTED_INPUTS]
+        return files, f"{target_path.name} ({len(files)} files)", None
+    return [target_path], target_path.name, None
 
 
 @app.post("/api/runs")
@@ -136,15 +203,19 @@ def start_run(req: RunRequest):
         raise HTTPException(404, f"Not found: {req.input}")
     if req.target not in ("hmos", "hms"):
         raise HTTPException(400, "target must be 'hmos' or 'hms'")
+    if req.pc_mode not in ("batch", "combined"):
+        raise HTTPException(400, "pc_mode must be 'batch' or 'combined'")
 
-    files, label = _inputs_for(path)
+    files, label, root = _inputs_for(path, req.pc_mode, req.recursive,
+                                     req.include_resources)
     if not files:
         raise HTTPException(400, "Nothing analysable in that folder.")
 
     skip = req.skip_existing
     if skip is None:
         skip = path.is_dir() and len(files) > 1
-    run_id = runner.submit(files, req.target, skip_existing=skip, input_label=label)
+    run_id = runner.submit(files, req.target, skip_existing=skip, input_label=label,
+                           root=root)
     return {"run_id": run_id, "file_count": len(files), "input": label,
             "skip_existing": skip}
 
@@ -162,8 +233,10 @@ def start_download(req: DownloadRequest):
     shows a single progress stream and a failed download is isolated exactly
     like a corrupt file -- see docs/decisions/0006.
     """
-    names = [p.strip() for p in req.packages.replace(",", "\n").splitlines()]
-    names = [n for n in names if n]
+    names = [p.strip() for p in req.packages.replace(",", "\n").replace(";", "\n").splitlines()]
+    # Order kept, repeats dropped: the same package twice would download twice
+    # into the same file and analyse it twice into the same report.
+    names = list(dict.fromkeys(n for n in names if n))
     if not names:
         raise HTTPException(400, "Give at least one package name.")
     # A package name has no separators and no spaces. Rejecting them here keeps
@@ -178,7 +251,7 @@ def start_download(req: DownloadRequest):
     run_id = runner.submit([], req.target, skip_existing=False,
                            input_label=label, packages=names)
     return {"run_id": run_id, "file_count": len(names), "input": label,
-            "skip_existing": False}
+            "skip_existing": False, "packages": names}
 
 
 # Declared BEFORE /api/runs/{run_id}, which would otherwise claim "latest" and
@@ -268,6 +341,56 @@ def results():
         store_index.rescan()
         data = store_index.library()
     return data
+
+
+class DeleteRequest(BaseModel):
+    # One of the two. A report path for an analysed app (relative to the repo
+    # root, as /api/results gives it); a manifest name plus a source file for a
+    # failed row, which has no report to point at.
+    report: str | None = None
+    manifest: str | None = None
+    source_file: str | None = None
+
+
+@app.post("/api/results/delete")
+def delete_result(req: DeleteRequest):
+    """Remove one result from the library: its files on disk, and its entry in
+    every run manifest that lists it, then rebuild the index.
+
+    The manifests are edited, not just the database: the index is rebuilt from
+    them (docs/decisions/0002), so a row deleted only from SQLite would come
+    straight back on the next rescan. Keyed by path rather than by row id
+    because ids are reassigned on every rescan -- a run finishing between the
+    page loading and the click would otherwise delete a different app.
+    """
+    from app.store import index as store_index
+    if req.report:
+        path = Path(req.report)
+        if not path.is_absolute():
+            path = (config.ROOT / req.report).resolve()
+        if not config.is_inside_result(path) or not path.name.endswith("_report.html"):
+            raise HTTPException(403, "Only reports inside the result folder can be deleted.")
+        if _report_in_use(path):
+            raise HTTPException(409, "That report is being written by the run in progress.")
+        return store_index.delete_report(path)
+    if req.manifest and req.source_file:
+        out = store_index.delete_failure(req.manifest, req.source_file)
+        if out is None:
+            raise HTTPException(404, "No such failed entry.")
+        return out
+    raise HTTPException(400, "Give a report, or a manifest and a source file.")
+
+
+def _report_in_use(report: Path) -> bool:
+    """True if the running run is analysing the input that writes `report`."""
+    run = runner.latest()
+    if not run or run.status != "running" or not run.current:
+        return False
+    for p in list(run.paths):
+        if run.label(p) == run.current:
+            return runner._report_for(p, run.target, run.stems.get(str(p))).resolve() \
+                == report.resolve()
+    return False
 
 
 @app.post("/api/rescan")

@@ -74,7 +74,8 @@ class TestMessyFolders(IsolatedTest):
 
     def _inputs(self, folder):
         from app.api.routes import _inputs_for
-        return _inputs_for(folder)
+        files, label, _root = _inputs_for(folder)
+        return files, label
 
     def test_ignores_everything_that_is_not_an_input(self):
         d = self.tmp / "messy"

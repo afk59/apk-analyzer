@@ -62,18 +62,33 @@
              two summary workbooks.</p>
           <button class="btn" id="pick-folder" data-i18n="analyze.folder.btn">Choose folder&hellip;</button>
           <div class="picked" id="picked-folder" hidden></div>
+          <!-- Program folders only (EXE/DLL, no APK/IPA). Batch is the default:
+               every binary gets its own report. "Combined" is the engine's
+               exe_folder mode -- one merged report for the whole program. -->
+          <div class="pcopts" id="pc-opts" hidden>
+            <label><input type="radio" name="pc-mode" value="batch" checked>
+              <span data-i18n="pc.batch">Each EXE/DLL its own report (batch)</span></label>
+            <label><input type="radio" name="pc-mode" value="combined">
+              <span data-i18n="pc.combined">One combined report for the whole program</span></label>
+            <label class="sub"><input type="checkbox" id="pc-recursive" checked>
+              <span data-i18n="pc.recursive">Include subfolders</span></label>
+            <label class="sub"><input type="checkbox" id="pc-resources">
+              <span data-i18n="pc.resources">Include .resources.dll (.NET language packs, no code)</span></label>
+            <div class="pccount" id="pc-count"></div>
+          </div>
         </div>
 
         <div class="card">
           <h3 data-i18n="analyze.download.title">Download by package name</h3>
-          <p data-i18n="analyze.download.body">Fetch the APK from a public mirror and analyse it. One package per line.
-             Each download is checked: it must be a real APK, and its manifest package
-             must be the one you asked for.</p>
+          <p data-i18n="analyze.download.body">Fetch APKs from a public mirror and analyse them as one batch.
+             Separate packages with commas or new lines. Each APK starts analysing as soon
+             as it arrives while the rest keep downloading. Each download is checked: it
+             must be a real APK, and its manifest package must be the one you asked for.</p>
           <textarea id="packages" rows="3" spellcheck="false"
                     data-i18n-ph="analyze.download.ph"
-                    placeholder="com.example.app"></textarea>
+                    placeholder="com.example.app, com.example.other"></textarea>
           <button class="btn" id="download" style="margin-top:var(--space-3)"
-                  data-i18n="analyze.download.btn">Download &amp; analyse</button>
+                  data-i18n="analyze.download.btn">Download &amp; start analysis</button>
         </div>
       </div>
 
@@ -109,6 +124,9 @@
         </div>
         <div class="bar"><i id="run-bar"></i></div>
         <div class="stages" id="run-stages"></div>
+        <!-- One row per requested package. Downloads run alongside the
+             analysis, so their progress cannot share the run's own line. -->
+        <div class="dllist" id="run-downloads" hidden></div>
         <div class="log" id="run-log"></div>
         <div class="donelist" id="run-done"></div>
       </div>
@@ -123,7 +141,8 @@
       </h2>
       <p class="lede" data-i18n="results.lede">
         Grouped by run, newest first. Click a row to open its report; the button opens the
-        Excel export. <em>Rescan disk</em> rebuilds the index from
+        Excel export, and &times; deletes the report from disk and from the library.
+        <em>Rescan disk</em> rebuilds the index from
         <code>engine/result/</code> alone &mdash; the index is only ever a copy of what is
         already there.
       </p>

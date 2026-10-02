@@ -1,6 +1,6 @@
 """Job queue: one worker subprocess per input file. See docs/decisions/0005.
 
-    runner.submit(paths, target, skip_existing) -> run_id
+    runner.submit(paths, target, skip_existing, root=...) -> run_id
     runner.events(run_id, cursor)               -> (events, next_cursor, finished)
     runner.cancel(run_id)
     runner.get(run_id)
@@ -28,6 +28,13 @@ BEHAVIOUR THAT IS NOT NEGOTIABLE, and why
         stdout here is always a pipe, the exact condition under which v1 lost
         11 of 26 apps to a UnicodeEncodeError on a CJK app name.
 
+    Downloads overlap analysis, analysis never overlaps itself.
+        A package list is fetched on its own thread while the loop analyses
+        whatever has already arrived, so five packages cost roughly "the
+        slowest of download-all and analyse-all", not their sum. Downloading is
+        network-bound and holds no androguard heap, so this does not break the
+        one-worker-at-a-time rule above -- the worker is still alone.
+
     Progress is forwarded, never invented.
         The worker's stages come from the engine's own phase calls. Nothing
         here synthesises a percentage from elapsed time: this corpus runs from
@@ -51,10 +58,57 @@ from app import config
 _REAP_GRACE_SEC = 20
 
 
+class _Cancelled(Exception):
+    """Raised from a download's progress callback to abort it mid-body. The
+    downloader turns any exception there into a failed Result and deletes the
+    partial file, which is exactly what a cancel should leave behind."""
+
+
+def plan_names(paths, root=None, target="hmos"):
+    """(labels, stems) for one run's inputs, both keyed by str(path).
+
+    label -- what the UI and the batch workbook call the file. The bare name
+             for a top-level file, exactly as before; the path relative to the
+             picked folder for one found in a subfolder, so two `x.dll` in
+             different subfolders stay distinguishable.
+    stem  -- an output-name override, set ONLY for inputs that would otherwise
+             write the same report as another input of this run. Everything
+             else keeps the name the CLI gives it, so no existing report is
+             renamed. Deterministic: the same folder always yields the same
+             names, which is what skip_existing relies on.
+    """
+    from app.worker import resolve_mode
+
+    labels, stems, by_report = {}, {}, {}
+    for p in paths:
+        p = Path(p)
+        label = p.name
+        if root is not None:
+            try:
+                label = p.relative_to(root).as_posix()
+            except ValueError:
+                pass
+        labels[str(p)] = label
+        mode, eff, stem = resolve_mode(p, target)
+        # Lower-cased: Windows file names are case-insensitive, so Foo.dll and
+        # foo.exe would still overwrite each other's report.
+        by_report.setdefault(f"{stem}_{mode}_{eff}".lower(), []).append(p)
+    for group in by_report.values():
+        if len(group) < 2:
+            continue
+        for p in group:
+            # The label with its extension kept, separators flattened:
+            # ShareX.exe / ShareX.dll, plugins__x.dll / x.dll.
+            stems[str(p)] = labels[str(p)].replace("/", "__")
+    return labels, stems
+
+
 class Run:
-    def __init__(self, run_id: int, paths, target: str, input_label: str, packages=None):
+    def __init__(self, run_id: int, paths, target: str, input_label: str, packages=None,
+                 root=None):
         self.id = run_id
         self.paths = list(paths)
+        self.labels, self.stems = plan_names(self.paths, root, target)
         # Package names to fetch before analysing. They become entries in
         # self.paths as they arrive, so everything downstream -- the loop, the
         # aggregate step, the manifest -- sees ordinary files.
@@ -77,9 +131,14 @@ class Run:
         # index can rebuild it (docs/decisions/0006, rule 3).
         self.downloads = []
         self.cancelled = threading.Event()
+        # True while the download thread may still append to self.paths.
+        self.fetching = bool(self.packages)
         self.proc = None
         self.lock = threading.Lock()
         self.bell = threading.Condition(self.lock)
+
+    def label(self, path) -> str:
+        return self.labels.get(str(path)) or Path(path).name
 
     def push(self, ev: dict):
         ev = {**ev, "t": time.time()}
@@ -98,6 +157,7 @@ class Run:
             "results": self.results, "failures": self.failures,
             "workbooks": self.workbooks,
             "downloads": self.downloads,
+            "packages": self.packages,
         }
 
 
@@ -109,13 +169,13 @@ class JobRunner:
 
     # ----------------------------------------------------------- public
     def submit(self, paths, target="hmos", skip_existing=False, input_label="",
-               packages=None) -> int:
+               packages=None, root=None) -> int:
         with self._lock:
             run_id = self._next_id
             self._next_id += 1
             run = Run(run_id, paths, target,
                       input_label or str(paths[0] if paths else (packages or [""])[0]),
-                      packages=packages)
+                      packages=packages, root=root)
             self._runs[run_id] = run
         threading.Thread(target=self._drive, args=(run, skip_existing),
                          daemon=True, name=f"run-{run_id}").start()
@@ -164,22 +224,41 @@ class JobRunner:
             return out, cursor + len(out), run.status != "running"
 
     # ----------------------------------------------------------- internals
+    def _next_path(self, run: Run, index: int):
+        """The input at `index`, waiting for the download thread if it may
+        still deliver one. None once there is nothing more to analyse."""
+        with run.bell:
+            while index >= len(run.paths) and run.fetching and not run.cancelled.is_set():
+                run.bell.wait(0.5)
+            return run.paths[index] if index < len(run.paths) else None
+
     def _drive(self, run: Run, skip_existing: bool):
         run.push({"stage": "run_started", "file_count": run.total})
+        fetcher = None
         if run.packages:
-            self._fetch_all(run)
-        for index, path in enumerate(run.paths):
-            if run.cancelled.is_set():
+            fetcher = threading.Thread(target=self._fetch_all, args=(run,),
+                                       daemon=True, name=f"fetch-{run.id}")
+            fetcher.start()
+        index = 0
+        while not run.cancelled.is_set():
+            path = self._next_path(run, index)
+            if path is None:
                 break
-            if skip_existing and self._outputs_exist(path, run.target):
+            name = run.label(path)
+            if skip_existing and self._outputs_exist(path, run.target, run.stems.get(str(path))):
                 run.push({"stage": "file_skipped", "index": index,
-                          "file": path.name, "reason": "already analysed"})
-                run.results.append({"source_file": path.name, "skipped": True})
-                continue
-            run.current = path.name
-            run.push({"stage": "file_started", "index": index,
-                      "file": path.name, "total": len(run.paths)})
-            self._run_one(run, path, index)
+                          "file": name, "reason": "already analysed"})
+                run.results.append({"source_file": name, "skipped": True})
+            else:
+                run.current = name
+                run.push({"stage": "file_started", "index": index,
+                          "file": name, "total": run.total})
+                self._run_one(run, path, index)
+            index += 1
+        if fetcher is not None:
+            # A cancel aborts the body in flight (see _Cancelled), so this is
+            # short; the timeout only guards against a stalled socket.
+            fetcher.join(timeout=60)
         run.current = None
         if not run.cancelled.is_set():
             self._aggregate(run)
@@ -222,6 +301,14 @@ class JobRunner:
         """
         from app.services import downloader
 
+        try:
+            self._fetch_each(run, downloader)
+        finally:
+            with run.bell:
+                run.fetching = False
+                run.bell.notify_all()
+
+    def _fetch_each(self, run: Run, downloader):
         for package in run.packages:
             if run.cancelled.is_set():
                 break
@@ -231,6 +318,8 @@ class JobRunner:
             state = {"last": 0.0}
 
             def progress(got, total, note=None, _pkg=package, _st=state):
+                if run.cancelled.is_set() and got is not None:
+                    raise _Cancelled()
                 if note:
                     run.push({"stage": "log", "level": "warn", "file": _pkg, "detail": note})
                     return
@@ -254,15 +343,21 @@ class JobRunner:
             })
 
             if result.state == "ready":
-                run.paths.append(result.path)
+                # Appended under the lock the analysis loop waits on, and the
+                # event below wakes it: the file starts analysing while the
+                # next package downloads.
+                with run.bell:
+                    run.paths.append(result.path)
+                    run.labels[str(result.path)] = result.path.name
                 run.push({"stage": "download_done", "file": package,
                           "path": str(result.path), "source": result.source,
                           "version": result.version, "size": result.size,
                           "note": result.note})
             else:
-                run.failures.append({"source_file": package, "error": result.error})
+                error = "cancelled" if run.cancelled.is_set() else result.error
+                run.failures.append({"source_file": package, "error": error})
                 run.push({"stage": "download_failed", "file": package,
-                          "error": result.error, "tried": result.tried})
+                          "error": error, "tried": result.tried})
 
     def _aggregate(self, run: Run):
         """The two batch workbooks, for a run that covered more than one file.
@@ -347,7 +442,7 @@ class JobRunner:
 
         entries = []
         for path in run.paths:
-            name = path.name
+            name = run.label(path)
             if name in failed:
                 entries.append({"row": {
                     "source_file": name, "mode": "error", "app_name": "ERROR",
@@ -359,20 +454,21 @@ class JobRunner:
             if row is None:
                 continue
             if row.get("skipped"):
-                side = self._sidecar_for(path, run.target)
+                stem = run.stems.get(str(path))
+                side = self._sidecar_for(path, run.target, stem)
                 if side is None:
                     continue
                 entries.append({"row": self._row_from_sidecar(
-                                    row, side, self._report_for(path, run.target)),
+                                    row, side, self._report_for(path, run.target, stem)),
                                 "sidecar": str(side)})
             else:
                 entries.append({"row": row, "sidecar": row.get("sidecar")})
         return entries
 
     @staticmethod
-    def _sidecar_for(path, target: str):
+    def _sidecar_for(path, target: str, stem=None):
         from app.worker import resolve_mode, sidecar_name
-        mode, eff, stem = resolve_mode(Path(path), target)
+        mode, eff, stem = resolve_mode(Path(path), target, stem)
         p = config.RESULT_DIR / ".sidecars" / sidecar_name(stem, mode, eff)
         return p if p.exists() else None
 
@@ -408,20 +504,23 @@ class JobRunner:
         }
 
     @staticmethod
-    def _report_for(path: Path, target: str) -> Path:
+    def _report_for(path: Path, target: str, stem=None) -> Path:
         """Where the worker writes this input's report. The worker's own naming,
         not a copy of it: a resumed HMS run once looked for "_apk_hmos_" and
         lost every report link for the files it skipped."""
         from app.worker import resolve_mode
-        mode, eff, stem = resolve_mode(path, target)
+        mode, eff, stem = resolve_mode(path, target, stem)
         return config.RESULT_DIR / f"{stem}_{mode}_{eff}_report.html"
 
     @staticmethod
-    def _outputs_exist(path: Path, target: str) -> bool:
-        return JobRunner._report_for(path, target).exists()
+    def _outputs_exist(path: Path, target: str, stem=None) -> bool:
+        return JobRunner._report_for(path, target, stem).exists()
 
     def _run_one(self, run: Run, path: Path, index: int):
+        name = run.label(path)
         cmd = [sys.executable, "-u", "-m", "app.worker", str(path), "--target", run.target]
+        if run.stems.get(str(path)):
+            cmd += ["--stem", run.stems[str(path)]]
         try:
             proc = subprocess.Popen(
                 cmd, cwd=str(config.ROOT),
@@ -429,8 +528,8 @@ class JobRunner:
                 text=True, encoding="utf-8", errors="replace", bufsize=1,
             )
         except Exception as exc:
-            run.failures.append({"source_file": path.name, "error": str(exc)})
-            run.push({"stage": "file_failed", "index": index, "file": path.name,
+            run.failures.append({"source_file": name, "error": str(exc)})
+            run.push({"stage": "file_failed", "index": index, "file": name,
                       "error": str(exc)})
             return
 
@@ -447,9 +546,9 @@ class JobRunner:
                 # the hooks; keep it visible as a log line rather than crashing
                 # the reader on it.
                 run.push({"stage": "log", "level": "raw", "detail": line[:500],
-                          "index": index, "file": path.name})
+                          "index": index, "file": name})
                 continue
-            ev["index"], ev["file"] = index, path.name
+            ev["index"], ev["file"] = index, name
             stage = ev.get("stage")
             if stage == "done":
                 row, saw_done = ev.get("result"), True
@@ -477,7 +576,7 @@ class JobRunner:
         try:
             proc.wait(timeout=_REAP_GRACE_SEC if saw_done else None)
         except subprocess.TimeoutExpired:
-            run.push({"stage": "log", "level": "warn", "index": index, "file": path.name,
+            run.push({"stage": "log", "level": "warn", "index": index, "file": name,
                       "detail": f"Worker finished but did not exit within "
                                 f"{_REAP_GRACE_SEC}s - terminating it."})
             try:
@@ -490,17 +589,27 @@ class JobRunner:
                     pass
         finally:
             stderr = (proc.stderr.read() or "").strip() if proc.stderr else ""
+            # Closed, not just read: one leaked handle per file adds up over a
+            # program folder of hundreds of binaries.
+            try:
+                proc.stderr.close()
+            except Exception:
+                pass
             run.proc = None
 
         if row:
+            # The run's name for the file, not the worker's bare file name: they
+            # differ only for a file found in a subfolder, where the bare name
+            # is ambiguous.
+            row["source_file"] = name
             run.results.append(row)
-            run.push({"stage": "file_done", "index": index, "file": path.name, "result": row})
+            run.push({"stage": "file_done", "index": index, "file": name, "result": row})
         else:
             msg = error or (stderr[-500:] if stderr else f"worker exited {proc.returncode}")
             if run.cancelled.is_set():
                 msg = "cancelled"
-            run.failures.append({"source_file": path.name, "error": msg})
-            run.push({"stage": "file_failed", "index": index, "file": path.name, "error": msg})
+            run.failures.append({"source_file": name, "error": msg})
+            run.push({"stage": "file_failed", "index": index, "file": name, "error": msg})
 
 
 runner = JobRunner()

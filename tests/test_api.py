@@ -198,15 +198,16 @@ class TestRunEndpoint(ApiTest):
         self.assertFalse(body["skip_existing"])
         self.post(f"/api/runs/{body['run_id']}/cancel")
 
-    def test_a_folder_of_binaries_is_one_exe_folder_application(self):
-        """The engine treats a directory of .exe/.dll as ONE app. Re-deciding
-        that here would produce a different report than the CLI."""
+    def test_a_folder_of_binaries_can_be_one_exe_folder_application(self):
+        """The engine's exe_folder mode -- the whole folder as ONE app, the
+        report the CLI writes for a folder -- is the "combined" option. A
+        program folder defaults to a per-binary batch (tests/test_batch_features)."""
         self.start_server()
         d = self.tmp / "pcapp"
         d.mkdir()
         (d / "app.exe").write_bytes(b"MZ")
         (d / "core.dll").write_bytes(b"MZ")
-        status, body = self.post("/api/runs", {"input": str(d)})
+        status, body = self.post("/api/runs", {"input": str(d), "pc_mode": "combined"})
         self.assertEqual(status, 200)
         self.assertEqual(body["file_count"], 1)
         self.assertIn("(folder)", body["input"])

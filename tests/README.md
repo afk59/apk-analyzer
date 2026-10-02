@@ -24,6 +24,7 @@ project keeps avoiding.
 | `test_api` | Every endpoint against a **real server**, plus SSE to completion |
 | `test_ui` | The page in a **real webview**: elements, handlers, panels, themes, JS errors |
 | `test_parity` | The worker's artifacts vs the v1 CLI's, and engine determinism |
+| `test_batch_features` | Program-folder batches (recursion, `.resources.dll`, combined mode, output-name collisions, resumed EXE rows — one run on real PE files), downloads overlapping analysis, deleting a result from disk/manifests/index |
 
 ## Isolation
 

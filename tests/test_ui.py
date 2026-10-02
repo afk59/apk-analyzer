@@ -70,6 +70,35 @@ def probe(window):
             window.evaluate_js("setLang('%s')" % lang)
             time.sleep(0.4)
             OUT.setdefault("langs", {})[lang] = json.loads(window.evaluate_js(LANG_PROBE))
+        # The new controls, driven the way a person would: a program folder
+        # picked, a package list's events arriving, a result deleted.
+        window.evaluate_js("setLang('en')")
+        OUT["features"] = json.loads(window.evaluate_js(FEATURES_PROBE))
+        import os
+        from pathlib import Path
+        from app.store import index as store_index
+        rd = Path(os.environ["MA_RESULT_DIR"])
+        rep = rd / "probe_apk_hmos_report.html"
+        rep.write_text("<html></html>", encoding="utf-8")
+        store_index.write_manifest({"id": 9, "started_at": "2026-10-02T01:00:00",
+            "status": "done", "target": "hmos", "input": "probe", "file_count": 1,
+            "results": [{"source_file": "probe.apk", "mode": "apk",
+                         "report": str(rep)}], "failures": [], "downloads": []})
+        store_index.rescan()
+        window.evaluate_js("showPanel('results')")
+        time.sleep(1.5)
+        before = json.loads(window.evaluate_js(
+            "JSON.stringify({rows: document.querySelectorAll('#results .result').length,"
+            " dels: document.querySelectorAll('#results .result .del').length})"))
+        window.evaluate_js("document.querySelector('#results .result .del').click()")
+        time.sleep(0.3)
+        armed = window.evaluate_js("document.querySelector('#results .result .del').textContent")
+        window.evaluate_js("document.querySelector('#results .result .del').click()")
+        time.sleep(2.0)
+        after = json.loads(window.evaluate_js(
+            "JSON.stringify({rows: document.querySelectorAll('#results .result').length})"))
+        OUT["delete"] = {"before": before, "armed": armed, "after": after,
+                         "fileGone": not rep.exists()}
         OUT["errors"] = json.loads(window.evaluate_js(
             "JSON.stringify(window.__errs || [])"))
 
@@ -151,6 +180,53 @@ RELOAD_PROBE = r"""
 })()
 """
 
+FEATURES_PROBE = r"""
+(function () {
+  renderPicked('folder', { name: 'Prog', path: 'C:/Prog', file_count: 0,
+                           program: { top: 2, top_resources: 1, all: 5, all_resources: 3 } });
+  var opts = document.getElementById('pc-opts');
+  var count = function () { return document.getElementById('pc-count').textContent.trim(); };
+  var out = { pcVisible: !opts.hidden, countDefault: count() };
+  document.getElementById('pc-recursive').click();
+  out.countTop = count();
+  document.getElementById('pc-resources').click();
+  out.countTopRes = count();
+  document.querySelector('input[name=pc-mode][value=combined]').click();
+  out.combinedDisablesBoxes = document.getElementById('pc-recursive').disabled;
+  out.options = pcOptions();
+  document.querySelector('input[name=pc-mode][value=batch]').click();
+  document.getElementById('pc-recursive').click();
+  document.getElementById('pc-resources').click();
+
+  renderPicked('file', { name: 'a.apk', path: 'C:/a.apk' });
+  out.pcHiddenForAFile = opts.hidden;
+
+  // A package list's events, interleaved the way the pipelined run sends them.
+  beginRun({ run_id: 999999, file_count: 2, input: '2 packages',
+             packages: ['com.a', 'com.b'] }, false);
+  if (run.source) { run.source.close(); run.source = null; }
+  var st = function (p) {
+    var rows = Array.from(document.querySelectorAll('#run-downloads .dlrow'));
+    var r = rows.find(function (x) { return x.querySelector('.pkg').textContent === p; });
+    return r ? r.dataset.state : null;
+  };
+  out.queued = [st('com.a'), st('com.b')];
+  handleEvent({ stage: 'download_started', file: 'com.a' });
+  handleEvent({ stage: 'download_progress', file: 'com.a', got: 5, total: 10 });
+  handleEvent({ stage: 'download_done', file: 'com.a', source: 'apkpure', version: '1' });
+  handleEvent({ stage: 'file_started', file: 'com.a.apk', index: 0 });
+  handleEvent({ stage: 'download_started', file: 'com.b' });
+  out.overlap = [st('com.a'), st('com.b')];
+  handleEvent({ stage: 'download_failed', file: 'com.b', error: 'nope' });
+  handleEvent({ stage: 'file_done', file: 'com.a.apk', index: 0,
+                result: { source_file: 'com.a.apk', kit_count: 1 } });
+  out.final = [st('com.a'), st('com.b')];
+  out.rows = document.querySelectorAll('#run-downloads .dlrow').length;
+  out.runLine = document.getElementById('run-file').textContent;
+  return JSON.stringify(out);
+})()
+"""
+
 RESULTS_PROBE = r"""
 (function () {
   return JSON.stringify({
@@ -215,6 +291,7 @@ class TestFrontend(IsolatedTest):
         body = ("ROOT = " + repr(str(ROOT)) + "\n"
                 + "LOAD_PROBE = " + repr(LOAD_PROBE) + "\n"
                 + "RESULTS_PROBE = " + repr(RESULTS_PROBE) + "\n"
+                + "FEATURES_PROBE = " + repr(FEATURES_PROBE) + "\n"
                 + "RELOAD_PROBE = " + repr(RELOAD_PROBE) + "\n"
                 + "THEME_PROBE = " + repr(THEME_PROBE) + "\n"
                 + "LANG_PROBE = " + repr(LANG_PROBE) + "\n"
@@ -261,7 +338,7 @@ class TestFrontend(IsolatedTest):
         self.assertEqual(
             set(p["api"]),
             {"health", "pick", "open", "results", "startRun", "runState",
-             "latestRun", "cancelRun", "rescan", "download"})
+             "latestRun", "cancelRun", "rescan", "download", "deleteResult"})
 
     def test_exactly_one_panel_is_visible_at_a_time(self):
         p = self._run_probe()["load"]
@@ -292,6 +369,34 @@ class TestFrontend(IsolatedTest):
     def test_the_backend_reports_a_ready_engine(self):
         p = self._run_probe()["load"]
         self.assertEqual(p["status"], "engine ready")
+
+    def test_a_program_folder_shows_its_options_and_counts(self):
+        f = self._run_probe()["features"]
+        self.assertTrue(f["pcVisible"])
+        self.assertTrue(f["countDefault"].startswith("5 "), f["countDefault"])
+        self.assertTrue(f["countTop"].startswith("2 "), f["countTop"])
+        self.assertTrue(f["countTopRes"].startswith("3 "), f["countTopRes"])
+        self.assertTrue(f["combinedDisablesBoxes"])
+        self.assertEqual(f["options"]["pc_mode"], "combined")
+        self.assertTrue(f["pcHiddenForAFile"])
+
+    def test_each_package_has_its_own_progress_row(self):
+        """Downloads overlap analysis, so a package's state cannot live on the
+        run's one "current file" line."""
+        f = self._run_probe()["features"]
+        self.assertEqual(f["queued"], ["queued", "queued"])
+        self.assertEqual(f["overlap"], ["analysing", "downloading"])
+        self.assertEqual(f["final"], ["analysed", "failed"])
+        self.assertEqual(f["rows"], 2)
+        self.assertEqual(f["runLine"], "com.a.apk",
+                         "a download's progress overwrote the file being analysed")
+
+    def test_the_x_deletes_after_a_second_click(self):
+        d = self._run_probe()["delete"]
+        self.assertEqual(d["before"], {"rows": 1, "dels": 1})
+        self.assertEqual(d["armed"], "Delete?", "the first click must only arm it")
+        self.assertEqual(d["after"]["rows"], 0)
+        self.assertTrue(d["fileGone"])
 
     def test_the_skip_toggle_waits_for_a_folder(self):
         """It only means something for a folder run; a picked file is always

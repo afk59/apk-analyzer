@@ -49,6 +49,27 @@ and a crash costs only the file in flight. See `decisions/0005-process-isolation
 The worker prints progress as one JSON object per line on stdout; the JobRunner parses those and
 pushes them to the browser over SSE. Nothing is shared but the pipe.
 
+**Downloads overlap analysis; analyses never overlap each other.** A package list is fetched on
+its own thread (`fetch-<run>`) that appends each verified APK to the run's input list and wakes
+the analysis loop, so the first APK is being analysed while the rest download. Downloading holds
+no androguard heap, so this does not weaken the one-worker-at-a-time rule. A cancel raises from
+the download's progress callback, which aborts the body in flight and deletes the partial file.
+
+## Inputs a run can be given
+
+| Picked | Becomes |
+|---|---|
+| one file | one input, never skipped |
+| a folder of APK/IPA (or mixed with EXE/DLL) | every supported file at the top level — one level, as the CLI's batch |
+| a **program folder** — EXE/DLL at the top level, no APK/IPA | **batch** by default: every EXE/DLL, subfolders included, each with its own report, plus the two batch workbooks. `*.resources.dll` (.NET language packs, no code) are left out unless asked for. `pc_mode: "combined"` is the engine's `exe_folder` mode instead: one merged report |
+| package names (comma, `;` or newline separated, repeats dropped) | downloaded and analysed in one run |
+
+**Output names never collide within a run.** Two inputs that would write the same report —
+`ShareX.exe` beside `ShareX.dll`, or `x.dll` in two subfolders — get a `--stem` override built
+from their path relative to the picked folder (`ShareX.dll_exe_hmos_report.html`,
+`plugins__x.dll_exe_hmos_report.html`). Anything that collides with nothing keeps the CLI's name.
+`jobs.plan_names()` decides; it is deterministic, which is what `skip_existing` relies on.
+
 ## Data flow — analysing
 
 ```
@@ -62,7 +83,17 @@ run finishes            → manifest in result/.runs/ → SQLite rebuilt from di
 UI: results list        → GET /api/results      → app cards with coverage/framework
 UI: page reloaded       → GET /api/runs/latest  → re-attach to the run's event stream
 UI: click a card        → POST /api/open        → os.startfile(path)   → Excel/browser opens
+UI: × on a card (twice) → POST /api/results/delete → files + manifest entries removed → rescan
 ```
+
+**Deleting edits the manifests, not just the database.** The index is rebuilt from them, so a row
+removed only from SQLite would come back on the next rescan. A delete is keyed by the report's
+path — never by row id, which is reassigned on every rescan — and removes the report, its
+workbook, its agent JSON and its side-car, then drops that report from **every** manifest that
+lists it (re-analysing an input overwrites one report that several runs point at). A manifest
+left with nothing to show is removed. The batch workbooks are not touched: they record the batch
+they summarise. Same guard as `/api/open` — resolved path inside `result/`, and it must be a
+`*_report.html`.
 
 `os.startfile` is why this is a local app and not a web page: a browser cannot open a local
 workbook, and `<input type=file>` never yields a real path. Both are solved by the native side.
@@ -73,9 +104,9 @@ workbook, and `<input type=file>` never yields a real path. Both are solved by t
 the UI can list, filter and compare without re-reading every file on disk.
 
 ```sql
--- SCHEMA_VERSION 3. The authoritative definition is app/store/db.py.
+-- SCHEMA_VERSION 4. The authoritative definition is app/store/db.py.
 runs      (id, started_at, finished_at, mode, target, status, input_path, file_count,
-           skipped_count)
+           skipped_count, manifest)               -- manifest: file name in result/.runs/
 apps      (id, run_id, source_file, package_name, app_name, version, framework,
            engine_name, packer, coverage_pct, coverage_status, kit_count,
            unmapped_count, ohpm_count, permission_count, analysis_time_sec,
@@ -94,6 +125,14 @@ Rules:
   namespace with an OHPM port counts as covered. A report without `total_ohpm_ns` (written
   earlier) keeps the kit-only figure it was published with.
 - Paths are stored **relative to the repo root** so a moved or shared folder still resolves.
+
+## Side-cars
+
+`result/.sidecars/` holds what the batch workbooks need from each analysed input, so a resumed
+batch can rebuild them for files it skipped. APK: `<stem>_<target>.json` (namespaces, framework,
+counts — the name it has always had). EXE / IPA / exe_folder: `<stem>_<mode>_<target>.json`,
+carrying the batch row's counts. Before 2026-10-02 only APKs had one, and a resumed batch silently
+dropped every EXE/DLL/IPA it skipped from `batch_summary.xlsx`.
 
 ## Frontend
 

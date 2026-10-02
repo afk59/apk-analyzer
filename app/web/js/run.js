@@ -15,7 +15,35 @@ const run = {
   id: null, total: 0, done: 0, source: null,
   fileStart: 0, timer: null, seen: new Set(),
   quiet: false,   // replaying a run that had already finished: no toast
+  dl: {},         // package -> its row in #run-downloads
 };
+
+/* One row per requested package. Downloads run on their own thread while the
+   analysis works through what has already arrived, so a package's progress
+   cannot live on the run's single "current file" line -- the two would
+   overwrite each other several times a second. */
+function dlRow(pkg) {
+  if (run.dl[pkg]) return run.dl[pkg];
+  const box = $('#run-downloads');
+  box.hidden = false;
+  const el = document.createElement('div');
+  el.className = 'dlrow';
+  el.innerHTML = '<span class="pkg"></span><span class="bar"><i></i></span><span class="st"></span>';
+  el.querySelector('.pkg').textContent = pkg;
+  box.appendChild(el);
+  run.dl[pkg] = el;
+  return el;
+}
+
+function dlState(pkg, key, extra, cls) {
+  const el = dlRow(pkg);
+  el.dataset.state = key;
+  el.className = 'dlrow' + (cls ? ' ' + cls : '');
+  el.querySelector('.st').textContent = t('dl.' + key) + (extra ? ' · ' + extra : '');
+}
+
+/* A downloaded file is analysed under its file name, <package>.apk. */
+const pkgOf = (file) => (file || '').replace(/\.apk$/i, '');
 
 function renderStages(active) {
   const box = $('#run-stages');
@@ -94,9 +122,7 @@ function handleEvent(ev) {
     case 'run_started':
       run.total = ev.file_count; updateBar(); break;
     case 'download_started':
-      run.seen = new Set(); run.fileStart = Date.now();
-      $('#run-file').textContent = ev.file;
-      renderStages(null);
+      dlState(ev.file, 'downloading');
       logLine('── ' + t('msg.downloading') + ' ' + ev.file);
       break;
     case 'download_progress': {
@@ -104,12 +130,16 @@ function handleEvent(ev) {
       // its Content-Length. Analysis does not, which is why nothing else shows
       // one.
       const mb = (n) => (n / 1048576).toFixed(1);
-      $('#run-elapsed').textContent = mb(ev.got) + ' / ' + mb(ev.total) + ' MB';
-      $('#run-bar').style.width =
-        Math.round(((run.done + ev.got / ev.total) / (run.total || 1)) * 100) + '%';
+      const el = dlRow(ev.file);
+      el.querySelector('.bar > i').style.width =
+        Math.min(100, Math.round((ev.got / (ev.total || 1)) * 100)) + '%';
+      el.querySelector('.st').textContent =
+        t('dl.downloading') + ' · ' + mb(ev.got) + ' / ' + mb(ev.total) + ' MB';
       break;
     }
     case 'download_done':
+      dlRow(ev.file).querySelector('.bar > i').style.width = '100%';
+      dlState(ev.file, 'ready', ev.version ? 'v' + ev.version : '', 'ok');
       logLine(t('msg.fetched') + ' ' + ev.file + (ev.version ? ' v' + ev.version : '') +
               ' — ' + t('msg.from') + ' ' + ev.source, 'ok');
       // Say when the config splits were dropped. The analysis is still valid --
@@ -119,10 +149,12 @@ function handleEvent(ev) {
       break;
     case 'download_failed':
       run.done++; updateBar();
+      dlState(ev.file, 'failed', '', 'fail');
       doneRow({ source_file: ev.file, error: ev.error }, true);
       logLine(t('msg.downloadFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
       break;
     case 'file_started':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'analysing', '', 'ok');
       run.seen = new Set();
       run.fileStart = Date.now();
       $('#run-file').textContent = ev.file;
@@ -134,10 +166,12 @@ function handleEvent(ev) {
       logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + t('msg.alreadyAnalysed'), 'ok');
       break;
     case 'file_done':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'analysed', '', 'ok');
       run.done++; updateBar(); doneRow(ev.result, false);
       logLine(t('msg.done') + ' ' + ev.file, 'ok');
       break;
     case 'file_failed':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'failed', '', 'fail');
       run.done++; updateBar();
       doneRow({ source_file: ev.file, error: ev.error }, true);
       logLine(t('msg.fileFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
@@ -225,6 +259,12 @@ function beginRun(res, show = true) {
   $('#nav-run').hidden = false;
   $('#run-done').innerHTML = '';
   $('#run-log').innerHTML = '';
+  $('#run-downloads').innerHTML = '';
+  $('#run-downloads').hidden = true;
+  run.dl = {};
+  // Every requested package is listed from the start, so a long list shows
+  // what is still waiting rather than appearing one row at a time.
+  (res.packages || []).forEach((pkg) => dlState(pkg, 'queued'));
   $('#run-cancel').disabled = false;
   $('#run-file').textContent = res.input;
   updateBar();
@@ -260,7 +300,8 @@ async function resumeLatestRun() {
   const running = r.status === 'running';
   run.quiet = !running;
   if (running) $('#start').disabled = true;
-  beginRun({ run_id: r.id, file_count: r.file_count, input: r.input }, running);
+  beginRun({ run_id: r.id, file_count: r.file_count, input: r.input,
+             packages: r.packages }, running);
 }
 
 resumeLatestRun();
@@ -272,7 +313,8 @@ async function startRun() {
   try {
     // null lets the server decide for a single file, which it never skips.
     const skip = state.folder ? $('#skip-existing').checked : null;
-    const res = await API.startRun(input, $('#target').value, skip);
+    const res = await API.startRun(input, $('#target').value, skip,
+                                   state.folder ? pcOptions() : null);
     beginRun(res);
   } catch (e) {
     toast(e.message, true);

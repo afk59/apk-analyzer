@@ -11,7 +11,7 @@ from pathlib import Path
 from app import config
 from app.config import rel_to_root
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -27,7 +27,11 @@ CREATE TABLE IF NOT EXISTS runs (
     -- They belong to the run that PRODUCED them, so they are not listed here as
     -- apps -- but a run that skipped everything would otherwise read as "0 apps"
     -- and look like it did nothing.
-    skipped_count INTEGER NOT NULL DEFAULT 0
+    skipped_count INTEGER NOT NULL DEFAULT 0,
+    -- File name of the run manifest in result/.runs/ this row was rebuilt
+    -- from; NULL for the synthetic "Unfiled" run. How a delete finds the
+    -- manifest to edit -- the row id cannot, it changes on every rescan.
+    manifest     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS apps (
