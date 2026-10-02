@@ -1,6 +1,6 @@
 # Handoff — start here
 
-Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
+Last updated **2026-10-02**, end of an unattended overnight session — see the last entry of `SESSION_LOG.md`. Read this, then `CLAUDE.md`.
 
 ---
 
@@ -9,11 +9,11 @@ Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
 | | |
 |---|---|
 | Branch | `v2` (this folder), pushed. `main` is the product branch, frozen except bug fixes. |
-| App | Working. `run.bat` → window, pickers, analysis with live progress, results library, APK download by package name. |
+| App | Working. `run.bat` → window, pickers, analysis with live progress, results library (with ×-delete), APK download by package name (comma-separated batch, downloads overlap analysis), PC program folders as a per-binary batch. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **219**, `python -m unittest discover -s tests -t .`. Measured 2026-09-27 at ~21 min on this machine; the old "~3 min" figure is no longer what it takes. |
-| `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
+| Tests | **254**, `python -m unittest discover -s tests -t .`. ~4 min with `MA_TEST_APK` pointing at the 3 MB corpus APK (see below); ~21 min without. Three full passes on 2026-10-02, all green. |
+| `mapping.json` | **v1.12.0** — 326 namespaces, 67 permissions. v1.11.1 was fully audited; the 15 rows added 2026-10-02 are grounded but their absorption is **predicted, not yet confirmed** (below). `ohpm_mapping.json` v1.2.0 (16), `win_mapping.json` v1.2.0 (101). |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 
 ## The two branches
@@ -113,6 +113,15 @@ instances, 0 shadowed, 0 leak-back.
    found **nine hallucinated values** — including `@kit.AnalyticsKit`, a kit
    that appears nowhere in the 110 MB documentation corpus and was used by 13
    rows. All corrected; the audit is now five permanent tests.
+
+## Owed from 2026-10-02
+
+| Item | Note |
+|---|---|
+| **Confirm the v1.12.0 APK absorption** | Run `org.wikipedia`, `com.shazam.android`, `de.danoeh.antennapod`, `com.calm.android` (re-download them) and corpus `com.ctm`, `com.foodgulu`, HSBC, `Octopus` under v1.12.0; compare with `MAPPING_ROUND_2026-10-02.md`. The overnight run was reaped on low memory before its first APK finished. |
+| Duolingo dies in androguard | `get_app_name()` → `struct.error` in `ARSCParser`. Engine bug with a 3-line repro in the session log; fix proposed, not applied (engine is frozen). |
+| Audit `win_mapping.json` | Never audited. `version.dll` → BasicServicesKit names `bundleManager`, which is AbilityKit. |
+| Sync `v2-nocomment` | The three 2026-10-02 commits are local on `v2`, not pushed, not cherry-picked. |
 
 ## What is deliberately still open
 

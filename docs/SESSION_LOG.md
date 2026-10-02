@@ -563,3 +563,95 @@ Tam paket iki kez koşuldu: birincide `test_the_backend_reports_a_ready_engine`
 düştü (sayfa 2,5 sn sonra hâlâ "connecting…"), ikincide 219/219 geçti; `test_ui`
 tek başına üç kez temiz geçti. Probe sabit bir 2,5 sn bekliyor — yük altında
 kırılgan olabilir. Yeniden görülürse probe'u beklemek yerine koşula bağlamak gerek.
+
+## 2026-10-02 — PC program klasörü toplu analiz, eşzamanlı indirme+analiz, sonuç silme, yeni mapping turu
+
+Gece boyu, gözetimsiz oturum. Dört commit, çıktıyı değiştiren ikisi ayrı:
+
+| Commit | Ne | Çıktı değişir mi |
+|---|---|---|
+| `24083c41` | Devam ettirilen batch'te atlanan EXE/DLL/IPA satırları artık kitaptan düşmüyor | **Evet** (batch_summary) |
+| `52003317` | Program klasörü batch, eşzamanlı indirme, × ile silme | Hayır |
+| `16ad3f07` | mapping v1.12.0 (+15), ohpm v1.2.0 (+1), win v1.2.0 (+9) | **Evet** |
+
+### 1. Son geliştirmeler PC tarafını bozmuş mu? — ölçüldü
+
+Tek EXE/DLL, EXE batch'i, toplu kitap ve index gerçek ikililerle (ShareX, WinRAR,
+notepad, d3d11) sorunsuz çalıştı; OHPM-coverage ve gömülü-workbook değişiklikleri
+EXE yolunu etkilemiyor. Ama program klasörü batch'inde ortaya çıkacak **iki gerçek
+hata** bulundu ve düzeltildi:
+
+- **Rapor adı çakışması:** ShareX klasöründe `ShareX.exe` ve `ShareX.dll` yan yana;
+  ikisi de `ShareX_exe_hmos_report.html` yazıyordu, ikincisi birincinin üstüne.
+  Artık yalnızca çakışan girdiler göreli yoldan bir `--stem` alıyor
+  (`ShareX.dll_exe_hmos_report.html`); çakışmayan her dosya CLI'ın adını koruyor.
+- **Devam ettirilen batch'te EXE satırları düşüyordu** (27 Eylül'de açık bırakılan
+  madde): side-car yalnızca APK için yazılıyordu. Artık her mod için yazılıyor.
+  ShareX'te ölçüldü: 316 dosya 3 sn'de atlandı, kitapta 316 satır.
+
+Ayrıca `_run_one` worker'ın stderr pipe'ını kapatmıyordu (dosya başına bir handle).
+
+### 2. PC program klasörü toplu analiz
+
+Yalnızca EXE/DLL içeren klasör (APK/IPA yok) artık varsayılan olarak **toplu**:
+her EXE/DLL ayrı rapor + iki toplu kitap. Alt klasörler dahil (eklentiler orada);
+`*.resources.dll` (.NET dil paketleri, kod yok — ShareX'te 590 adet) varsayılan
+olarak hariç. Üçü de arayüzde seçenek; "tek birleşik rapor" motorun eski
+`exe_folder` modu. Seçici her kombinasyonun sayısını önceden veriyor.
+
+**Gerçek koşu:** ShareX, 316 ikili, **11,5 dk, 0 hata**. Dosya başı ~1,5 sn;
+yavaş olanlar `ffmpeg.exe` gibi büyük ikililer (motorun string-scan'i — motor donuk).
+
+### 3. Virgülle çoklu indirme + "İndir ve analizi başlat"
+
+Paketler virgül, `;` veya satırla ayrılabiliyor, tekrarlar atılıyor. İndirme ayrı
+bir thread'de; her APK iner inmez analize giriyor, diğerleri arkada inmeye devam
+ediyor. Analiz yine tek tek (androguard bellek kuralı korunuyor). İlerleme
+panelinde paket başına satır: sırada / iniyor / analiz ediliyor / analiz edildi /
+başarısız. İptal, inmekte olan dosyayı da yarıda kesiyor.
+
+**Gerçek koşu (5 paket):** ilk analiz 18,6. sn'de başladı (eskiden tüm indirmeler
+bitene kadar, 35,5 sn beklerdi). Bu aynada indirme hızlı olduğu için kazanç
+~17 sn; yavaş ağda kazanç indirme süresi kadar büyür.
+
+### 4. Sonuçlar'da × ile silme
+
+Her satırın sağında ×: ilk tık "Silinsin mi?" diye kurar, ikinci tık siler (yerel
+`confirm()` kullanılmadı — webview arka ucuna göre görünmeyebiliyor). Rapor,
+xlsx, agent JSON ve side-car diskten silinir; rapor **onu listeleyen tüm**
+manifest'lerden çıkarılır, boş kalan manifest silinir, index yeniden kurulur.
+Yalnızca SQLite'tan silmek yetmezdi: rescan geri getirirdi. Silme rapor yoluyla
+yapılıyor, satır id'siyle değil (id her rescan'de değişiyor). `/api/open` ile aynı
+koruma. Toplu kitaplara dokunulmuyor. Canlı denendi: 4 dosya silindi, rescan
+sonrası geri gelmedi. SCHEMA_VERSION 3 → 4 (`runs.manifest`).
+
+### 5. Mapping turu — ayrıntı `docs/MAPPING_ROUND_2026-10-02.md`
+
+- **APK:** 4 yeni uygulamadan (Wikipedia, Shazam, AntennaPod, Calm) +15 satır
+  (coil, MapLibre, ORMLite, Hawk, UUID, 8 UI kütüphanesi, picasso-transformations)
+  ve +1 OHPM (Stream PhotoView). Tahmin: yeni uygulamalarda 264 ns / 270 satır,
+  43'lük korpusta 147 / 175, **0 gölgeleme**. Reddedilenler gerekçeleriyle yazıldı
+  (jsoup, re2j, kronos/NTP, quicksettings, Rive, vendor SDK'lar…).
+- **Windows:** ShareX+WinRAR'da kalan 17 eşlenmemiş DLL'den +9 satır. **Gerçek
+  motorla doğrulandı:** 319 ikilide 166 → 155, ffmpeg.exe 2 → 0, hiçbir kit kaybı yok.
+  `mscoree.dll` (103 ikili) bilerek eşlenmedi: .NET'in HarmonyOS'ta karşılığı yok.
+
+### Açık kalanlar — sabah bakılacak
+
+1. **APK mapping doğrulaması yapılmadı.** Doğrulama koşusu (8 APK, HSBC dahil)
+   gece makine belleği azalınca Claude Code tarafından durduruldu, ilk APK bile
+   bitmeden. Gözetimsiz yeniden başlatılmadı. Yapılacak: bu 8 APK'yı v1.12.0 ile
+   koşup `MAPPING_ROUND_2026-10-02.md` tablosuyla karşılaştırmak.
+2. **Duolingo analizi androguard'da düşüyor** — motor hatası, yeniden üretildi:
+   `APK(path).get_app_name()` → `struct.error: unpack requires a buffer of 2 bytes`
+   (`ARSCParser`, androguard 4.1.3, `resources.arsc`). Motor ~4 dk DEX analizi
+   yapıp sonra bu çağrıda ölüyor. Önerilen düzeltme (motor donuk olduğu için
+   yapılmadı, karar bakımcının): `get_app_name()` hatasında paket adına düşmek.
+3. **Toplu kitaplar sabit adlı** (önceden de açık madde): aynı result klasöründe
+   ShareX batch'i APK batch'inin `batch_summary.xlsx`'inin üstüne yazdı.
+4. **`win_mapping.json` hiç denetlenmedi.** Geçerken görülen: `version.dll` satırı
+   `bundleManager`'ı BasicServicesKit'e bağlıyor, oysa AbilityKit'te.
+5. **`v2-nocomment` senkronu yapılmadı**, push yapılmadı — üç commit yerel.
+
+Testler: 219 → **254**; tam paket **3 kez** koşuldu, üçü de 254/254 OK (~4 dk),
+artı özellik+UI modülleri ayrıca bir kez daha (58/58).
