@@ -359,7 +359,7 @@ class JobRunner:
             if row is None:
                 continue
             if row.get("skipped"):
-                side = self._sidecar_for(name, run.target)
+                side = self._sidecar_for(path, run.target)
                 if side is None:
                     continue
                 entries.append({"row": self._row_from_sidecar(
@@ -370,9 +370,10 @@ class JobRunner:
         return entries
 
     @staticmethod
-    def _sidecar_for(source_file: str, target: str):
-        stem = Path(source_file).stem
-        p = config.RESULT_DIR / ".sidecars" / f"{stem}_{target}.json"
+    def _sidecar_for(path, target: str):
+        from app.worker import resolve_mode, sidecar_name
+        mode, eff, stem = resolve_mode(Path(path), target)
+        p = config.RESULT_DIR / ".sidecars" / sidecar_name(stem, mode, eff)
         return p if p.exists() else None
 
     @staticmethod
@@ -387,12 +388,21 @@ class JobRunner:
             side = json.loads(Path(side_path).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             side = {}
+        mode = side.get("mode") or "apk"
+        if mode == "apk":
+            kits = len({m["kit"] for m in side.get("mapped", [])})
+            unmapped = len(side.get("unmapped", []))
+        else:
+            # EXE/IPA side-cars carry the row's own counts; there is no
+            # namespace list to count them from.
+            kits = side.get("kit_count", 0)
+            unmapped = side.get("unmapped_count", 0)
         return {
             "source_file": row.get("source_file", ""),
-            "mode": "apk",
+            "mode": mode,
             "app_name": side.get("app_name") or "",
-            "kit_count": len({m["kit"] for m in side.get("mapped", [])}),
-            "unmapped_count": len(side.get("unmapped", [])),
+            "kit_count": kits,
+            "unmapped_count": unmapped,
             "permission_count": side.get("permissions", 0),
             "report": str(report) if report.exists() else None,
         }

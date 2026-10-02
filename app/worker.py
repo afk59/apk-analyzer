@@ -140,6 +140,13 @@ def _sidecar(result: dict, framework: dict) -> dict:
     }
 
 
+def sidecar_name(stem: str, mode: str, target: str) -> str:
+    """The side-car's file name. APK keeps the name it has always had, so every
+    side-car already on disk is still found; the other modes carry their mode,
+    because `foo.apk` and `foo.exe` would otherwise share `foo_hmos.json`."""
+    return f"{stem}_{target}.json" if mode == "apk" else f"{stem}_{mode}_{target}.json"
+
+
 def resolve_mode(path: Path, target: str):
     """(mode, effective_target, output_stem) for one input.
 
@@ -259,13 +266,21 @@ def _run(path: Path, target: str) -> dict:
         from core.renderer import coverage_status
         pct, status = coverage_status(result)
         row["coverage_pct"], row["coverage_status"] = pct, status
+        side_doc = _sidecar(result, framework)
+    else:
+        # The batch row and nothing else: no aggregate sheet reads more than
+        # that for these modes. Without it a resumed batch had no record of a
+        # SKIPPED EXE/DLL/IPA and dropped its row from batch_summary.xlsx.
+        side_doc = {"mode": mode, "app_name": row["app_name"],
+                    "kit_count": row["kit_count"],
+                    "unmapped_count": row["unmapped_count"],
+                    "permissions": row["permission_count"]}
 
-        side_dir = result_dir / ".sidecars"
-        side_dir.mkdir(exist_ok=True)
-        side = side_dir / f"{stem}_{target}.json"
-        side.write_text(json.dumps(_sidecar(result, framework), ensure_ascii=False, default=str),
-                        encoding="utf-8")
-        row["sidecar"] = str(side)
+    side_dir = result_dir / ".sidecars"
+    side_dir.mkdir(exist_ok=True)
+    side = side_dir / sidecar_name(stem, mode, target)
+    side.write_text(json.dumps(side_doc, ensure_ascii=False, default=str), encoding="utf-8")
+    row["sidecar"] = str(side)
 
     return row
 

@@ -340,6 +340,28 @@ class TestAggregateEntries(JobsTest):
         [entry] = self.runner._entries(run)
         self.assertEqual(entry["row"]["report"], str(hms))
 
+    def test_a_skipped_exe_keeps_its_workbook_row(self):
+        """Side-cars used to be APK-only, so a resumed batch dropped every
+        EXE/DLL/IPA it skipped from batch_summary.xlsx."""
+        from app.services import jobs
+        exe = self.config.INPUT_DIR / "prog" / "tool.exe"
+        exe.parent.mkdir(parents=True, exist_ok=True)
+        exe.write_bytes(b"MZ")
+        report = self.config.RESULT_DIR / "tool_exe_hmos_report.html"
+        report.write_text("<html></html>", encoding="utf-8")
+        side = self.config.RESULT_DIR / ".sidecars" / "tool_exe_hmos.json"
+        side.parent.mkdir(parents=True, exist_ok=True)
+        side.write_text(json.dumps({"mode": "exe", "app_name": "tool.exe",
+                                    "kit_count": 4, "unmapped_count": 2,
+                                    "permissions": 0}), encoding="utf-8")
+        run = jobs.Run(1, [exe], "hmos", "prog")
+        run.results.append({"source_file": "tool.exe", "skipped": True})
+        [entry] = jobs.JobRunner()._entries(run)
+        row = entry["row"]
+        self.assertEqual((row["mode"], row["kit_count"], row["unmapped_count"]),
+                         ("exe", 4, 2))
+        self.assertEqual(Path(row["report"]), report)
+
     def test_no_workbooks_for_a_single_analysed_app(self):
         """The CLI has never produced them for one file either."""
         self.use_stub(STUB_OK)
