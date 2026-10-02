@@ -13,8 +13,8 @@ Last updated **2026-10-02**, end of an unattended overnight session — see the 
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
 | Tests | **258**, `python -m unittest discover -s tests -t .`. ~4 min with `MA_TEST_APK` pointing at the 3 MB corpus APK (see below); ~21 min without. Five full passes on 2026-10-02, all green. |
-| `mapping.json` | **v1.13.0** — 335 namespaces, 67 permissions. `ohpm_mapping.json` v1.3.0 (29), `win_mapping.json` v1.2.0 (101). The 2026-10-02 rows are confirmed on real runs (435/435 and 898/898) except `org.msgpack` and `app.rive`, predicted only — see `MAPPING_ROUND_2026-10-02.md`. |
-| Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
+| `mapping.json` | **v1.14.0** — 336 namespaces, 67 permissions. `ohpm_mapping.json` v1.3.0 (29), `win_mapping.json` v1.2.0 (101). The 2026-10-02 rows are confirmed on real runs (435/435 and 898/898) except `org.msgpack` and `app.rive`, predicted only — see `MAPPING_ROUND_2026-10-02.md`. |
+| Corpus | **42 apps** in `../apk-analyzer-side/src/input/`. HSBC was removed 2026-10-02 by maintainer decision (see below); the full run is now ≈ 35 min. |
 
 ## The two branches
 
@@ -88,8 +88,7 @@ python -m app --no-window                       # note the port it prints
 POST /api/runs {"input": "<corpus>", "target": "hmos", "skip_existing": false}
 ```
 
-Budget ~55 min. HSBC (`hk.com.hsbc.hsbchkmobilebanking.apk`, 328 MB) is last in
-sort order and takes ~20 min on its own; that is normal, not a hang.
+Budget ~35 min. (HSBC used to add ~20 min on its own; it is no longer in the corpus.)
 
 **Afterwards, confirm the absorption** — the numbers to reproduce are in
 `docs/MAPPING_ROUND_2026-08-30.md` §6: 161 distinct namespaces, 251 row
@@ -118,7 +117,7 @@ instances, 0 shadowed, 0 leak-back.
 
 | Item | Note |
 |---|---|
-| Confirm HSBC (coil, msgpack) and Calm (rive) | The only rows still predicted-only. Both files exhaust memory here when anything else runs; run each alone. |
+| **HSBC and Calm are not analysed any more** | Maintainer decision, 2026-10-02: both exhausted memory on this machine and cost more than they returned. Inputs, reports and side-cars deleted; `RESUME.txt` updated. Do not re-download or re-add them. Consequence: `org.msgpack`, `app.rive` and `ai.onnxruntime` match nothing in the remaining corpus — they stay as grounded rows for future apps, confirmed by prediction only. A copy of HSBC output still sits in `../apk-analyzer-v3/out/corpus43/` (the separate v3 project, left untouched). |
 | Duolingo dies in androguard | `get_app_name()` → `struct.error` in `ARSCParser`. Engine bug with a 3-line repro in the session log; fix proposed, not applied (engine is frozen). |
 | Audit `win_mapping.json` | Never audited. `version.dll` → BasicServicesKit names `bundleManager`, which is AbilityKit. |
 | Sync `v2-nocomment` | The three 2026-10-02 commits are local on `v2`, not pushed, not cherry-picked. |

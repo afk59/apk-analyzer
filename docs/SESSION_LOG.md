@@ -699,3 +699,17 @@ durduracak kadar bellek tüketiyor; ikinci turun doğrulaması bu yüzden ön pl
 tek tek ve bu ikisi hariç yapıldı.
 
 Testler 254 → **258**; tam paket iki kez koşuldu, ikisi de 258/258 OK.
+
+## 2026-10-02 (gece) — ONNX satırı, HSBC ve Calm kaldırıldı
+
+- **Bakımcı kararı:** HSBC ve Calm bir daha analiz edilmeyecek — bu makinede belleği
+  bitirip arka plan koşularını iki kez durdurdular. HSBC: v2 kütüphanesindeki 4 dosya
+  (uygulamanın kendi silme yoluyla, manifest ve index tutarlı), korpustaki 320 MB APK,
+  `RESUME.txt` satırı silindi. Calm yalnızca geçici klasörlerdeydi, oradan silindi.
+  Korpus artık **42 uygulama**. `apk-analyzer-v3/out/corpus43/` içindeki HSBC çıktısına
+  (ayrı v3 projesi) dokunulmadı.
+- **mapping v1.14.0 (+1):** `ai.onnxruntime` → `@kit.MindSporeLiteKit` (medium). CANN Kit
+  yerine MindSpore Lite: açık kit, gerçek token, dokümanı ONNX dönüşümünü açıkça anlatıyor;
+  `org.tensorflow.lite` ile aynı satır. Motor değişikliği gerekmedi.
+- Sonuç: `org.msgpack`, `app.rive`, `ai.onnxruntime` kalan korpusta hiçbir şeyle eşleşmiyor;
+  dayanakları yazılı satırlar olarak gelecekteki uygulamalar için duruyor.
