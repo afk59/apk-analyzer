@@ -84,6 +84,7 @@ UI: results list        → GET /api/results      → app cards with coverage/fr
 UI: page reloaded       → GET /api/runs/latest  → re-attach to the run's event stream
 UI: click a card        → POST /api/open        → os.startfile(path)   → Excel/browser opens
 UI: × on a card (twice) → POST /api/results/delete → files + manifest entries removed → rescan
+UI: tick + Delete selected → POST /api/results/delete-many → same, one manifest sweep, ONE rescan
 ```
 
 **Deleting edits the manifests, not just the database.** The index is rebuilt from them, so a row

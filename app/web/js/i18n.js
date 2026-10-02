@@ -119,6 +119,13 @@ const STRINGS = {
     'results.delete': 'Delete this report',
     'results.confirm': 'Delete?',
     'msg.deleted': 'Deleted',
+    'results.selectAll': 'Select all',
+    'results.select': 'Select',
+    'results.selectRun': 'Select this run',
+    'results.selected': 'selected',
+    'results.deleteSelected': 'Delete selected',
+    'results.confirmMany': 'Delete {n}?',
+    'msg.refused': 'refused',
   },
 
   tr: {
@@ -222,6 +229,13 @@ const STRINGS = {
     'results.delete': 'Bu raporu sil',
     'results.confirm': 'Silinsin mi?',
     'msg.deleted': 'Silindi',
+    'results.selectAll': 'Tümünü seç',
+    'results.select': 'Seç',
+    'results.selectRun': 'Bu koşuyu seç',
+    'results.selected': 'seçili',
+    'results.deleteSelected': 'Seçilenleri sil',
+    'results.confirmMany': '{n} rapor silinsin mi?',
+    'msg.refused': 'reddedildi',
   },
 
   zh: {
@@ -325,6 +339,13 @@ const STRINGS = {
     'results.delete': '删除此报告',
     'results.confirm': '删除？',
     'msg.deleted': '已删除',
+    'results.selectAll': '全选',
+    'results.select': '选择',
+    'results.selectRun': '选择此次运行',
+    'results.selected': '已选择',
+    'results.deleteSelected': '删除所选',
+    'results.confirmMany': '删除 {n} 项？',
+    'msg.refused': '被拒绝',
   },
 };
 

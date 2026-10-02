@@ -141,11 +141,111 @@ function coverageBits(a) {
   return null;
 }
 
+/* ---------------------------------------------------------- selection
+   Keyed by what the server deletes by -- a report path, or a manifest entry
+   for a failed row -- so the same report listed under two runs is one item,
+   and a rescan that renumbers every row cannot change what is selected. */
+const selection = new Map();          // key -> delete target
+const targetOf = (a, group) => {
+  const art = a.artifacts || {};
+  if (art.html) return { report: art.html };
+  if (a.status === 'failed' && group && group.manifest) {
+    return { manifest: group.manifest, source_file: a.source_file };
+  }
+  return null;                        // nothing the server could delete
+};
+const keyOf = (target) => JSON.stringify(target);
+
+function pickBox(target) {
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.className = 'pick';
+  box.dataset.key = keyOf(target);
+  box.checked = selection.has(box.dataset.key);
+  box.setAttribute('aria-label', t('results.select'));
+  // The row itself opens the report; ticking a box must not.
+  box.addEventListener('click', (ev) => ev.stopPropagation());
+  box.addEventListener('keydown', (ev) => ev.stopPropagation());
+  box.addEventListener('change', () => {
+    setSelected(box.dataset.key, target, box.checked);
+    syncSelection();
+  });
+  return box;
+}
+
+function setSelected(key, target, on) {
+  if (on) selection.set(key, target); else selection.delete(key);
+}
+
+/* Every checkbox, the per-run boxes and the bar are derived from `selection`,
+   so a row ticked in one run shows ticked wherever else it is listed. */
+function syncSelection() {
+  const boxes = $$('#results input.pick');
+  boxes.forEach((b) => { b.checked = selection.has(b.dataset.key); });
+  $$('#results input.pick-run').forEach((rb) => {
+    const mine = Array.from(rb.closest('.rungroup').querySelectorAll('input.pick'));
+    const n = mine.filter((b) => b.checked).length;
+    rb.checked = mine.length > 0 && n === mine.length;
+    rb.indeterminate = n > 0 && n < mine.length;
+  });
+  const all = $('#sel-all');
+  const keys = new Set(boxes.map((b) => b.dataset.key));
+  const n = selection.size;
+  all.checked = keys.size > 0 && n === keys.size;
+  all.indeterminate = n > 0 && n < keys.size;
+  $('#sel-count').textContent = n ? n + ' ' + t('results.selected') : '';
+  const del = $('#del-selected');
+  del.disabled = n === 0;
+  disarmBulk();
+}
+
+let bulkTimer = null;
+function disarmBulk() {
+  const del = $('#del-selected');
+  clearTimeout(bulkTimer);
+  del.classList.remove('armed');
+  del.textContent = t('results.deleteSelected');
+}
+
+/* Same two-step as the row x: the first click says how many will go. */
+async function deleteSelected() {
+  const del = $('#del-selected');
+  if (!selection.size) return;
+  if (!del.classList.contains('armed')) {
+    del.classList.add('armed');
+    del.textContent = t('results.confirmMany').replace('{n}', selection.size);
+    bulkTimer = setTimeout(disarmBulk, 4000);
+    return;
+  }
+  clearTimeout(bulkTimer);
+  del.disabled = true;
+  try {
+    const res = await API.deleteMany(Array.from(selection.values()));
+    const gone = (res.reports || 0) + (res.failures || 0);
+    const refused = (res.refused || []).length;
+    toast(t('msg.deleted') + ': ' + gone + (refused ? ' · ' + refused + ' ' + t('msg.refused') : '') + '.',
+          refused > 0);
+    selection.clear();
+    loadResults();
+  } catch (e) {
+    toast(e.message, true);
+    syncSelection();
+  }
+}
+
+$('#sel-all').addEventListener('change', () => {
+  const on = $('#sel-all').checked;
+  $$('#results input.pick').forEach((b) => setSelected(b.dataset.key, JSON.parse(b.dataset.key), on));
+  syncSelection();
+});
+$('#del-selected').addEventListener('click', deleteSelected);
+
 function appRow(a, group) {
   const row = document.createElement('div');
   row.className = 'result' + (a.status === 'failed' ? ' fail' : '');
   row.tabIndex = 0;
   row.setAttribute('role', 'button');
+  const target = targetOf(a, group);
 
   const bits = [];
   if (a.package_name) bits.push(a.package_name);
@@ -157,6 +257,7 @@ function appRow(a, group) {
     escapeHtml(a.app_name || a.source_file) + '</div><div class="meta">' +
     escapeHtml(a.status === 'failed' ? (a.error || t('msg.failed')) : bits.join('  ·  ')) +
     '</div></div>';
+  if (target) row.prepend(pickBox(target));
 
   // A failed app gets no chips and nothing to open. The caller appends it --
   // returning early here must not also append, or the row lands twice.
@@ -248,6 +349,19 @@ function runGroup(r) {
     // them, so they are counted here but listed there.
     (r.skipped_count ? ' · ' + r.skipped_count + ' ' + t('msg.reused') : '') + '</span>' +
     (r.status === 'cancelled' ? '<span class="chip packed">' + t('run.cancelled') + '</span>' : '');
+  // Select every row of this run. Only when the run has something deletable.
+  if (r.apps.some((a) => targetOf(a, r))) {
+    const rb = document.createElement('input');
+    rb.type = 'checkbox';
+    rb.className = 'pick-run';
+    rb.setAttribute('aria-label', t('results.selectRun'));
+    rb.addEventListener('change', () => {
+      wrap.querySelectorAll('input.pick').forEach((b) =>
+        setSelected(b.dataset.key, JSON.parse(b.dataset.key), rb.checked));
+      syncSelection();
+    });
+    head.prepend(rb);
+  }
   wrap.appendChild(head);
 
   const body = document.createElement('div');
@@ -281,9 +395,17 @@ async function loadResults() {
     if (!data.runs.length) {
       box.insertAdjacentHTML('beforeend',
         '<div class="empty">' + t('results.empty') + '</div>');
+      selection.clear();
+      $('#selbar').hidden = true;
       return;
     }
     data.runs.forEach(r => box.appendChild(runGroup(r)));
+    // What was selected and is still listed stays selected; what was deleted
+    // or vanished in a rescan drops out.
+    const listed = new Set($$('#results input.pick').map((b) => b.dataset.key));
+    Array.from(selection.keys()).forEach((k) => { if (!listed.has(k)) selection.delete(k); });
+    $('#selbar').hidden = listed.size === 0;
+    syncSelection();
   } catch (e) {
     box.innerHTML = '';
     toast(e.message, true);

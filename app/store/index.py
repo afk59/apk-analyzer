@@ -273,8 +273,8 @@ def _same(a, b: Path) -> bool:
 
 
 def _edit_manifests(keep) -> int:
-    """Rewrite every manifest through `keep(kind, entry) -> bool`, kind being
-    "result" or "failure". A manifest left with nothing to show -- no analysed
+    """Rewrite every manifest through `keep(kind, entry, manifest) -> bool`,
+    kind being "result" or "failure" and manifest the file's name. A manifest left with nothing to show -- no analysed
     app and no failure, only files it skipped -- is removed, since its run
     would otherwise sit in the library as an empty group. Returns how many
     manifests changed."""
@@ -285,8 +285,8 @@ def _edit_manifests(keep) -> int:
             snap = json.loads(mpath.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        results = [r for r in snap.get("results", []) if keep("result", r)]
-        failures = [f for f in snap.get("failures", []) if keep("failure", f)]
+        results = [r for r in snap.get("results", []) if keep("result", r, mpath.name)]
+        failures = [f for f in snap.get("failures", []) if keep("failure", f, mpath.name)]
         if (len(results) == len(snap.get("results", []))
                 and len(failures) == len(snap.get("failures", []))):
             continue
@@ -308,41 +308,65 @@ def delete_report(report: Path) -> dict:
     edited. The batch workbooks are left alone: they are a record of the batch
     they summarise, not a view of the library.
     """
-    report = report.resolve()
-    removed = []
-    for f in _files_of(report):
-        try:
-            if f.exists():
-                f.unlink()
-                removed.append(f.name)
-        except OSError:
-            pass
-    changed = _edit_manifests(
-        lambda kind, e: not (kind == "result" and e.get("report")
-                             and _same(e["report"], report)))
-    return {"deleted": removed, "manifests_changed": changed, **rescan()}
+    return delete_many([report], [])
 
 
 def delete_failure(manifest: str, source_file: str):
     """Drop one failed entry from one run. None if there is no such entry."""
-    if "/" in manifest or "\\" in manifest or not _MANIFEST_NAME.match(manifest):
+    if not _failure_exists(manifest, source_file):
         return None
-    target = runs_dir() / manifest
+    return delete_many([], [(manifest, source_file)])
+
+
+def _failure_exists(manifest: str, source_file: str) -> bool:
+    if "/" in manifest or "\\" in manifest or not _MANIFEST_NAME.match(manifest):
+        return False
     try:
-        snap = json.loads(target.read_text(encoding="utf-8"))
+        snap = json.loads((runs_dir() / manifest).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return any(f.get("source_file") == source_file for f in snap.get("failures", []))
+
+
+def delete_many(reports, failures) -> dict:
+    """Delete several results in one pass: every report's files, every listed
+    failure, one sweep over the manifests and ONE rescan.
+
+    Deleting a selection one item at a time would rescan the whole result
+    tree once per item -- a 300-row selection of a program-folder batch would
+    rebuild the index 300 times. `reports` are paths already checked by the
+    caller; `failures` are (manifest name, source file) pairs, and a pair
+    naming a manifest that does not look like one is ignored.
+    """
+    targets = {Path(r).resolve() for r in reports}
+    removed = []
+    for report in sorted(targets):
+        for f in _files_of(report):
+            try:
+                if f.exists():
+                    f.unlink()
+                    removed.append(f.name)
+            except OSError:
+                pass
+    keys = {(m, sf) for m, sf in failures
+            if "/" not in m and "\\" not in m and _MANIFEST_NAME.match(m)}
+
+    def keep(kind, entry, manifest):
+        if kind == "result":
+            rep = entry.get("report")
+            return not (rep and _resolved(rep) in targets)
+        return (manifest, entry.get("source_file")) not in keys
+
+    changed = _edit_manifests(keep)
+    return {"deleted": removed, "reports": len(targets), "failures": len(keys),
+            "manifests_changed": changed, **rescan()}
+
+
+def _resolved(path):
+    try:
+        return Path(path).resolve()
     except (OSError, ValueError):
         return None
-    failures = [f for f in snap.get("failures", []) if f.get("source_file") != source_file]
-    if len(failures) == len(snap.get("failures", [])):
-        return None
-    results = snap.get("results", [])
-    if not failures and not any(not r.get("skipped") for r in results):
-        target.unlink(missing_ok=True)
-    else:
-        snap["failures"] = failures
-        target.write_text(json.dumps(snap, ensure_ascii=False, default=str, indent=1),
-                          encoding="utf-8")
-    return {"deleted": [], "manifests_changed": 1, **rescan()}
 
 
 _MANIFEST_NAME = re.compile(r"^run-[\w.\-]+\.json$")

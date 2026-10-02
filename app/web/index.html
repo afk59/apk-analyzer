@@ -146,6 +146,15 @@
         <code>engine/result/</code> alone &mdash; the index is only ever a copy of what is
         already there.
       </p>
+      <!-- Selection: a box per row, one per run, one for everything. Hidden
+           until there is something to select. -->
+      <div class="selbar" id="selbar" hidden>
+        <label><input type="checkbox" id="sel-all">
+          <span data-i18n="results.selectAll">Select all</span></label>
+        <span class="selcount" id="sel-count"></span>
+        <button class="btn danger" id="del-selected" disabled
+                data-i18n="results.deleteSelected">Delete selected</button>
+      </div>
       <div id="results"></div>
     </section>
   </main>

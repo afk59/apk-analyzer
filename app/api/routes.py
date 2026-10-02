@@ -381,6 +381,42 @@ def delete_result(req: DeleteRequest):
     raise HTTPException(400, "Give a report, or a manifest and a source file.")
 
 
+class DeleteManyRequest(BaseModel):
+    items: list[DeleteRequest]
+
+
+@app.post("/api/results/delete-many")
+def delete_results(req: DeleteManyRequest):
+    """The selection on the Results page, deleted in one pass and one rescan.
+
+    Every report goes through the SAME guard as the single delete; one that
+    fails it is reported back and skipped, it does not abort the rest --
+    a selection is many independent requests that happen to arrive together.
+    """
+    from app.store import index as store_index
+    if not req.items:
+        raise HTTPException(400, "Nothing selected.")
+    reports, failures, refused = [], [], []
+    for item in req.items:
+        if item.report:
+            path = Path(item.report)
+            if not path.is_absolute():
+                path = (config.ROOT / item.report).resolve()
+            if not config.is_inside_result(path) or not path.name.endswith("_report.html"):
+                refused.append({"item": item.report, "reason": "outside the result folder"})
+            elif _report_in_use(path):
+                refused.append({"item": item.report, "reason": "being written by the run in progress"})
+            else:
+                reports.append(path)
+        elif item.manifest and item.source_file:
+            failures.append((item.manifest, item.source_file))
+        else:
+            refused.append({"item": None, "reason": "neither a report nor a manifest entry"})
+    out = store_index.delete_many(reports, failures)
+    out["refused"] = refused
+    return out
+
+
 def _report_in_use(report: Path) -> bool:
     """True if the running run is analysing the input that writes `report`."""
     run = runner.latest()

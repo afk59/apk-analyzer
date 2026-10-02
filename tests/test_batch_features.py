@@ -342,6 +342,38 @@ class TestDelete(IsolatedTest):
         self.assertIsNone(index.delete_failure(mpath.name, "bad.apk"), "already gone")
         self.assertIsNone(index.delete_failure("../evil.json", "x"))
 
+    def test_a_selection_goes_in_one_pass(self):
+        """Reports from two runs and a failure, deleted together: every file
+        gone, every manifest edited, one rescan -- and what was not selected
+        stays."""
+        from app.store import index
+        a, _, m1 = self.analysed("sel_a", run_id=1, failures=[
+            {"source_file": "bad.apk", "error": "boom"}])
+        b, _, m2 = self.analysed("sel_b", run_id=2, extra_results=[
+            {"source_file": "keep.apk", "mode": "apk",
+             "report": str(self.make_report("keep"))}])
+        index.rescan()
+        calls = []
+        real = index.rescan
+        index.rescan = lambda: calls.append(1) or real()
+        try:
+            out = index.delete_many([a, b], [(m1.name, "bad.apk")])
+        finally:
+            index.rescan = real
+        self.assertEqual(len(calls), 1, "one rescan for the whole selection")
+        self.assertEqual((out["reports"], out["failures"]), (2, 1))
+        self.assertFalse(a.exists() or b.exists())
+        self.assertFalse(m1.exists(), "run 1 had nothing left")
+        names = [x["source_file"] for r in index.library()["runs"] for x in r["apps"]]
+        self.assertEqual(names, ["keep.apk"])
+
+    def test_a_bad_manifest_name_in_a_selection_is_ignored(self):
+        from app.store import index
+        _, _, m = self.analysed("ok2", failures=[{"source_file": "x.apk", "error": "e"}])
+        out = index.delete_many([], [("../evil.json", "x.apk")])
+        self.assertEqual(out["failures"], 0)
+        self.assertTrue(m.exists())
+
     def test_the_manifest_name_is_in_the_library(self):
         from app.store import index
         _, _, mpath = self.analysed("named")
@@ -381,6 +413,23 @@ class TestDeleteEndpoint(test_api.ApiTest):
         self.assertFalse(report.exists())
         _, lib = self.get("/api/results")
         self.assertEqual(lib["runs"], [])
+
+    def test_a_selection_through_the_api_skips_what_it_must_refuse(self):
+        self.start_server()
+        r1, r2 = self.make_report("m1"), self.make_report("m2")
+        outside = self.tmp / "x_apk_hmos_report.html"
+        outside.write_text("x", encoding="utf-8")
+        self.post("/api/rescan")
+        status, body = self.post("/api/results/delete-many", {"items": [
+            {"report": self.config.rel_to_root(r1)}, {"report": str(r2)},
+            {"report": str(outside)}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["reports"], 2)
+        self.assertEqual(len(body["refused"]), 1)
+        self.assertFalse(r1.exists() or r2.exists())
+        self.assertTrue(outside.exists(), "the refused one must be untouched")
+        status, _ = self.post("/api/results/delete-many", {"items": []})
+        self.assertEqual(status, 400)
 
     def test_needs_a_target(self):
         self.start_server()

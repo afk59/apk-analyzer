@@ -42,5 +42,6 @@ const API = (() => {
     rescan:    ()    => post('/api/rescan', {}),
     download:  (packages, target) => post('/api/downloads', { packages, target }),
     deleteResult: (target) => post('/api/results/delete', target),
+    deleteMany:   (items)  => post('/api/results/delete-many', { items }),
   };
 })();

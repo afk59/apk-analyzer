@@ -99,6 +99,44 @@ def probe(window):
             "JSON.stringify({rows: document.querySelectorAll('#results .result').length})"))
         OUT["delete"] = {"before": before, "armed": armed, "after": after,
                          "fileGone": not rep.exists()}
+
+        # Selection: three reports in two runs, ticked and deleted together.
+        reps = []
+        for i, names in enumerate((["s1", "s2"], ["s3"])):
+            rows = []
+            for n in names:
+                rp = rd / f"{n}_apk_hmos_report.html"
+                rp.write_text("<html></html>", encoding="utf-8")
+                reps.append(rp)
+                rows.append({"source_file": n + ".apk", "mode": "apk", "report": str(rp)})
+            store_index.write_manifest({"id": 20 + i, "started_at": f"2026-10-0{i + 3}T01:00:00",
+                "status": "done", "target": "hmos", "input": f"sel{i}", "file_count": len(rows),
+                "results": rows, "failures": [], "downloads": []})
+        store_index.rescan()
+        window.evaluate_js("loadResults()")
+        time.sleep(1.5)
+        js = window.evaluate_js
+        sel = {"bar": js("document.getElementById('selbar').hidden"),
+               "boxes": js("document.querySelectorAll('#results input.pick').length"),
+               "runBoxes": js("document.querySelectorAll('#results input.pick-run').length")}
+        js("document.querySelector('#results input.pick-run').click()")
+        time.sleep(0.2)
+        sel["afterRunBox"] = js("document.getElementById('sel-count').textContent")
+        sel["allIndeterminate"] = js("document.getElementById('sel-all').indeterminate")
+        js("document.querySelector('#results input.pick-run').click()")
+        js("document.getElementById('sel-all').click()")
+        time.sleep(0.2)
+        sel["afterAll"] = js("document.getElementById('sel-count').textContent")
+        js("document.getElementById('del-selected').click()")
+        time.sleep(0.2)
+        sel["armed"] = js("document.getElementById('del-selected').textContent")
+        sel["stillThere"] = all(p.exists() for p in reps)
+        js("document.getElementById('del-selected').click()")
+        time.sleep(2.5)
+        sel["rowsAfter"] = js("document.querySelectorAll('#results .result').length")
+        sel["filesGone"] = not any(p.exists() for p in reps)
+        sel["barAfter"] = js("document.getElementById('selbar').hidden")
+        OUT["select"] = sel
         OUT["errors"] = json.loads(window.evaluate_js(
             "JSON.stringify(window.__errs || [])"))
 
@@ -338,7 +376,8 @@ class TestFrontend(IsolatedTest):
         self.assertEqual(
             set(p["api"]),
             {"health", "pick", "open", "results", "startRun", "runState",
-             "latestRun", "cancelRun", "rescan", "download", "deleteResult"})
+             "latestRun", "cancelRun", "rescan", "download", "deleteResult",
+         "deleteMany"})
 
     def test_exactly_one_panel_is_visible_at_a_time(self):
         p = self._run_probe()["load"]
@@ -397,6 +436,19 @@ class TestFrontend(IsolatedTest):
         self.assertEqual(d["armed"], "Delete?", "the first click must only arm it")
         self.assertEqual(d["after"]["rows"], 0)
         self.assertTrue(d["fileGone"])
+
+    def test_rows_can_be_selected_and_deleted_together(self):
+        s = self._run_probe()["select"]
+        self.assertFalse(s["bar"], "selection bar hidden with rows on screen")
+        self.assertEqual((s["boxes"], s["runBoxes"]), (3, 2))
+        self.assertEqual(s["afterRunBox"], "1 selected", "the newest run holds one row")
+        self.assertTrue(s["allIndeterminate"])
+        self.assertEqual(s["afterAll"], "3 selected")
+        self.assertEqual(s["armed"], "Delete 3?")
+        self.assertTrue(s["stillThere"], "the first click must only arm it")
+        self.assertEqual(s["rowsAfter"], 0)
+        self.assertTrue(s["filesGone"])
+        self.assertTrue(s["barAfter"])
 
     def test_the_skip_toggle_waits_for_a_folder(self):
         """It only means something for a folder run; a picked file is always
