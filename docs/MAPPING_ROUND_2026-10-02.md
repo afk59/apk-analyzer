@@ -202,7 +202,7 @@ the library's *core* work. Applied to vendor SDKs:
 
 | Root | Why not |
 |---|---|
-| `ai.onnxruntime` (`@ohos/onnxruntime` exists) | Rule 1: ONNX models run natively via CANN Kit's offline conversion (`harmonyos-guides/ai/cann-kit/model-conversion`). The native row needs a `@kit.CANNKit` token and doc URL the engine does not have yet — a maintainer decision. |
+| `ai.onnxruntime` → OHPM (`@ohos/onnxruntime`) | Rule 1. The native row was written in round 3 (below) — to MindSpore Lite Kit, not CANN Kit. |
 | `com.youth.banner` (`@ohos/banner`), `com.aigestudio.wheelpicker` (`@ohos/wheelpicker`), `com.astuetz` (`@ohos/pagerslidingtabstrip`), `net.cachapa.expandablelayout` | Rule 1: Swiper, TextPicker, Tabs and animation are built-in ArkUI. |
 | `org.spongycastle` (`@ohos/asn1*`, `@ohos/crypto-js`) | BouncyCastle repackaged; crypto is @kit.CryptoArchitectureKit, and an ASN.1 parser alone is not the library's core. |
 | `us.zoom.plist` (`@ohos/dd-plist`) | Zoom's internal plist code, not dd-plist. Name match only. |
@@ -233,3 +233,21 @@ two files whose analysis exhausted memory on this machine tonight.
 > Coverage rose on all 14 (e.g. `hk.ust.student` 79.0 → 90.1 %, `com.mpsaps.cmoffice` 75.8 →
 > 93.1 %), but the "before" reports predate the 2026-09-24 formula change (OHPM counted as
 > covered), so those deltas mix two effects. The unmapped counts above are the clean measure.
+
+---
+
+# Round 3 — `mapping.json` v1.13.0 → v1.14.0 (+1)
+
+`ai.onnxruntime` → **`@kit.MindSporeLiteKit`** (medium). Round 2 had proposed CANN Kit, which
+would have needed a new kit token: CANN Kit is an NDK kit with no `@kit.CANNKit` import anywhere
+in the corpus. MindSpore Lite Kit is an open kit with a real token and does the same job:
+`harmonyos-guides/ai/mindspore-lite-kit/about-this-kit` lists ONNX among supported models,
+`using-mindspore-lite-for-model-conversion` converts ONNX to `.ms`, and the operator appendix is
+written against ONNX Opset 18. Exactly the existing `org.tensorflow.lite` row. No engine change.
+
+## HSBC and Calm removed — maintainer decision
+
+Both apps exhausted memory on this machine and stopped background runs twice. They are deleted
+(inputs, reports, side-cars) and will not be analysed again. Three rows now match nothing in the
+remaining 42-app corpus and stay **predicted only**: `org.msgpack` (HSBC), `app.rive` (Calm),
+`ai.onnxruntime` (HSBC). All three are grounded; they are kept for the next app that ships them.

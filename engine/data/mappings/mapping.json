@@ -1,5 +1,5 @@
 {
-  "version": "1.13.0",
+  "version": "1.14.0",
   "last_updated": "2026-10",
   "namespace_mappings": [
     {
@@ -2753,6 +2753,14 @@
       "harmony_import": "@kit.PushKit",
       "confidence": "medium",
       "note": "Push delivery -> `import { pushService } from '@kit.PushKit'`. JPush's own HarmonyOS SDK is @jg/push (publisher 极光推送), on Push Kit. cn.jiguang (shared core/analytics) is not claimed."
+    },
+    {
+      "android_namespace": "ai.onnxruntime",
+      "android_display": "ONNX Runtime",
+      "harmony_kit": "@kit.MindSporeLiteKit",
+      "harmony_import": "@kit.MindSporeLiteKit",
+      "confidence": "medium",
+      "note": "On-device inference. `mindSporeLite.loadModelFromFile` (api/@ohos.ai.mindSporeLite.d.ts, exported by kits/@kit.MindSporeLiteKit.d.ts); ONNX models are converted offline to .ms (harmonyos-guides/ai/mindspore-lite-kit/using-mindspore-lite-for-model-conversion), and the supported operators are listed against ONNX Opset 18 (appendix/mindspore-lite-kit-operator-list). Same row as org.tensorflow.lite. No runtime ONNX loading; operators outside the list block conversion. @ohos/onnxruntime exists but native-first rules it out."
     }
   ],
   "permission_mappings": [
