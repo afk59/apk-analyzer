@@ -12,8 +12,8 @@ Last updated **2026-10-02**, end of an unattended overnight session — see the 
 | App | Working. `run.bat` → window, pickers, analysis with live progress, results library (with ×-delete), APK download by package name (comma-separated batch, downloads overlap analysis), PC program folders as a per-binary batch. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **254**, `python -m unittest discover -s tests -t .`. ~4 min with `MA_TEST_APK` pointing at the 3 MB corpus APK (see below); ~21 min without. Three full passes on 2026-10-02, all green. |
-| `mapping.json` | **v1.12.0** — 326 namespaces, 67 permissions. v1.11.1 was fully audited; the 15 rows added 2026-10-02 are grounded but their absorption is **predicted, not yet confirmed** (below). `ohpm_mapping.json` v1.2.0 (16), `win_mapping.json` v1.2.0 (101). |
+| Tests | **258**, `python -m unittest discover -s tests -t .`. ~4 min with `MA_TEST_APK` pointing at the 3 MB corpus APK (see below); ~21 min without. Five full passes on 2026-10-02, all green. |
+| `mapping.json` | **v1.13.0** — 335 namespaces, 67 permissions. `ohpm_mapping.json` v1.3.0 (29), `win_mapping.json` v1.2.0 (101). The 2026-10-02 rows are confirmed on real runs (435/435 and 898/898) except `org.msgpack` and `app.rive`, predicted only — see `MAPPING_ROUND_2026-10-02.md`. |
 | Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
 
 ## The two branches
@@ -118,7 +118,7 @@ instances, 0 shadowed, 0 leak-back.
 
 | Item | Note |
 |---|---|
-| **Confirm the v1.12.0 APK absorption** | Run `org.wikipedia`, `com.shazam.android`, `de.danoeh.antennapod`, `com.calm.android` (re-download them) and corpus `com.ctm`, `com.foodgulu`, HSBC, `Octopus` under v1.12.0; compare with `MAPPING_ROUND_2026-10-02.md`. The overnight run was reaped on low memory before its first APK finished. |
+| Confirm HSBC (coil, msgpack) and Calm (rive) | The only rows still predicted-only. Both files exhaust memory here when anything else runs; run each alone. |
 | Duolingo dies in androguard | `get_app_name()` → `struct.error` in `ARSCParser`. Engine bug with a 3-line repro in the session log; fix proposed, not applied (engine is frozen). |
 | Audit `win_mapping.json` | Never audited. `version.dll` → BasicServicesKit names `bundleManager`, which is AbilityKit. |
 | Sync `v2-nocomment` | The three 2026-10-02 commits are local on `v2`, not pushed, not cherry-picked. |

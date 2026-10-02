@@ -655,3 +655,47 @@ sonrası geri gelmedi. SCHEMA_VERSION 3 → 4 (`runs.manifest`).
 
 Testler: 219 → **254**; tam paket **3 kez** koşuldu, üçü de 254/254 OK (~4 dk),
 artı özellik+UI modülleri ayrıca bir kez daha (58/58).
+
+## 2026-10-02 (akşam) — çoklu seçim, mapping doğrulaması, OHPM turu
+
+Bakımcı tekli silmeyi onayladı; istenen: çoklu/tümünü seçip silme, mapping
+testleri ve "resmi doküman / OHPM ile karşılanabiliyorsa mapping'i artır".
+
+**Çoklu seçim (`441b2220`).** Her satırda kutu, her koşu başlığında "bu koşuyu
+seç", üstte "Tümünü seç" + seçili sayısı + "Seçilenleri sil" (ilk tık
+"3 rapor silinsin mi?", ikinci tık siler). Yeni uç `POST /api/results/delete-many`:
+seçimi tek geçişte siler — tek manifest taraması, **tek rescan** (300 satırlık
+bir PC batch'i için 300 rescan değil). Korumayı geçemeyen öğe `refused` ile
+döner, diğerleri yine silinir. Tekli silme artık aynı yolun ince sarmalayıcısı.
+
+**Tur 1 doğrulaması (v1.12.0).** Gece yarıda kalan koşu yeniden yapıldı; makine
+yine HSBC'de belleği bitirince durduruldu, ama 8 uygulamadan 7'si tamamlandı:
+**tahmin 435 = gerçek 435**, sızıntı 0, beklenmeyen 0, yeni eşlenmeyen 0.
+HSBC doğrulanmadı (yalnızca coil satırları).
+
+**Tur 2 (`9b61f8fa`) — mapping v1.13.0 (+9), ohpm v1.3.0 (+13).** Önbellekteki
+OHPM kayıt defteri (3.499 paket) 47 uygulamadaki 2.457 eşlenmemiş kütüphane
+köküyle eşleştirildi:
+- OpenHarmony'nin kendi `@ohos/*` portlarından 12 satır: jjwt, DiskLruCache,
+  WebRTC'nin PeerConnection yarısı, **AltBeacon (v1'in "kesin boşluk" dediği
+  açık kapandı)**, gRPC, libpag, **Rive (tur 1'deki yanlış reddimi geri aldım —
+  port varmış, yanlış adla aramışım)**, FlatBuffers, Linphone, MessagePack,
+  Rebound, Commons Compress; artı GrowingIO'nun kendi SDK'sı.
+- "Önce native" kuralı satıcı SDK'larında da uygulandı: AMap → MapKit/LocationKit,
+  Getui/JPush → PushKit (notlarda satıcının resmi HarmonyOS SDK'sı yazılı);
+  Realm → ArkData; RN kamera modülleri → CameraKit; ARouter → ArkUI.
+- Her paket canlı kayıt defterinde doğrulandı (negatif kontrolle); satıcı paketi
+  yalnızca yayıncı satıcının kendisiyse kabul edildi.
+- **Doğrulandı:** 14 korpus uygulaması ön planda, tek tek yeniden analiz edildi:
+  **tahmin 898 = gerçek 898**, sızıntı/beklenmeyen/yeni 0. Örn. hk.ust.student
+  507 → 272 eşlenmeyen, cmoffice 144 → 41. msgpack (yalnız HSBC'de) ve rive
+  (yalnız Calm'da) yalnızca tahmin.
+- Reddedilenler gerekçeleriyle `MAPPING_ROUND_2026-10-02.md`'de (onnxruntime —
+  CANN Kit token kararı bakımcıda; Stripe — OHPM'de yok; banner/wheelpicker —
+  ArkUI'de yerleşik…).
+
+**Bellek notu:** HSBC ve Calm bu makinede analiz sırasında arka plan işlerini
+durduracak kadar bellek tüketiyor; ikinci turun doğrulaması bu yüzden ön planda,
+tek tek ve bu ikisi hariç yapıldı.
+
+Testler 254 → **258**; tam paket iki kez koşuldu, ikisi de 258/258 OK.
