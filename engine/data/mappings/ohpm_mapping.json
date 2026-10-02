@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "last_updated": "2026-08",
+  "version": "1.2.0",
+  "last_updated": "2026-10",
   "tier": "ohpm",
   "ohpm_mappings": [
     {
@@ -182,6 +182,18 @@
       "source_repo": "https://gitcode.com/openharmony-tpc/openharmony_tpc_samples/tree/master/metadata-extractor",
       "popularity": 96,
       "note": "XMP parsing rides along with the metadata-extractor port, which reads XMP alongside EXIF/IPTC/ICC. Direct port of Drew Noakes' metadata-extractor. NOTE: native @kit.ImageKit (getImageProperty / getImagePropertySync / modifyImageProperty) already covers image EXIF, which is the common case; this package earns its row only on the superset - IPTC/XMP/ICC and audio/video container metadata. If an app uses com.drew only for image EXIF, prefer the native path."
+    },
+    {
+      "android_namespace": "io.getstream.photoview",
+      "android_display": "PhotoView (Stream fork)",
+      "ohpm_package": "@ohos/photoview",
+      "install_cmd": "ohpm install @ohos/photoview",
+      "category": "UI > Media Component > Image Display",
+      "description": "Implementation of ImageView for ohos that supports zooming, by various touch gestures.",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/openharmony-sig/ohos_photoview",
+      "popularity": 364,
+      "note": "Stream's maintained fork of com.github.chrisbanes.photoview -- same classes (PhotoView, PhotoViewAttacher, CustomGestureDetector), so it follows that row to the same port. Package re-checked against the registry 2026-10-02 (body is a dict)."
     }
   ]
 }
