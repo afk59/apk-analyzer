@@ -371,3 +371,45 @@ class TestAggregateEntries(JobsTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+STUB_STDERR_FLOOD = """
+import json, sys
+sys.stderr.write("w" * (1 << 20))      # far past any OS pipe buffer
+sys.stderr.write("LAST-LINE" + chr(10))
+sys.stderr.flush()
+print(json.dumps({"stage": "error", "error": None}))
+sys.exit(3)
+"""
+
+
+class TestRealReaderStderr(JobsTest):
+    """The REAL _run_one (not the mirror above), with only the command swapped.
+
+    stderr used to be read after stdout ended, so a worker that wrote more than
+    the pipe buffer to stderr before its terminal line blocked on that write
+    while the runner blocked on stdout (audit 2026-10-03, BUG-17)."""
+
+    def test_a_worker_flooding_stderr_does_not_deadlock(self):
+        from app.services import jobs
+        script = self.tmp / "flood.py"
+        script.write_text(STUB_STDERR_FLOOD, encoding="utf-8")
+        self.runner = jobs.JobRunner()
+        real_popen = jobs.subprocess.Popen
+
+        def popen(cmd, **kw):
+            if "app.worker" in cmd:
+                cmd = [sys.executable, "-u", str(script), cmd[cmd.index("app.worker") + 1]]
+            return real_popen(cmd, **kw)
+
+        jobs.subprocess.Popen = popen
+        try:
+            run = self.wait(self.runner.submit(self.touch_inputs("f.apk"), "hmos"),
+                            timeout=30)
+        finally:
+            jobs.subprocess.Popen = real_popen
+        self.assertEqual(len(run.failures), 1)
+        # The tail of what it wrote is what the failure row reports.
+        err = run.failures[0]["error"]
+        self.assertNotIn("Error", err, "the stub itself failed, not the reader")
+        self.assertIn("LAST-LINE", err)

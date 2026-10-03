@@ -42,6 +42,7 @@ BEHAVIOUR THAT IS NOT NEGOTIABLE, and why
         someone is watching it.
 """
 
+import collections
 import json
 import subprocess
 import sys
@@ -56,6 +57,29 @@ from app import config
 # it is terminated. Generous enough for a normal interpreter teardown, short
 # enough that a lingering 10 GB process cannot slow down the next file.
 _REAP_GRACE_SEC = 20
+
+
+def _drain(stream):
+    """Read a child's stderr on its own thread, keeping the tail.
+
+    stdout is the protocol and is read line by line; stderr used to be read
+    only after stdout ended (and never, for the aggregate step). A child that
+    writes more than the OS pipe buffer to stderr then blocks on it while we
+    block on stdout -- a deadlock (audit 2026-10-03, BUG-17). Returns the
+    thread and a function giving what was read.
+    """
+    chunks = collections.deque(maxlen=64)      # last ~256 KB is plenty
+
+    def pump():
+        try:
+            for chunk in iter(lambda: stream.read(4096), ""):
+                chunks.append(chunk)
+        except Exception:
+            pass
+
+    t = threading.Thread(target=pump, daemon=True, name="stderr-drain")
+    t.start()
+    return t, lambda: "".join(chunks)
 
 
 class _Cancelled(Exception):
@@ -410,6 +434,7 @@ class JobRunner:
                       "detail": f"Could not build the batch workbooks: {exc}"})
             return
 
+        drain, _ = _drain(proc.stderr)
         for line in proc.stdout:
             line = line.strip()
             if not line:
@@ -428,6 +453,7 @@ class JobRunner:
                       "detail": "The workbook step did not exit - terminating it."})
             proc.terminate()
         finally:
+            drain.join(timeout=5)
             # Both pipes, or the reader leaks a file handle per run -- surfaced
             # as a ResourceWarning by the test suite.
             for stream in (proc.stdout, proc.stderr):
@@ -545,6 +571,7 @@ class JobRunner:
             return
 
         run.proc = proc
+        drain, stderr_text = _drain(proc.stderr)
         row, error, saw_done = None, None, False
         for line in proc.stdout:
             line = line.strip()
@@ -599,7 +626,11 @@ class JobRunner:
                 except Exception:
                     pass
         finally:
-            stderr = (proc.stderr.read() or "").strip() if proc.stderr else ""
+            # The child has exited (or been killed), so its end of the pipe is
+            # closed and the drain thread is finishing; the timeout only covers
+            # a grandchild that inherited the handle.
+            drain.join(timeout=5)
+            stderr = stderr_text().strip()
             # Closed, not just read: one leaked handle per file adds up over a
             # program folder of hundreds of binaries.
             try:
