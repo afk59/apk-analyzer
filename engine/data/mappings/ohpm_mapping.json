@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "last_updated": "2026-08",
+  "version": "1.3.0",
+  "last_updated": "2026-10",
   "tier": "ohpm",
   "ohpm_mappings": [
     {
@@ -182,6 +182,161 @@
       "source_repo": "https://gitcode.com/openharmony-tpc/openharmony_tpc_samples/tree/master/metadata-extractor",
       "popularity": 96,
       "note": "XMP parsing rides along with the metadata-extractor port, which reads XMP alongside EXIF/IPTC/ICC. Direct port of Drew Noakes' metadata-extractor. NOTE: native @kit.ImageKit (getImageProperty / getImagePropertySync / modifyImageProperty) already covers image EXIF, which is the common case; this package earns its row only on the superset - IPTC/XMP/ICC and audio/video container metadata. If an app uses com.drew only for image EXIF, prefer the native path."
+    },
+    {
+      "android_namespace": "io.getstream.photoview",
+      "android_display": "PhotoView (Stream fork)",
+      "ohpm_package": "@ohos/photoview",
+      "install_cmd": "ohpm install @ohos/photoview",
+      "category": "UI > Media Component > Image Display",
+      "description": "Implementation of ImageView for ohos that supports zooming, by various touch gestures.",
+      "confidence": "high",
+      "source_repo": "https://gitcode.com/openharmony-sig/ohos_photoview",
+      "popularity": 364,
+      "note": "Stream's maintained fork of com.github.chrisbanes.photoview -- same classes (PhotoView, PhotoViewAttacher, CustomGestureDetector), so it follows that row to the same port. Package re-checked against the registry 2026-10-02 (body is a dict)."
+    },
+    {
+      "android_namespace": "io.jsonwebtoken",
+      "android_display": "jjwt (Java JWT)",
+      "ohpm_package": "@ohos/jsonwebtoken",
+      "install_cmd": "ohpm install @ohos/jsonwebtoken",
+      "category": "Security > Authentication > JWT Authentication",
+      "description": "适用于openharmony环境的JSON Web Token 实现",
+      "confidence": "high",
+      "popularity": 937,
+      "note": "JWT create/parse/verify. Natively, JWT appears only as Account Kit's ID token (harmonyos-guides/application-services/account-kit/faqs) - not a general JWT library; @kit.CryptoArchitectureKit has the HMAC/RSA primitives but no token format, so the port earns the row. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "com.jakewharton.disklrucache",
+      "android_display": "DiskLruCache",
+      "ohpm_package": "@ohos/disklrucache",
+      "install_cmd": "ohpm install @ohos/disklrucache",
+      "category": "Storage and Database > Storage > Disk Cache Library",
+      "description": "专门为OpenHarmony打造的一款磁盘缓存库，通过LRU算法进行磁盘数据存取。",
+      "confidence": "high",
+      "popularity": 1920,
+      "note": "Name-for-name port of Jake Wharton's DiskLruCache (registry: 'disk cache library, LRU'). Hand-rolling it on @kit.CoreFileKit fileIo is the native alternative. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.webrtc",
+      "android_display": "WebRTC (peer connection)",
+      "ohpm_package": "@ohos/webrtc",
+      "install_cmd": "ohpm install @ohos/webrtc",
+      "category": "Media > Audio > Audio Transmission",
+      "description": "ArkTS interfaces of webrtc for OpenHarmony.",
+      "confidence": "medium",
+      "popularity": 377,
+      "note": "PeerConnection / ICE / SDP / DataChannel - the half v1.10.0 left unmapped because no kit does it. Native org.webrtc.audio (@kit.AudioKit) and org.webrtc.Camera (@kit.CameraKit) are longer prefixes and keep winning their packages. The port exposes ArkTS (W3C-style) interfaces, not org.webrtc's Java API, hence medium. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.altbeacon",
+      "android_display": "AltBeacon (android-beacon-library)",
+      "ohpm_package": "@ohos/beacon-library",
+      "install_cmd": "ohpm install @ohos/beacon-library",
+      "category": "Network Communication > Short-Range Communication > Bluetooth Communication",
+      "description": "Bluetooth tools, mainly involving beacon area monitoring and beacon equipment ranging",
+      "confidence": "medium",
+      "popularity": 356,
+      "note": "Beacon region monitoring and ranging - AltBeacon's own core work, which slice 2b found NO native counterpart for (ble.startBLEScan is transport only). Function matches the registry description; that it is a line-by-line port is not verified, hence medium. Closes a gap v1 recorded as confirmed. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "io.grpc",
+      "android_display": "gRPC Java",
+      "ohpm_package": "@ohos/grpc",
+      "install_cmd": "ohpm install @ohos/grpc",
+      "category": "Network Communication > Communication Protocol > RPC",
+      "description": "ohos_grpc_node是一个高性能的远程过程调用（RPC）框架,旨在简化和优化分布式系统中的服务通信.",
+      "confidence": "medium",
+      "popularity": 281,
+      "note": "gRPC client. v1 rejected io.grpc.okhttp -> NetworkKit because 'you need a gRPC client'; this is one (ohos_grpc_node, registry: Network Communication > RPC). API shape is grpc-node's, not grpc-java's stubs. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.libpag",
+      "android_display": "libpag (PAG)",
+      "ohpm_package": "@ohos/libpag",
+      "install_cmd": "ohpm install @ohos/libpag",
+      "category": "Graphics > Graphics Rendering > Animation Rendering > Cross-Platform Animation Rendering Engine",
+      "description": "libpag（便携式动画图形）文件的渲染库，可跨多个平台本地渲染 After Effects 动画",
+      "confidence": "high",
+      "popularity": 123,
+      "note": "Tencent PAG animation renderer; the port renders the same .pag files (registry: cross-platform After Effects animation rendering). Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "app.rive",
+      "android_display": "Rive runtime",
+      "ohpm_package": "@ohos/rive",
+      "install_cmd": "ohpm install @ohos/rive",
+      "category": "",
+      "description": "Rive animation engine for HarmonyOS/OpenHarmony - Lightweight, High Performance, Cross Platform vector animation library",
+      "confidence": "medium",
+      "popularity": 97,
+      "note": "Rive vector animation runtime for HarmonyOS. Reverses the 2026-10-02 round-1 rejection, which claimed no port existed - it was missed by searching for the wrong name. State-machine/data-binding parity unverified, hence medium. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "com.google.flatbuffers",
+      "android_display": "FlatBuffers",
+      "ohpm_package": "@ohos/flatbuffers",
+      "install_cmd": "ohpm install @ohos/flatbuffers",
+      "category": "Serialization > Binary",
+      "description": "Memory Efficient Serialization Library",
+      "confidence": "high",
+      "popularity": 96,
+      "note": "FlatBuffers serialization; same schema and wire format (registry: Serialization > Binary). Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.linphone",
+      "android_display": "Linphone SDK",
+      "ohpm_package": "@ohos/linphone",
+      "install_cmd": "ohpm install @ohos/linphone",
+      "category": "",
+      "description": "支持在鸿蒙设备上一对一的SIP音视频通话。",
+      "confidence": "medium",
+      "popularity": 77,
+      "note": "SIP voice/video calling. The port supports one-to-one calls only (registry description); conferencing and Linphone's full account/chat stack are not claimed. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.msgpack",
+      "android_display": "MessagePack",
+      "ohpm_package": "@ohos/msgpack",
+      "install_cmd": "ohpm install @ohos/msgpack",
+      "category": "Serialization > Binary",
+      "description": "This library is an implementation of MessagePack for TypeScript and JavaScript, providing a compact and efficient binary serialization format.",
+      "confidence": "high",
+      "popularity": 65,
+      "note": "MessagePack binary serialization; same wire format. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "com.facebook.rebound",
+      "android_display": "Rebound",
+      "ohpm_package": "@ohos/rebound",
+      "install_cmd": "ohpm install @ohos/rebound",
+      "category": "Graphics > Graphics Rendering > Animation Rendering > Spring Physics Simulation",
+      "description": "rebound is a simple library that models Spring dynamics for the purpose of driving physical animations.",
+      "confidence": "high",
+      "popularity": 44,
+      "note": "Name-for-name port of Facebook Rebound spring dynamics. ArkUI's springMotion curves are the native alternative for simple cases. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "org.apache.commons.compress",
+      "android_display": "Apache Commons Compress",
+      "ohpm_package": "@ohos/commons-compress",
+      "install_cmd": "ohpm install @ohos/commons-compress",
+      "category": "Compression > General Data Compression > gzip",
+      "description": "专门为OpenHarmony打造的一款用于处理压缩解压和归档格式的API库，致力于更轻便、更简单",
+      "confidence": "medium",
+      "popularity": 1583,
+      "note": "Archives and compressors (tar, 7z, ar, bzip2, xz...). zip/gzip alone are native - zlib in @kit.BasicServicesKit - so this row earns its place only on the superset, as metadata-extractor's does. Registry existence checked 2026-10-02 (body is a dict; negative control False)."
+    },
+    {
+      "android_namespace": "com.growingio",
+      "android_display": "GrowingIO SDK",
+      "ohpm_package": "@growingio/analytics",
+      "install_cmd": "ohpm install @growingio/analytics",
+      "category": "Tool Library > Third-Party SDK > Data Analytics SDK",
+      "description": "GrowingAnalytics for HarmonyOS SDK.",
+      "confidence": "high",
+      "popularity": 1186,
+      "note": "The vendor's own HarmonyOS SDK (publisher growingio). A vendor analytics SDK's core work is delivering events to that vendor's backend, which no kit does (hiAppEvent records, it does not deliver to GrowingIO) - so native-first does not apply. Covers com.growingio.android.* and the Flutter plugin namespace. Registry existence checked 2026-10-02."
     }
   ]
 }

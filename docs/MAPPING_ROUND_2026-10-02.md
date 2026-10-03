@@ -1,0 +1,253 @@
+# Mapping round — 2026-10-02
+
+`mapping.json` **v1.11.1 → v1.12.0**: namespaces **311 → 326 (+15)**.
+`ohpm_mapping.json` **v1.1.0 → v1.2.0**: **15 → 16 (+1)**.
+`win_mapping.json` **v1.1.0 → v1.2.0**: **92 → 101 (+9)**. Permissions unchanged.
+Append-only. Driven by apps this corpus did not contain, downloaded through the app's own new
+batch downloader, and grounded against `docs-ref/` per `MAPPING_DISCIPLINE.md`.
+
+## Source
+
+Five packages fetched in one run (`org.wikipedia, com.shazam.android, de.danoeh.antennapod,
+com.calm.android, com.duolingo`). Four analysed; Duolingo fails inside androguard (see the
+session log — engine bug, not a mapping question). **1,219 distinct unmapped namespaces, 364
+library roots** between the four.
+
+Ranking was by library root across apps, then every root was put through the gate: already
+covered by a prefix? recorded as rejected in an earlier round? native capability that does the
+library's *core* work? attested verbatim?
+
+## The rows
+
+| Prefix | Kit | Conf | Evidence (path · symbol) |
+|---|---|---|---|
+| `coil` (covers `coil3`) | `@kit.ImageKit` | medium | `kits/@kit.ImageKit.d.ts` · `image`; same as `com.bumptech.glide` / `com.squareup.picasso` |
+| `org.maplibre.android` | `@kit.MapKit` | medium | `harmonyos-guides/application-services/map-kit` · `import { map, mapCommon, MapComponent } from '@kit.MapKit'`; `…/tileoverlay`, `…/displaying-a-custom-map`; same as `com.mapbox` |
+| `com.j256.ormlite` | `@kit.ArkData` | medium | `kits/@kit.ArkData.d.ts` · `relationalStore`; same as `androidx.room` |
+| `com.orhanobut.hawk` | `@kit.ArkData` | medium | `kits/@kit.ArkData.d.ts` · `preferences` (encryption half named in the note) |
+| `com.fasterxml.uuid` | `@kit.ArkTS` | medium | `api/@ohos.util.d.ts` · `generateRandomUUID` (v4 only) |
+| `com.makeramen.roundedimageview` | `@kit.ArkUI` | high | `component/common.d.ts` · `borderRadius`, `border` |
+| `com.wang.avi` | `@kit.ArkUI` | medium | `component/loading_progress.d.ts` · `LoadingProgress` |
+| `com.skydoves.balloon` | `@kit.ArkUI` | medium | `component/common.d.ts` · `bindPopup` |
+| `com.flaviofaria.kenburnsview` | `@kit.ArkUI` | medium | ArkUI `animateTo` on scale/translate |
+| `dev.chrisbanes.snapper` | `@kit.ArkUI` | medium | `component/list.d.ts` · `scrollSnapAlign` |
+| `it.xabaras.android.recyclerview` | `@kit.ArkUI` | medium | `component/list_item.d.ts` · `swipeAction` |
+| `com.google.accompanist.pager` | `@kit.ArkUI` | high | `component/swiper.d.ts` · `Swiper` |
+| `com.google.accompanist.flowlayout` | `@kit.ArkUI` | high | `component/flex.d.ts` · `wrap?: FlexWrap` |
+| `com.google.accompanist.drawablepainter` | `@kit.ArkUI` | medium | `api/@ohos.arkui.drawableDescriptor.d.ts` · `DrawableDescriptor` (exported by `@kit.ArkUI`) |
+| `jp.wasabeef.picasso` | `@kit.ArkGraphics2D` | medium | `api/@ohos.effectKit.d.ts` · `createEffect`, `blur`, `grayscale`, `setColorMatrix` |
+| `io.getstream.photoview` (OHPM) | `@ohos/photoview` | high | fork of `com.github.chrisbanes.photoview`, same classes; registry existence re-checked (`isinstance(body, dict)`, with a negative control) |
+
+Accompanist is mapped **per module**, the way Expo was: it is a grab-bag of Compose helpers, and
+a blanket prefix would claim modules that have no single counterpart.
+
+Prefixes are at most four segments, because the engine keys namespaces at four
+(`apk_engine.py`, `ns_key = ".".join(parts[:4])`) and matches with `startswith`. A five-segment
+prefix can never match. `coil` was checked to claim nothing but `coil.*` / `coil3.*` (335 rows
+across both corpora, zero others).
+
+## Rejected, and why
+
+| Root | apps | Why not |
+|---|---|---|
+| `org.jsoup` | 2 | HTML **parser**. ArkTS's `xml` is XML-only; there is no native HTML DOM parser. (Its fetch helper was already rejected as a network row in v1.) |
+| `com.google.re2j` | 2 | A regex engine. Regex is the language's own `RegExp`, not a kit, and RE2's linear-time guarantee has no counterpart. |
+| `com.lyft.kronos` | 1 | SNTP client. No NTP API in the `.d.ts` or the docs corpus; `systemDateTime` reads the clock, it does not sync it. **Gap.** |
+| `android.service.quicksettings` | 1 | Quick Settings tiles. No third-party control-centre tile API found in the docs. **Gap, unconfirmed** — re-check if the docs are re-crawled. |
+| `org.maplibre.geojson` | 1 | GeoJSON data model. No kit does that job; `com.mapbox`'s blanket row is not a precedent worth repeating. |
+| `jp.co.cyberagent.android` (GPUImage) | 1 | Key truncates at four segments, so the only usable prefix would claim every CyberAgent library. Also: live camera filter chains have no counterpart. |
+| ~~`app.rive`~~ | 1 | ~~Rive has no OHPM port.~~ **Wrong — reversed in round 2.** `@ohos/rive` exists; it was missed by searching for the wrong name. Exactly the NOT-FOUND-means-unconfirmed trap. |
+| `com.google.accompanist` (other modules) | — | Only `pager`, `flowlayout`, `drawablepainter` occur; nothing else is claimed. |
+| `com.jayway.jsonpath`, `net.minidev.json` | 1 | JSONPath query language — no native counterpart; json-smart alone is too small to earn a row. |
+| `com.datadog`, `com.amplitude`, `com.appsflyer`, `com.iterable`, `com.auth0`, `com.perimeterx`, `com.hcaptcha`, `com.spotify.sdk`, `com.apple.mediaservices`, `com.facebook.*` | 1 | Vendor SDKs — the standing decision. The vendor ships (or does not ship) a HarmonyOS SDK; no kit replaces their backend. |
+| `org.jctools`, `org.reactivestreams`, `_COROUTINE`, `com.getkeepsafe.relinker`, `org.bytedeco.javacpp`, `org.objectweb.asm` | 1–2 | Infrastructure: concurrency primitives, interfaces, native-library loading, bytecode. |
+| `com.google.api` / `rpc` / `type` / `longrunning` / `logging` / `cloud` | 1 | Protobuf message classes — standing decision from v1. |
+| `com.google.androidbrowserhelper` | 1 | Trusted Web Activity / Custom Tabs launcher. ArkWeb is an in-app web view, a different thing. |
+| `com.bytehamster.lib` | 1 | SearchPreference — a settings-screen UI with no HarmonyOS preference-screen abstraction (same reason `android.preference.PreferenceActivity` was cut in Sprint 12). |
+| `org.conscrypt`, `android.security.NetworkSecurityPolicy`, `com.google.firebase` (plumbing) | 3–4 | Standing decisions, unchanged. |
+
+## Absorption — predicted
+
+Replay of the real match loop (longest-prefix-first, break on first hit) over the side-cars:
+
+| | 4 new apps | 43-app corpus |
+|---|---|---|
+| distinct namespaces absorbed | **264** | **147** |
+| row instances absorbed | **270** | **175** |
+| rows shadowed by a pre-existing rule | **0** | **0** |
+| new rules matching nothing | 0 | 12 (they come from the new apps) |
+
+Heaviest: `coil` (165 ns in the new apps, 144 in the corpus — `com.ctm`, `com.foodgulu`,
+`hk.com.hsbc.hsbchkmobilebanking`), `com.skydoves.balloon` (18 ns / 23 rows, 2 apps),
+`org.maplibre.android` (19).
+
+## Absorption — confirmed (7 of 8 apps)
+
+The first confirming run was reaped by the host on low memory overnight. Re-run on
+2026-10-02 evening through the app's own queue (`app.services.jobs`), one worker per APK, under
+v1.12.0, compared per app against the side-cars written before the round:
+
+| App | unmapped before | after | absorbed | predicted | leak-back | unexpected | new |
+|---|---|---|---|---|---|---|---|
+| `com.calm.android` | 997 | 828 | 169 | 169 | 0 | 0 | 0 |
+| `com.ctm` | 1773 | 1646 | 127 | 127 | 0 | 0 | 0 |
+| `org.wikipedia` | 158 | 76 | 82 | 82 | 0 | 0 | 0 |
+| `Octopus` | 361 | 324 | 37 | 37 | 0 | 0 | 0 |
+| `de.danoeh.antennapod` | 80 | 61 | 19 | 19 | 0 | 0 | 0 |
+| `com.foodgulu` | 992 | 991 | 1 | 1 | 0 | 0 | 0 |
+| `com.shazam.android` | 47 | 47 | 0 | 0 | 0 | 0 | 0 |
+| **total** | | | **435** | **435** | **0** | **0** | **0** |
+
+**HSBC was not confirmed**: the host reaped the run again while HSBC (the 328 MB file) was in
+flight. Its predicted share is the `coil` rows only.
+
+---
+
+# Windows (`win_mapping.json`)
+
+Source: ShareX's 316 binaries run as a program-folder batch, plus WinRAR. After the existing
+92 rows, **17 distinct DLLs** stayed unmapped.
+
+| DLL | Kit | Conf | Evidence |
+|---|---|---|---|
+| `gdiplus.dll` | `@kit.ArkGraphics2D` | medium | `api/@ohos.graphics.drawing.d.ts`; same as `gdi32.dll` |
+| `msimg32.dll` | `@kit.ArkGraphics2D` | medium | `ShaderEffect.createLinearGradient` (`api/@ohos.graphics.drawing.d.ts`) |
+| `windowscodecs.dll` | `@kit.ImageKit` | medium | `createImageSource`, `createImagePacker` (`api/@ohos.multimedia.image.d.ts`) |
+| `usp10.dll` | `@kit.ArkUI` | medium | text engine + `@ohos.graphics.text`; same as `harfbuzz.dll`, `dwrite.dll` |
+| `imm32.dll` | `@kit.IMEKit` | medium | `inputMethod.getController`, `attach` (`api/@ohos.inputMethod.d.ts`) |
+| `winspool.drv` | `@kit.BasicServicesKit` | medium | `print.print(files)` (`api/@ohos.print.d.ts`, exported by the kit) |
+| `shcore.dll` | `@kit.ArkUI` | medium | `display` `densityDPI` / `densityPixels` (`api/@ohos.display.d.ts`) |
+| `avicap32.dll` | `@kit.CameraKit` | medium | `camera.getCameraManager` (`api/@ohos.multimedia.camera.d.ts`) |
+| `uxtheme.dll` | `@kit.ArkUI` | **low** | `ThemeControl` / `CustomTheme`; owner-drawn theme parts genuinely differ |
+
+**Not mapped, and why:**
+
+| DLL | Why not |
+|---|---|
+| `mscoree.dll` (103 binaries) | The .NET runtime loader. There is no CLR on HarmonyOS; a .NET binary is a rewrite, and a kit row would say otherwise — same reasoning as Hermes. It is also the most common unmapped DLL in any .NET program folder, which is exactly why it must stay visible. |
+| `perl532.dll`, `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, `libwinpthread-1.dll` | Language runtimes bundled with exiftool / MinGW. Not capabilities. |
+| `liblzma-5__.dll` | LZMA/xz. `zlib` in `@kit.BasicServicesKit` is deflate/gzip only. **Gap.** |
+| `wintrust.dll` | Authenticode verification. Signature checks are the OS's job at install time; no app API. |
+| `d3dcompiler_47_cor3.dll` | HLSL shader compiler. No counterpart. |
+| `dwmapi.dll` | DWM frame and composition attributes. Window chrome is system-drawn; nothing to point at honestly. |
+
+**Confirmed with the real engine** (`exe_engine.analyze_exe`, old mapping from git vs new, same
+binaries): unmapped-DLL instances **166 → 155** over 319 binaries, plus `ffmpeg.exe` separately
+(**2 → 0**, gaining `@kit.CameraKit`). Every one of the 9 rows matched something; no binary lost
+a kit or gained an unmapped DLL. Windows matching is by exact DLL name, so shadowing cannot occur.
+
+> **Seen in passing, not changed:** the existing `version.dll` row says
+> "`@ohos.bundleManager` via BasicServicesKit", but `bundleManager` is AbilityKit. The Windows
+> mapping has not had the audit `mapping.json` had on 2026-08-30. Worth doing.
+
+
+---
+
+# Round 2 — OHPM ports and vendor SDKs (same day)
+
+`mapping.json` **v1.12.0 → v1.13.0** (+9 native), `ohpm_mapping.json` **v1.2.0 → v1.3.0** (+13).
+
+Asked for directly: *"if the official docs or OHPM can cover it, grow the mapping."* Round 1
+searched by capability; this round searched the **registry**. The cached OHPM sweep
+(`engine/data/reference/ohpm_registry_cache.json`, 3,499 packages, complete) was matched
+against every library root still unmapped across the 43-app corpus and the four new apps
+(2,457 roots). Two filters made that tractable:
+
+1. **The `@ohos/*` family** (322 packages) — OpenHarmony TPC/SIG's own ports, mostly
+   name-for-name ports of Android libraries. Matching on the port's name token found 12 real
+   ports among the noise.
+2. **Vendors' own HarmonyOS SDKs**, accepted only when the registry **publisher** is the vendor
+   (高德开放平台 for `@amap/*`, `getui`, `极光推送` for `@jg/*`, `growingio`).
+
+Every package was existence-checked against the live registry (`isinstance(body, dict)`), with a
+made-up package name as the negative control (False).
+
+## Native-first decides vendor SDKs too
+
+Rule 1 says: if a kit does the capability, no OHPM row. Rule 5 says: ask whether the kit does
+the library's *core* work. Applied to vendor SDKs:
+
+- **Maps, location, search, push** — the kit does the core work (Map Kit renders and searches,
+  Location Kit positions, Push Kit delivers; Getui's and JPush's own HarmonyOS SDKs ride on Push
+  Kit). **Native row**, with the vendor's official HarmonyOS SDK named in the note for an app
+  that must stay on that vendor's data or backend.
+- **Analytics (GrowingIO)** — the core work is delivering events to the vendor's backend; no kit
+  does that. **OHPM row** to the vendor's own SDK.
+
+## The rows
+
+| Prefix | Target | Conf | Basis |
+|---|---|---|---|
+| `io.jsonwebtoken` | `@ohos/jsonwebtoken` | high | JWT natively only as Account Kit's ID token |
+| `com.jakewharton.disklrucache` | `@ohos/disklrucache` | high | name-for-name port |
+| `org.webrtc` | `@ohos/webrtc` | medium | the PeerConnection half v1.10.0 left open; `org.webrtc.audio` / `.Camera` native rows still win |
+| `org.altbeacon` | `@ohos/beacon-library` | medium | **closes a gap v1 recorded as confirmed**; monitoring + ranging match, port lineage unverified |
+| `io.grpc` | `@ohos/grpc` | medium | v1 wanted "a gRPC client" for `io.grpc.okhttp` — this is one |
+| `org.libpag` | `@ohos/libpag` | high | same .pag files |
+| `app.rive` | `@ohos/rive` | medium | reverses round 1 |
+| `com.google.flatbuffers` | `@ohos/flatbuffers` | high | same wire format |
+| `org.linphone` | `@ohos/linphone` | medium | one-to-one SIP only |
+| `org.msgpack` | `@ohos/msgpack` | high | same wire format |
+| `com.facebook.rebound` | `@ohos/rebound` | high | name-for-name port |
+| `org.apache.commons.compress` | `@ohos/commons-compress` | medium | superset of native zip/gzip, like metadata-extractor |
+| `com.growingio` | `@growingio/analytics` | high | vendor's own SDK |
+| `io.realm` | `@kit.ArkData` | medium | `@ohos/realm-core` is only the C++ core — pointing there would overstate it |
+| `org.reactnative.camera`, `com.lwansbrough.RCTCamera` | `@kit.CameraKit` | medium | RN camera modules |
+| `com.alibaba.android.arouter` | `@kit.ArkUI` | medium | `NavPathStack`, as `androidx.navigation` |
+| `com.amap.api.maps` / `.services` | `@kit.MapKit` | medium | note names `@amap/amap_lbs_map3d` / `_search` |
+| `com.amap.api.location` | `@kit.LocationKit` | medium | note names `@amap/amap_lbs_location` |
+| `com.igexin`, `cn.jpush` | `@kit.PushKit` | medium | notes name `@getui/push`, `@jg/push` |
+
+## Not written, and why
+
+| Root | Why not |
+|---|---|
+| `ai.onnxruntime` → OHPM (`@ohos/onnxruntime`) | Rule 1. The native row was written in round 3 (below) — to MindSpore Lite Kit, not CANN Kit. |
+| `com.youth.banner` (`@ohos/banner`), `com.aigestudio.wheelpicker` (`@ohos/wheelpicker`), `com.astuetz` (`@ohos/pagerslidingtabstrip`), `net.cachapa.expandablelayout` | Rule 1: Swiper, TextPicker, Tabs and animation are built-in ArkUI. |
+| `org.spongycastle` (`@ohos/asn1*`, `@ohos/crypto-js`) | BouncyCastle repackaged; crypto is @kit.CryptoArchitectureKit, and an ASN.1 parser alone is not the library's core. |
+| `us.zoom.plist` (`@ohos/dd-plist`) | Zoom's internal plist code, not dd-plist. Name match only. |
+| `org.hamcrest` (`@ohos/hamcrest`) | Test matchers shipped by accident; no runtime role. |
+| `com.stripe.android` (4 apps, 108k methods) | No Stripe package on OHPM. Vendor gap. |
+| `com.alipay.alipaysecuritysdk` etc. (7 apps) | `@cashier_alipay/cashiersdk` is the payment SDK (already mapped from `com.alipay.sdk.app`); that it covers the device-security SDK is not shown. |
+| `com.getui.gtc`, `cn.jiguang` | Shared vendor cores, not the push capability. |
+
+## Absorption — predicted, then confirmed
+
+Predicted over all 47 apps: **998 namespaces / 1,245 row instances, 0 shadowed**, every rule
+matching something.
+
+Confirmed by re-analysing **14 corpus apps** (12–130 MB) with the real worker, in the
+foreground, one at a time, under v1.13.0, against their pre-round side-cars (rounds 1 and 2
+together, since those side-cars predate both):
+
+| | predicted | absorbed | leak-back | unexpected | new unmapped |
+|---|---|---|---|---|---|
+| 14 apps | **898** | **898** | 0 | 0 | 0 |
+
+Largest: `hk.ust.student` 507 → 272 (gRPC), `com.ctm` 1773 → 1450 (WebRTC, Linphone, JPush, coil),
+`com.mpsaps.cmoffice` 144 → 41 (WebRTC's PeerConnection half), `com.bochk.app.aos` 498 → 405.
+
+Two rows are **predicted only**: `org.msgpack` (only in HSBC) and `app.rive` (only in Calm) — the
+two files whose analysis exhausted memory on this machine tonight.
+
+> Coverage rose on all 14 (e.g. `hk.ust.student` 79.0 → 90.1 %, `com.mpsaps.cmoffice` 75.8 →
+> 93.1 %), but the "before" reports predate the 2026-09-24 formula change (OHPM counted as
+> covered), so those deltas mix two effects. The unmapped counts above are the clean measure.
+
+---
+
+# Round 3 — `mapping.json` v1.13.0 → v1.14.0 (+1)
+
+`ai.onnxruntime` → **`@kit.MindSporeLiteKit`** (medium). Round 2 had proposed CANN Kit, which
+would have needed a new kit token: CANN Kit is an NDK kit with no `@kit.CANNKit` import anywhere
+in the corpus. MindSpore Lite Kit is an open kit with a real token and does the same job:
+`harmonyos-guides/ai/mindspore-lite-kit/about-this-kit` lists ONNX among supported models,
+`using-mindspore-lite-for-model-conversion` converts ONNX to `.ms`, and the operator appendix is
+written against ONNX Opset 18. Exactly the existing `org.tensorflow.lite` row. No engine change.
+
+## HSBC and Calm removed — maintainer decision
+
+Both apps exhausted memory on this machine and stopped background runs twice. They are deleted
+(inputs, reports, side-cars) and will not be analysed again. Three rows now match nothing in the
+remaining 42-app corpus and stay **predicted only**: `org.msgpack` (HSBC), `app.rive` (Calm),
+`ai.onnxruntime` (HSBC). All three are grounded; they are kept for the next app that ships them.

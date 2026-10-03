@@ -10,7 +10,7 @@ from pathlib import Path
 from app import config
 from app.config import rel_to_root
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -26,7 +26,11 @@ CREATE TABLE IF NOT EXISTS runs (
     -- They belong to the run that PRODUCED them, so they are not listed here as
     -- apps -- but a run that skipped everything would otherwise read as "0 apps"
     -- and look like it did nothing.
-    skipped_count INTEGER NOT NULL DEFAULT 0
+    skipped_count INTEGER NOT NULL DEFAULT 0,
+    -- File name of the run manifest in result/.runs/ this row was rebuilt
+    -- from; NULL for the synthetic "Unfiled" run. How a delete finds the
+    -- manifest to edit -- the row id cannot, it changes on every rescan.
+    manifest     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS apps (
@@ -61,19 +65,27 @@ CREATE TABLE IF NOT EXISTS artifacts (
     path    TEXT NOT NULL
 );
 
+-- Where a downloaded binary came from (docs/decisions/0006). One row per
+-- attempt, under the run that made it, so a result traces to its source even
+-- after the same package is fetched again. Rebuilt from the run manifests.
 CREATE TABLE IF NOT EXISTS downloads (
-    package_name TEXT PRIMARY KEY,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id       INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+    package_name TEXT NOT NULL,
     source       TEXT,                   -- which adapter served it
-    state        TEXT NOT NULL,          -- queued | fetching | verifying | ready | failed
+    state        TEXT NOT NULL,          -- ready | not_found | failed
     file_path    TEXT,
-    version      TEXT,
+    version      TEXT,                   -- versionName from the verified manifest
+    size         INTEGER,
     requested_at TEXT NOT NULL,
-    error        TEXT
+    error        TEXT,
+    note         TEXT                    -- e.g. config splits dropped from a bundle
 );
 
 CREATE INDEX IF NOT EXISTS idx_apps_run     ON apps(run_id);
 CREATE INDEX IF NOT EXISTS idx_apps_package ON apps(package_name);
 CREATE INDEX IF NOT EXISTS idx_artifacts_app ON artifacts(app_id);
+CREATE INDEX IF NOT EXISTS idx_downloads_run ON downloads(run_id);
 """
 
 

@@ -54,9 +54,14 @@ class TestWindowsAnalysis(IsolatedTest):
         self.assertEqual(row["target"], "hmos", "EXE has no HMS target to choose")
         self.assertTrue(Path(row["report"]).exists())
         self.assertTrue(Path(row["xlsx"]).exists())
-        # No side-car and no coverage: both are APK concepts.
-        self.assertIsNone(row.get("sidecar"))
+        # No coverage: that is an APK concept. A side-car, though, so a resumed
+        # batch that skips this file still has its row for the workbook.
         self.assertNotIn("coverage_status", row)
+        side = Path(row["sidecar"])
+        self.assertEqual(side.name, "notepad_exe_hmos.json")
+        doc = json.loads(side.read_text(encoding="utf-8"))
+        self.assertEqual(doc["mode"], "exe")
+        self.assertEqual(doc["kit_count"], row["kit_count"])
 
     def test_a_dll_is_analysed_the_same_way(self):
         dll = self.config.INPUT_DIR / "version.dll"

@@ -38,6 +38,7 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
     unmapped_ns_apps, unmapped_ns_agg = {}, {}
     ohpm_ns_apps, ohpm_ns_meta = {}, {}
     apk_apps, frameworks = [], {}
+    unmapped_dll_agg, unmapped_fw_agg = {}, {}
 
     for entry in rows_and_sidecars:
         row = entry["row"]
@@ -73,6 +74,21 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
             "permission_count":  row.get("permission_count", 0),
             "html_path":         row.get("report"),
         })
+
+        # The same accumulation run_batch does for EXE/DLL and IPA rows.
+        if row.get("mode") == "exe":
+            for u in side.get("unmapped_dlls", []):
+                agg = unmapped_dll_agg.setdefault(u["dll_name"], {
+                    "dll_name": u["dll_name"], "func_count": 0,
+                    "sample_funcs": set(), "apps": [],
+                })
+                agg["func_count"] += u.get("func_count") or 0
+                agg["sample_funcs"].update(u.get("sample_funcs") or [])
+                agg["apps"].append(file_name)
+        elif row.get("mode") == "ipa":
+            for fw in side.get("unmapped_frameworks", []):
+                agg = unmapped_fw_agg.setdefault(fw, {"framework": fw, "apps": []})
+                agg["apps"].append(file_name)
 
         if row.get("mode") != "apk":
             continue
@@ -115,6 +131,13 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
 
     for agg in unmapped_ns_agg.values():
         agg["sample_methods"] = sorted(agg["sample_methods"])[:8]
+    for agg in unmapped_dll_agg.values():
+        agg["sample_funcs"] = sorted(agg["sample_funcs"])[:8]
+    # Ordered exactly as run_batch orders them.
+    unmapped_dll_list = sorted(unmapped_dll_agg.values(),
+                               key=lambda x: (len(x["apps"]), x["func_count"]), reverse=True)
+    unmapped_fw_list = sorted(unmapped_fw_agg.values(),
+                              key=lambda x: len(x["apps"]), reverse=True)
 
     play_metadata = None
     if apk_apps:
@@ -128,7 +151,7 @@ def build(rows_and_sidecars, result_dir: Path, target: str) -> dict:
     emit({"stage": "workbooks", "detail": "Writing batch_summary.xlsx"})
     summary = result_dir / "batch_summary.xlsx"
     export_excel_batch(
-        rows, summary, [], [],
+        rows, summary, unmapped_dll_list, unmapped_fw_list,
         mapped_ns_apps=mapped_ns_apps or None,
         mapped_ns_kit=mapped_ns_kit,
         unmapped_ns_apps=unmapped_ns_apps or None,

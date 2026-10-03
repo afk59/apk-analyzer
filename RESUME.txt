@@ -1,6 +1,5 @@
 v1.11.1 ile yeniden analiz edilmesi gerekenler:
 com.app.auralaw
-hk.com.hsbc.hsbchkmobilebanking
 hk.edu.cityu.mobile
 hk.edu.polyu.polyumobile
 hk.edu.polyu.polyustaffmobile

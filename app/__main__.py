@@ -198,6 +198,12 @@ def _wait_until_up(url: str, timeout: float = 20.0):
 
 
 def main(argv: list[str]) -> int:
+    # Line-buffered even when stdout is a file or a pipe, so a headless run's
+    # log shows the "serving on <port>" line it is driven by.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
     config.ensure_dirs()
 
     if not _ensure_deps():

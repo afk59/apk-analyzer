@@ -517,3 +517,216 @@ Yeni formül `(kit + OHPM) / (kit + eşlenmeyen + OHPM)`. Payda değişmedi.
   rescan onları sessizce yeniden puanlamıyor.
 - Etki bu iki uygulamada küçük: botim %84,1 → %84,4, SHEIN %64,2 → %65,6.
 - +3 test (store ×2, aggregate ×1): 207 → 210.
+
+## 2026-09-27 — v2 incelemesindeki doğrulanan sorunlar düzeltildi
+
+Kod okunarak yapılan bir incelemedeki iddialar tek tek doğrulandı; doğrulananlar
+öncelik sırasıyla düzeltildi. Her biri ayrı commit; **çıktıyı değiştiren tek
+commit ayrı tutuldu** (8453fe78).
+
+1. **Devam ettirilen HMS batch'inde rapor linki kayboluyordu** — ÇIKTI DEĞİŞİKLİĞİ.
+   `_row_from_sidecar` rapor adını hedeften bağımsız `_apk_hmos_` diye kuruyordu;
+   HMS koşusunda atlanan her dosya `batch_summary.xlsx`'e linksiz yazılıyordu.
+   Artık yol worker'ın kendi `resolve_mode`'undan geliyor.
+2. **SSE yeniden bağlanınca olaylar baştan geliyordu** (sayaç iki kez artıyordu).
+   Her olay `id:` taşıyor, `Last-Event-ID` okunuyor.
+3. **Web filtresi engeli "bulunamadı" görünüyordu.** HTML sayfa artık bir hata
+   (`Unusable`), vardığı URL ile birlikte; bir kaynak hata verdiyse sonuç
+   `not_found` değil `failed` ve "uygulamanın olmadığını göstermez" diyor.
+4. **`downloads` tablosuna hiç yazılmıyordu** (ADR 0006 madde 3). Kayıt artık run
+   manifest'ine giriyor, rescan tabloyu oradan kuruyor — ADR 0002'nin "DB silinir,
+   rescan aynı kütüphaneyi verir" kuralı korunuyor. Tablo artık deneme başına bir
+   satır (run_id ile); SCHEMA_VERSION 2 → 3.
+5. **Sayfa yenilenince İlerleme kayboluyordu.** `GET /api/runs/latest` + sayfa
+   açılışta son koşuya yeniden bağlanıyor.
+6. **Arayüz:** klasör seçilince skip_existing kutusu; toplu çalışma kitabı aşaması
+   görünüyor ve bitince iki kitabın düğmeleri çıkıyor; kalan sabit İngilizce
+   metinler (DOWNLOAD FAILED, FAILED, "already analysed", tema düğmesi…) çevrildi.
+7. **Dokümanlar:** test sayısı, şema, `sse.js`, `/api/results`.
+
+**Düzeltilmeyenler, bakımcı kararı bekliyor:**
+
+- *Toplu Excel'lerin üzerine yazılması* — v1'in `run_batch`'i de aynı sabit adları
+  kullanıyor; değiştirmek çıktı değişikliği.
+- *Yetim worker* — pencere kapanınca worker Windows'ta öldürülmüyor; bir sonraki
+  `emit()`'te kırık pipe ile büyük olasılıkla ölüyor, ama androguard'ın sessiz
+  DEX aşamasında dakikalarca bellek tutabilir. Ölçülmedi.
+- *Atlanan IPA/EXE dosyaları devam ettirilen batch'in çalışma kitabından düşüyor* —
+  side-car yalnızca APK için yazılıyor, `_entries` side-car'sız atlanan dosyayı
+  sessizce çıkarıyor. İncelemede "mode alanı yanlış" diye raporlanmıştı; o yanlıştı,
+  sorun satırın hiç yazılmaması.
+
+Testler 210 → 219. Paketin bu makinede ~21 dk sürdüğü ölçüldü; HANDOFF'taki
+"~3 dk" düzeltildi.
+
+Tam paket iki kez koşuldu: birincide `test_the_backend_reports_a_ready_engine`
+düştü (sayfa 2,5 sn sonra hâlâ "connecting…"), ikincide 219/219 geçti; `test_ui`
+tek başına üç kez temiz geçti. Probe sabit bir 2,5 sn bekliyor — yük altında
+kırılgan olabilir. Yeniden görülürse probe'u beklemek yerine koşula bağlamak gerek.
+
+## 2026-10-02 — PC program klasörü toplu analiz, eşzamanlı indirme+analiz, sonuç silme, yeni mapping turu
+
+Gece boyu, gözetimsiz oturum. Dört commit, çıktıyı değiştiren ikisi ayrı:
+
+| Commit | Ne | Çıktı değişir mi |
+|---|---|---|
+| `24083c41` | Devam ettirilen batch'te atlanan EXE/DLL/IPA satırları artık kitaptan düşmüyor | **Evet** (batch_summary) |
+| `52003317` | Program klasörü batch, eşzamanlı indirme, × ile silme | Hayır |
+| `16ad3f07` | mapping v1.12.0 (+15), ohpm v1.2.0 (+1), win v1.2.0 (+9) | **Evet** |
+
+### 1. Son geliştirmeler PC tarafını bozmuş mu? — ölçüldü
+
+Tek EXE/DLL, EXE batch'i, toplu kitap ve index gerçek ikililerle (ShareX, WinRAR,
+notepad, d3d11) sorunsuz çalıştı; OHPM-coverage ve gömülü-workbook değişiklikleri
+EXE yolunu etkilemiyor. Ama program klasörü batch'inde ortaya çıkacak **iki gerçek
+hata** bulundu ve düzeltildi:
+
+- **Rapor adı çakışması:** ShareX klasöründe `ShareX.exe` ve `ShareX.dll` yan yana;
+  ikisi de `ShareX_exe_hmos_report.html` yazıyordu, ikincisi birincinin üstüne.
+  Artık yalnızca çakışan girdiler göreli yoldan bir `--stem` alıyor
+  (`ShareX.dll_exe_hmos_report.html`); çakışmayan her dosya CLI'ın adını koruyor.
+- **Devam ettirilen batch'te EXE satırları düşüyordu** (27 Eylül'de açık bırakılan
+  madde): side-car yalnızca APK için yazılıyordu. Artık her mod için yazılıyor.
+  ShareX'te ölçüldü: 316 dosya 3 sn'de atlandı, kitapta 316 satır.
+
+Ayrıca `_run_one` worker'ın stderr pipe'ını kapatmıyordu (dosya başına bir handle).
+
+### 2. PC program klasörü toplu analiz
+
+Yalnızca EXE/DLL içeren klasör (APK/IPA yok) artık varsayılan olarak **toplu**:
+her EXE/DLL ayrı rapor + iki toplu kitap. Alt klasörler dahil (eklentiler orada);
+`*.resources.dll` (.NET dil paketleri, kod yok — ShareX'te 590 adet) varsayılan
+olarak hariç. Üçü de arayüzde seçenek; "tek birleşik rapor" motorun eski
+`exe_folder` modu. Seçici her kombinasyonun sayısını önceden veriyor.
+
+**Gerçek koşu:** ShareX, 316 ikili, **11,5 dk, 0 hata**. Dosya başı ~1,5 sn;
+yavaş olanlar `ffmpeg.exe` gibi büyük ikililer (motorun string-scan'i — motor donuk).
+
+### 3. Virgülle çoklu indirme + "İndir ve analizi başlat"
+
+Paketler virgül, `;` veya satırla ayrılabiliyor, tekrarlar atılıyor. İndirme ayrı
+bir thread'de; her APK iner inmez analize giriyor, diğerleri arkada inmeye devam
+ediyor. Analiz yine tek tek (androguard bellek kuralı korunuyor). İlerleme
+panelinde paket başına satır: sırada / iniyor / analiz ediliyor / analiz edildi /
+başarısız. İptal, inmekte olan dosyayı da yarıda kesiyor.
+
+**Gerçek koşu (5 paket):** ilk analiz 18,6. sn'de başladı (eskiden tüm indirmeler
+bitene kadar, 35,5 sn beklerdi). Bu aynada indirme hızlı olduğu için kazanç
+~17 sn; yavaş ağda kazanç indirme süresi kadar büyür.
+
+### 4. Sonuçlar'da × ile silme
+
+Her satırın sağında ×: ilk tık "Silinsin mi?" diye kurar, ikinci tık siler (yerel
+`confirm()` kullanılmadı — webview arka ucuna göre görünmeyebiliyor). Rapor,
+xlsx, agent JSON ve side-car diskten silinir; rapor **onu listeleyen tüm**
+manifest'lerden çıkarılır, boş kalan manifest silinir, index yeniden kurulur.
+Yalnızca SQLite'tan silmek yetmezdi: rescan geri getirirdi. Silme rapor yoluyla
+yapılıyor, satır id'siyle değil (id her rescan'de değişiyor). `/api/open` ile aynı
+koruma. Toplu kitaplara dokunulmuyor. Canlı denendi: 4 dosya silindi, rescan
+sonrası geri gelmedi. SCHEMA_VERSION 3 → 4 (`runs.manifest`).
+
+### 5. Mapping turu — ayrıntı `docs/MAPPING_ROUND_2026-10-02.md`
+
+- **APK:** 4 yeni uygulamadan (Wikipedia, Shazam, AntennaPod, Calm) +15 satır
+  (coil, MapLibre, ORMLite, Hawk, UUID, 8 UI kütüphanesi, picasso-transformations)
+  ve +1 OHPM (Stream PhotoView). Tahmin: yeni uygulamalarda 264 ns / 270 satır,
+  43'lük korpusta 147 / 175, **0 gölgeleme**. Reddedilenler gerekçeleriyle yazıldı
+  (jsoup, re2j, kronos/NTP, quicksettings, Rive, vendor SDK'lar…).
+- **Windows:** ShareX+WinRAR'da kalan 17 eşlenmemiş DLL'den +9 satır. **Gerçek
+  motorla doğrulandı:** 319 ikilide 166 → 155, ffmpeg.exe 2 → 0, hiçbir kit kaybı yok.
+  `mscoree.dll` (103 ikili) bilerek eşlenmedi: .NET'in HarmonyOS'ta karşılığı yok.
+
+### Açık kalanlar — sabah bakılacak
+
+1. **APK mapping doğrulaması yapılmadı.** Doğrulama koşusu (8 APK, HSBC dahil)
+   gece makine belleği azalınca Claude Code tarafından durduruldu, ilk APK bile
+   bitmeden. Gözetimsiz yeniden başlatılmadı. Yapılacak: bu 8 APK'yı v1.12.0 ile
+   koşup `MAPPING_ROUND_2026-10-02.md` tablosuyla karşılaştırmak.
+2. **Duolingo analizi androguard'da düşüyor** — motor hatası, yeniden üretildi:
+   `APK(path).get_app_name()` → `struct.error: unpack requires a buffer of 2 bytes`
+   (`ARSCParser`, androguard 4.1.3, `resources.arsc`). Motor ~4 dk DEX analizi
+   yapıp sonra bu çağrıda ölüyor. Önerilen düzeltme (motor donuk olduğu için
+   yapılmadı, karar bakımcının): `get_app_name()` hatasında paket adına düşmek.
+3. **Toplu kitaplar sabit adlı** (önceden de açık madde): aynı result klasöründe
+   ShareX batch'i APK batch'inin `batch_summary.xlsx`'inin üstüne yazdı.
+4. **`win_mapping.json` hiç denetlenmedi.** Geçerken görülen: `version.dll` satırı
+   `bundleManager`'ı BasicServicesKit'e bağlıyor, oysa AbilityKit'te.
+5. **`v2-nocomment` senkronu yapılmadı**, push yapılmadı — üç commit yerel.
+
+Testler: 219 → **254**; tam paket **3 kez** koşuldu, üçü de 254/254 OK (~4 dk),
+artı özellik+UI modülleri ayrıca bir kez daha (58/58).
+
+## 2026-10-02 (akşam) — çoklu seçim, mapping doğrulaması, OHPM turu
+
+Bakımcı tekli silmeyi onayladı; istenen: çoklu/tümünü seçip silme, mapping
+testleri ve "resmi doküman / OHPM ile karşılanabiliyorsa mapping'i artır".
+
+**Çoklu seçim (`441b2220`).** Her satırda kutu, her koşu başlığında "bu koşuyu
+seç", üstte "Tümünü seç" + seçili sayısı + "Seçilenleri sil" (ilk tık
+"3 rapor silinsin mi?", ikinci tık siler). Yeni uç `POST /api/results/delete-many`:
+seçimi tek geçişte siler — tek manifest taraması, **tek rescan** (300 satırlık
+bir PC batch'i için 300 rescan değil). Korumayı geçemeyen öğe `refused` ile
+döner, diğerleri yine silinir. Tekli silme artık aynı yolun ince sarmalayıcısı.
+
+**Tur 1 doğrulaması (v1.12.0).** Gece yarıda kalan koşu yeniden yapıldı; makine
+yine HSBC'de belleği bitirince durduruldu, ama 8 uygulamadan 7'si tamamlandı:
+**tahmin 435 = gerçek 435**, sızıntı 0, beklenmeyen 0, yeni eşlenmeyen 0.
+HSBC doğrulanmadı (yalnızca coil satırları).
+
+**Tur 2 (`9b61f8fa`) — mapping v1.13.0 (+9), ohpm v1.3.0 (+13).** Önbellekteki
+OHPM kayıt defteri (3.499 paket) 47 uygulamadaki 2.457 eşlenmemiş kütüphane
+köküyle eşleştirildi:
+- OpenHarmony'nin kendi `@ohos/*` portlarından 12 satır: jjwt, DiskLruCache,
+  WebRTC'nin PeerConnection yarısı, **AltBeacon (v1'in "kesin boşluk" dediği
+  açık kapandı)**, gRPC, libpag, **Rive (tur 1'deki yanlış reddimi geri aldım —
+  port varmış, yanlış adla aramışım)**, FlatBuffers, Linphone, MessagePack,
+  Rebound, Commons Compress; artı GrowingIO'nun kendi SDK'sı.
+- "Önce native" kuralı satıcı SDK'larında da uygulandı: AMap → MapKit/LocationKit,
+  Getui/JPush → PushKit (notlarda satıcının resmi HarmonyOS SDK'sı yazılı);
+  Realm → ArkData; RN kamera modülleri → CameraKit; ARouter → ArkUI.
+- Her paket canlı kayıt defterinde doğrulandı (negatif kontrolle); satıcı paketi
+  yalnızca yayıncı satıcının kendisiyse kabul edildi.
+- **Doğrulandı:** 14 korpus uygulaması ön planda, tek tek yeniden analiz edildi:
+  **tahmin 898 = gerçek 898**, sızıntı/beklenmeyen/yeni 0. Örn. hk.ust.student
+  507 → 272 eşlenmeyen, cmoffice 144 → 41. msgpack (yalnız HSBC'de) ve rive
+  (yalnız Calm'da) yalnızca tahmin.
+- Reddedilenler gerekçeleriyle `MAPPING_ROUND_2026-10-02.md`'de (onnxruntime —
+  CANN Kit token kararı bakımcıda; Stripe — OHPM'de yok; banner/wheelpicker —
+  ArkUI'de yerleşik…).
+
+**Bellek notu:** HSBC ve Calm bu makinede analiz sırasında arka plan işlerini
+durduracak kadar bellek tüketiyor; ikinci turun doğrulaması bu yüzden ön planda,
+tek tek ve bu ikisi hariç yapıldı.
+
+Testler 254 → **258**; tam paket iki kez koşuldu, ikisi de 258/258 OK.
+
+## 2026-10-02 (gece) — ONNX satırı, HSBC ve Calm kaldırıldı
+
+- **Bakımcı kararı:** HSBC ve Calm bir daha analiz edilmeyecek — bu makinede belleği
+  bitirip arka plan koşularını iki kez durdurdular. HSBC: v2 kütüphanesindeki 4 dosya
+  (uygulamanın kendi silme yoluyla, manifest ve index tutarlı), korpustaki 320 MB APK,
+  `RESUME.txt` satırı silindi. Calm yalnızca geçici klasörlerdeydi, oradan silindi.
+  Korpus artık **42 uygulama**. `apk-analyzer-v3/out/corpus43/` içindeki HSBC çıktısına
+  (ayrı v3 projesi) dokunulmadı.
+- **mapping v1.14.0 (+1):** `ai.onnxruntime` → `@kit.MindSporeLiteKit` (medium). CANN Kit
+  yerine MindSpore Lite: açık kit, gerçek token, dokümanı ONNX dönüşümünü açıkça anlatıyor;
+  `org.tensorflow.lite` ile aynı satır. Motor değişikliği gerekmedi.
+- Sonuç: `org.msgpack`, `app.rive`, `ai.onnxruntime` kalan korpusta hiçbir şeyle eşleşmiyor;
+  dayanakları yazılı satırlar olarak gelecekteki uygulamalar için duruyor.
+
+## 2026-10-03 — Denetim raporu bulgularının düzeltilmesi
+
+- Denetim raporu ve script'leri `v2` dalında duruyor; bu dala alınmadı.
+- Her bulgu kodda teyit edildi. Düzeltilenler (her biri ayrı commit, testli):
+  BUG-02 rapor `<script>` enjeksiyonu (motor, çıktı-nötr), BUG-03 paralel koşu takibi +
+  buton kilidi, BUG-04 PC/IPA toplu kitabında Unmapped DLLs/Frameworks sheet'leri
+  (**çıktı değiştiren**), BUG-05 taşınan sonuç klasörü, BUG-11/15 arayüz i18n,
+  BUG-12 başsız modda port satırı, BUG-13 silme sayısı, BUG-14 paket adı doğrulaması,
+  BUG-17 stderr kilitlenmesi (rapor "teorik" demişti; bu makinede 1 MB stderr yetiyor,
+  ölçüldü), EKS-03/07 doküman düzeltmeleri.
+- Raporun yanlış/eksik kısımları: batch_unmapped.xlsx v1'de de yalnız APK — "No Unmapped"
+  doğru davranış; BUG-13'te dosyası olmayan ama manifest'te duran rapor silinebilmeli
+  (404 değil); BUG-08'de 3 izin dokümanda geçiyor (`\_` yazımıyla), ama yine de sistem-özel.
+- Ertelenenler (motor/mapping, bakımcı kararı + korpus koşusu gerekir): BUG-01 (kritik),
+  06, 07, 08, 09, 10, 16, 18, EKS-02/11/12 — liste HANDOFF.md'de.
+- Testler 258 → **271**, tam paket yeşil.

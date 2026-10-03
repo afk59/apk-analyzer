@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "last_updated": "2026-07-13",
+  "version": "1.2.0",
+  "last_updated": "2026-10-02",
   "target": "hmos",
   "description": "Windows DLL / API namespace → HarmonyOS NEXT kit mapping for PC migration analysis",
   "dll_mappings": [
@@ -786,6 +786,78 @@
       "harmony_import": null,
       "confidence": "high",
       "note": "Windows 10+ CRT API Set stub, redirects to ucrtbase.dll — direct NDK libc equivalent, recompile without rewrite"
+    },
+    {
+      "dll_name": "gdiplus.dll",
+      "dll_display": "GDI+",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "GDI+ paths, brushes, bitmaps -> @ohos.graphics.drawing (api/@ohos.graphics.drawing.d.ts, exported by @kit.ArkGraphics2D), as gdi32.dll. Its image codecs (GdipCreateBitmapFromFile/Stream) are @kit.ImageKit createImageSource."
+    },
+    {
+      "dll_name": "msimg32.dll",
+      "dll_display": "GDI AlphaBlend / GradientFill",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "AlphaBlend / GradientFill / TransparentBlt -> drawing Brush alpha and ShaderEffect.createLinearGradient (api/@ohos.graphics.drawing.d.ts)."
+    },
+    {
+      "dll_name": "windowscodecs.dll",
+      "dll_display": "Windows Imaging Component (WIC)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "WIC decode / encode / format conversion -> image.createImageSource / createImagePacker / PixelMap (api/@ohos.multimedia.image.d.ts). COM codec enumeration and custom codecs have no counterpart."
+    },
+    {
+      "dll_name": "usp10.dll",
+      "dll_display": "Uniscribe (complex script shaping)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "ScriptItemize/ScriptShape/ScriptPlace -> the ArkUI text engine and @ohos.graphics.text paragraph layout, as harfbuzz.dll and dwrite.dll. Glyph-level control is NDK work."
+    },
+    {
+      "dll_name": "imm32.dll",
+      "dll_display": "Input Method Manager",
+      "harmony_kit": "@kit.IMEKit",
+      "harmony_import": "@kit.IMEKit",
+      "confidence": "medium",
+      "note": "Application side of the IME: inputMethod.getController() -> InputMethodController.attach / showTextInput (api/@ohos.inputMethod.d.ts, exported by @kit.IMEKit). Text fields do this themselves; only custom editors need it."
+    },
+    {
+      "dll_name": "winspool.drv",
+      "dll_display": "Windows Print Spooler",
+      "harmony_kit": "@kit.BasicServicesKit",
+      "harmony_import": "@kit.BasicServicesKit",
+      "confidence": "medium",
+      "note": "Printing -> print.print(files) (api/@ohos.print.d.ts, exported by @kit.BasicServicesKit), which hands documents to the system print dialog. Printer enumeration and DEVMODE settings are not app-level on HarmonyOS."
+    },
+    {
+      "dll_name": "shcore.dll",
+      "dll_display": "Shell Core (DPI awareness)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "GetDpiForMonitor / GetScaleFactorForMonitor -> display.getDefaultDisplaySync() densityDPI / densityPixels (api/@ohos.display.d.ts, exported by @kit.ArkUI). Layout in vp makes most DPI handling disappear."
+    },
+    {
+      "dll_name": "avicap32.dll",
+      "dll_display": "Video for Windows capture",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "capCreateCaptureWindow capture -> camera.getCameraManager + preview/photo/video outputs (api/@ohos.multimedia.camera.d.ts). Driver-dialog APIs have no counterpart."
+    },
+    {
+      "dll_name": "uxtheme.dll",
+      "dll_display": "Visual Styles (UxTheme)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "low",
+      "note": "Themed drawing of standard controls. ArkUI components are themed by the system and an app theme is ThemeControl / CustomTheme (@kit.ArkUI); owner-drawn theme parts and buffered paint animation are hand work, so the shape genuinely differs."
     }
   ]
 }

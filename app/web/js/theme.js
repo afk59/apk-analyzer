@@ -35,9 +35,13 @@ function setTheme(mode) {
   const btn = document.getElementById('theme-toggle');
   if (btn) {
     btn.dataset.mode = mode;
-    btn.textContent = { system: 'Auto', light: 'Light', dark: 'Dark' }[mode];
-    btn.title = `Theme: ${mode} (click to change)`;
-    btn.setAttribute('aria-label', `Theme: ${mode}. Click to change.`);
+    // theme.js runs before i18n.js, so t() may not exist yet on the very
+    // first call; main.js calls setTheme again when the language changes.
+    const tr = (k, en) => (typeof t === 'function' ? t(k, en) : en);
+    const label = tr('theme.' + mode, { system: 'Auto', light: 'Light', dark: 'Dark' }[mode]);
+    btn.textContent = label;
+    btn.title = tr('theme.title', 'Theme') + ': ' + label;
+    btn.setAttribute('aria-label', btn.title);
   }
 }
 

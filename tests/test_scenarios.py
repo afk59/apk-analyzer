@@ -68,7 +68,8 @@ class TestMessyFolders(IsolatedTest):
 
     def _inputs(self, folder):
         from app.api.routes import _inputs_for
-        return _inputs_for(folder)
+        files, label, _root = _inputs_for(folder)
+        return files, label
 
     def test_ignores_everything_that_is_not_an_input(self):
         d = self.tmp / "messy"
@@ -406,3 +407,46 @@ class TestMappingDataIntegrity(IsolatedTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOverlappingRunsTracking(IsolatedTest):
+    """Two runs that overlap, as the API allows: a reload must re-attach to the
+    one still going, and the delete guard must see every running run."""
+
+    def setUp(self):
+        super().setUp()
+        from app.services import jobs
+        self.jobs = jobs
+        self.runner = jobs.JobRunner()
+
+    def _add(self, run_id, status, paths=(), current=None):
+        run = self.jobs.Run(run_id, list(paths), "hmos", f"run{run_id}")
+        run.status, run.current = status, current
+        self.runner._runs[run_id] = run
+        return run
+
+    def test_latest_prefers_a_running_run_over_a_newer_finished_one(self):
+        self._add(1, "running")
+        self._add(2, "done")
+        self.assertEqual(self.runner.latest().id, 1)
+
+    def test_latest_is_the_newest_when_nothing_runs(self):
+        self._add(1, "done")
+        self._add(2, "cancelled")
+        self.assertEqual(self.runner.latest().id, 2)
+
+    def test_delete_guard_sees_an_older_running_run(self):
+        from app.api import routes
+        apk = self.config.INPUT_DIR / "busy.apk"
+        apk.write_bytes(b"x")
+        self._add(1, "running", [apk], current="busy.apk")
+        self._add(2, "done")
+        report = self.runner._report_for(apk, "hmos")
+        original = routes.runner
+        routes.runner = self.runner
+        try:
+            self.assertTrue(routes._report_in_use(report))
+            self.assertFalse(routes._report_in_use(
+                self.config.RESULT_DIR / "other_apk_hmos_report.html"))
+        finally:
+            routes.runner = original

@@ -33,6 +33,18 @@ def write_manifest(snapshot: dict) -> Path:
 
 
 # ------------------------------------------------------------------ reading
+def _locate(path) -> Path:
+    """Where a report named in a manifest is NOW.
+
+    Manifests hold the absolute path the worker wrote, and every report lives
+    directly in RESULT_DIR. So when the result folder has been moved or copied,
+    the same file name in the current RESULT_DIR is that report.
+    """
+    p = Path(path)
+    here = config.RESULT_DIR / p.name
+    return here if here.exists() else p
+
+
 def _agent_for(report: Path):
     cand = config.AGENT_DIR / report.name.replace("_report.html", "_agent.json")
     return cand if cand.exists() else None
@@ -121,6 +133,7 @@ def rescan() -> dict:
     """Rebuild the whole index from disk. Safe to run at any time."""
     conn = connect()
     try:
+        conn.execute("DELETE FROM downloads")
         conn.execute("DELETE FROM artifacts")
         conn.execute("DELETE FROM apps")
         conn.execute("DELETE FROM runs")
@@ -136,15 +149,17 @@ def rescan() -> dict:
             skipped = sum(1 for r in snap.get("results", []) if r.get("skipped"))
             cur = conn.execute(
                 "INSERT INTO runs (started_at, finished_at, mode, target, status,"
-                " input_path, file_count, skipped_count) VALUES (?,?,?,?,?,?,?,?)",
+                " input_path, file_count, skipped_count, manifest)"
+                " VALUES (?,?,?,?,?,?,?,?,?)",
                 (snap.get("started_at"), snap.get("finished_at"),
                  "batch" if (snap.get("file_count") or 0) > 1 else "single",
                  snap.get("target", "hmos"), snap.get("status", "done"),
-                 snap.get("input", ""), snap.get("file_count", 0), skipped))
+                 snap.get("input", ""), snap.get("file_count", 0), skipped,
+                 mpath.name))
             run_id = cur.lastrowid
 
             for row in snap.get("results", []):
-                report = Path(row["report"]) if row.get("report") else None
+                report = _locate(row["report"]) if row.get("report") else None
                 if row.get("skipped") or not report:
                     # A skipped file belongs to the EARLIER run that analysed
                     # it; listing it twice would double-count the library.
@@ -156,6 +171,17 @@ def rescan() -> dict:
                     "INSERT INTO apps (run_id, source_file, status, error)"
                     " VALUES (?,?,?,?)",
                     (run_id, fail.get("source_file", "?"), "failed", fail.get("error")))
+            for dl in snap.get("downloads", []):
+                conn.execute(
+                    "INSERT INTO downloads (run_id, package_name, source, state,"
+                    " file_path, version, size, requested_at, error, note)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (run_id, dl.get("package_name", "?"), dl.get("source"),
+                     dl.get("state", "failed"),
+                     rel(Path(dl["file_path"])) if dl.get("file_path") else None,
+                     dl.get("version"), dl.get("size"),
+                     dl.get("requested_at") or snap.get("started_at") or "",
+                     dl.get("error"), dl.get("note")))
 
         # Anything on disk that no manifest claims -- v1 CLI output, or a run
         # whose manifest was removed.
@@ -179,6 +205,7 @@ def rescan() -> dict:
             "runs": conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0],
             "apps": conn.execute("SELECT COUNT(*) FROM apps").fetchone()[0],
             "artifacts": conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0],
+            "downloads": conn.execute("SELECT COUNT(*) FROM downloads").fetchone()[0],
             "manifests": len(manifests),
             "orphans": len(orphans),
         }
@@ -210,6 +237,139 @@ def _insert_app(conn, run_id: int, row: dict, report: Path):
     return app_id
 
 
+# ------------------------------------------------------------------ deleting
+_REPORT_NAME = re.compile(r"^(?P<stem>.+)_(?P<mode>apk|exe_folder|exe|ipa)_"
+                          r"(?P<target>hmos|hms)_report\.html$")
+
+
+def _files_of(report: Path) -> list:
+    """Every file on disk that belongs to one report: the report, its
+    workbook, its agent JSON, and the side-car the batch workbooks read."""
+    out = [report, report.with_suffix(".xlsx"),
+           config.AGENT_DIR / report.name.replace("_report.html", "_agent.json")]
+    m = _REPORT_NAME.match(report.name)
+    if m:
+        from app.worker import sidecar_name
+        out.append(config.RESULT_DIR / ".sidecars"
+                   / sidecar_name(m["stem"], m["mode"], m["target"]))
+    return out
+
+
+def _same(a, b: Path) -> bool:
+    try:
+        return Path(a).resolve() == b.resolve()
+    except (OSError, ValueError):
+        return False
+
+
+def _edit_manifests(keep) -> int:
+    """Rewrite every manifest through `keep(kind, entry, manifest) -> bool`,
+    kind being "result" or "failure". A manifest left with nothing to show is
+    removed rather than kept as an empty group. Returns how many changed."""
+    changed = 0
+    rd = runs_dir()
+    for mpath in sorted(rd.glob("run-*.json")) if rd.exists() else []:
+        try:
+            snap = json.loads(mpath.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        results = [r for r in snap.get("results", []) if keep("result", r, mpath.name)]
+        failures = [f for f in snap.get("failures", []) if keep("failure", f, mpath.name)]
+        if (len(results) == len(snap.get("results", []))
+                and len(failures) == len(snap.get("failures", []))):
+            continue
+        changed += 1
+        if not failures and not any(not r.get("skipped") for r in results):
+            mpath.unlink(missing_ok=True)
+            continue
+        snap["results"], snap["failures"] = results, failures
+        mpath.write_text(json.dumps(snap, ensure_ascii=False, default=str, indent=1),
+                         encoding="utf-8")
+    return changed
+
+
+def delete_report(report: Path) -> dict:
+    """Delete one analysed app: its files, its manifest entries, its index row.
+
+    One report file can be listed by several runs -- analysing the same input
+    again overwrites the same report -- so EVERY manifest that points at it is
+    edited. The batch workbooks are left alone: they are a record of the batch
+    they summarise, not a view of the library.
+    """
+    return delete_many([report], [])
+
+
+def delete_failure(manifest: str, source_file: str):
+    """Drop one failed entry from one run. None if there is no such entry."""
+    if not _failure_exists(manifest, source_file):
+        return None
+    return delete_many([], [(manifest, source_file)])
+
+
+def _failure_exists(manifest: str, source_file: str) -> bool:
+    if "/" in manifest or "\\" in manifest or not _MANIFEST_NAME.match(manifest):
+        return False
+    try:
+        snap = json.loads((runs_dir() / manifest).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return any(f.get("source_file") == source_file for f in snap.get("failures", []))
+
+
+def delete_many(reports, failures) -> dict:
+    """Delete several results in one pass: every report's files, every listed
+    failure, one sweep over the manifests and ONE rescan.
+
+    One item at a time would rescan the whole result tree per item. `reports`
+    are paths already checked by the caller; `failures` are (manifest name,
+    source file) pairs, and a pair naming a non-manifest is ignored.
+    """
+    targets = {Path(r).resolve() for r in reports}
+    removed = []
+    # Reports that actually had something to delete -- a file, or an entry in
+    # some manifest -- not the number requested.
+    hit = set()
+    for report in sorted(targets):
+        for f in _files_of(report):
+            try:
+                if f.exists():
+                    f.unlink()
+                    removed.append(f.name)
+                    hit.add(report)
+            except OSError:
+                pass
+    keys = {(m, sf) for m, sf in failures
+            if "/" not in m and "\\" not in m and _MANIFEST_NAME.match(m)}
+
+    def keep(kind, entry, manifest):
+        if kind == "result":
+            rep = entry.get("report")
+            # By the stored path, or by name in the current result folder
+            # (see _locate, which cannot help once the file is gone).
+            if not rep:
+                return True
+            for cand in (_resolved(rep), _resolved(config.RESULT_DIR / Path(rep).name)):
+                if cand in targets:
+                    hit.add(cand)
+                    return False
+            return True
+        return (manifest, entry.get("source_file")) not in keys
+
+    changed = _edit_manifests(keep)
+    return {"deleted": removed, "reports": len(hit), "failures": len(keys),
+            "manifests_changed": changed, **rescan()}
+
+
+def _resolved(path):
+    try:
+        return Path(path).resolve()
+    except (OSError, ValueError):
+        return None
+
+
+_MANIFEST_NAME = re.compile(r"^run-[\w.\-]+\.json$")
+
+
 def library() -> dict:
     """Runs newest first, each with its apps and their artifact paths."""
     conn = connect()
@@ -227,6 +387,10 @@ def library() -> dict:
                 }
                 apps.append(app)
             run["apps"] = apps
+            run["downloads"] = [
+                {k: d[k] for k in d.keys() if k not in ("id", "run_id")} for d in
+                conn.execute("SELECT * FROM downloads WHERE run_id=? ORDER BY id", (r["id"],))
+            ]
             # The batch workbooks are per-result-directory, not per-app.
             runs.append(run)
         workbooks = {}

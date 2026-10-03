@@ -126,12 +126,23 @@ def _sidecar(result: dict, framework: dict) -> dict:
     }
 
 
-def resolve_mode(path: Path, target: str):
+def sidecar_name(stem: str, mode: str, target: str) -> str:
+    """The side-car's file name. APK keeps the name it has always had, so every
+    side-car already on disk is still found; the other modes carry their mode,
+    because `foo.apk` and `foo.exe` would otherwise share `foo_hmos.json`."""
+    return f"{stem}_{target}.json" if mode == "apk" else f"{stem}_{mode}_{target}.json"
+
+
+def resolve_mode(path: Path, target: str, stem: str | None = None):
     """(mode, effective_target, output_stem) for one input.
 
     Getting it wrong silently produces a report under the wrong name, which
     then makes skip_existing skip the wrong thing. Only APK has a target
     choice: HMS is an Android concept, so an EXE or an IPA is always HarmonyOS.
+
+    `stem` overrides the output name. The queue passes one only when two inputs
+    of the same run would otherwise write the same report (e.g. `X.exe` and
+    `X.dll` side by side both map to `X_exe_hmos_report.html`).
     """
     sfx = path.suffix.lower()
     if path.is_dir():
@@ -144,11 +155,12 @@ def resolve_mode(path: Path, target: str):
         mode = "apk"
     if mode != "apk":
         target = "hmos"
-    stem = path.name if mode == "exe_folder" else path.stem
+    if not stem:
+        stem = path.name if mode == "exe_folder" else path.stem
     return mode, target, stem
 
 
-def _run(path: Path, target: str) -> dict:
+def _run(path: Path, target: str, stem_override: str | None = None) -> dict:
     """Mirror engine/analyzer.py's single-file branch exactly.
 
     The order and the filenames are verbatim: the artifacts must be
@@ -165,7 +177,7 @@ def _run(path: Path, target: str) -> dict:
     agent_dir.mkdir(parents=True, exist_ok=True)
     mappings = config.MAPPINGS_DIR
 
-    mode, target, stem = resolve_mode(path, target)
+    mode, target, stem = resolve_mode(path, target, stem_override)
     output_html = result_dir / f"{stem}_{mode}_{target}_report.html"
     agent_path = agent_dir / f"{stem}_{mode}_{target}_agent.json"
 
@@ -239,13 +251,28 @@ def _run(path: Path, target: str) -> dict:
         from core.renderer import coverage_status
         pct, status = coverage_status(result)
         row["coverage_pct"], row["coverage_status"] = pct, status
+        side_doc = _sidecar(result, framework)
+    else:
+        # The batch row, so a resumed batch keeps the row of a SKIPPED
+        # EXE/DLL/IPA in batch_summary.xlsx.
+        side_doc = {"mode": mode, "app_name": row["app_name"],
+                    "kit_count": row["kit_count"],
+                    "unmapped_count": row["unmapped_count"],
+                    "permissions": row["permission_count"]}
+        # run_batch's "Unmapped DLLs" / "Unmapped Frameworks" sheets are built
+        # from these lists.
+        if mode == "exe":
+            side_doc["unmapped_dlls"] = [
+                {k: u.get(k) for k in ("dll_name", "func_count", "sample_funcs")}
+                for u in result.get("unmapped_dlls") or []]
+        elif mode == "ipa":
+            side_doc["unmapped_frameworks"] = list(result.get("unmapped_frameworks") or [])
 
-        side_dir = result_dir / ".sidecars"
-        side_dir.mkdir(exist_ok=True)
-        side = side_dir / f"{stem}_{target}.json"
-        side.write_text(json.dumps(_sidecar(result, framework), ensure_ascii=False, default=str),
-                        encoding="utf-8")
-        row["sidecar"] = str(side)
+    side_dir = result_dir / ".sidecars"
+    side_dir.mkdir(exist_ok=True)
+    side = side_dir / sidecar_name(stem, mode, target)
+    side.write_text(json.dumps(side_doc, ensure_ascii=False, default=str), encoding="utf-8")
+    row["sidecar"] = str(side)
 
     return row
 
@@ -262,6 +289,8 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(prog="app.worker")
     ap.add_argument("path")
     ap.add_argument("--target", default="hmos", choices=["hmos", "hms"])
+    ap.add_argument("--stem", default=None,
+                    help="output name override; see resolve_mode")
     args = ap.parse_args(argv)
 
     path = Path(args.path)
@@ -274,7 +303,7 @@ def main(argv: list[str]) -> int:
 
     try:
         _install_hooks()
-        row = _run(path, args.target)
+        row = _run(path, args.target, args.stem)
     except SystemExit as exc:
         # SystemExit is a BaseException, so `except Exception` does NOT catch it
         # -- and engine/core/exe_engine.py calls sys.exit(1) on an unreadable PE

@@ -53,7 +53,9 @@ nav.side .navnote {
 }
 
 main { padding: var(--space-5); overflow: auto; }
-.panel[hidden] { display: none; }
+/* [hidden] is a UA-stylesheet rule, so any author rule setting `display` on
+   the element beats it. One global guard rather than a rule per component. */
+[hidden] { display: none !important; }
 h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
 .lede { color: var(--text2); margin: 0 0 var(--space-5); max-width: 60ch; line-height: 1.6; }
 
@@ -196,6 +198,63 @@ h2 { font-size: 1rem; margin: 0 0 var(--space-2); }
   border-radius: var(--radius);
 }
 .workbooks .label { font-size: .8rem; color: var(--text2); margin-right: var(--space-2); }
+
+/* The x on a result row. Quiet until hovered, red once armed: the first
+   click only arms it (see deleteButton in main.js). */
+.result .del {
+  all: unset; cursor: pointer; flex: none;
+  min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: 1px solid transparent;
+  color: var(--text3); font-size: 1.05rem; line-height: 1;
+  transition: color var(--dur), background var(--dur), border-color var(--dur);
+}
+.result .del:hover { color: var(--red); background: var(--red-soft); }
+.result .del:focus-visible { outline: 2px solid var(--red); outline-offset: 1px; }
+.result .del.armed {
+  color: #fff; background: var(--red); border-color: var(--red);
+  font-size: .74rem; font-weight: 600;
+}
+.result .del[disabled] { opacity: .45; cursor: progress; }
+
+/* Selection on the Results page. */
+.selbar {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  margin-bottom: var(--space-4); padding: var(--space-2) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: .82rem; color: var(--text2);
+}
+.selbar label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.selbar .selcount { font-family: var(--mono); font-size: .76rem; color: var(--text3); flex: 1; }
+.btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn.danger:hover { background: var(--red-soft); filter: none; }
+.btn.danger.armed { background: var(--red); color: #fff; }
+.result input.pick, .runhead input.pick-run { flex: none; width: 16px; height: 16px; cursor: pointer; margin: 0; }
+
+/* Program-folder options under the folder card. */
+.pcopts {
+  margin-top: var(--space-3); display: flex; flex-direction: column; gap: 6px;
+  font-size: .8rem; color: var(--text2);
+}
+.pcopts label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.pcopts label.sub { margin-left: 22px; }
+.pcopts input[disabled] + span { opacity: .5; }
+.pccount { margin-top: 4px; font-family: var(--mono); font-size: .76rem; }
+.pccount strong { color: var(--text); font-family: var(--font); }
+
+/* Per-package rows on the Progress panel. */
+.dllist {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-bottom: var(--space-4); padding: var(--space-3);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: .76rem;
+}
+.dlrow { display: grid; grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr); gap: var(--space-3); align-items: center; }
+.dlrow .pkg { font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dlrow .bar { height: 4px; margin: 0; }
+.dlrow .st  { color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dlrow.ok   .st { color: var(--green); }
+.dlrow.fail .st { color: var(--red); }
 
 /* ----------------------------------------------------------- downloads */
 #packages {

@@ -8,6 +8,7 @@ import json
 import sqlite3
 import sys
 import unittest
+from pathlib import Path
 
 from tests.support import IsolatedTest
 
@@ -100,6 +101,42 @@ class TestRescan(IsolatedTest):
             "failures": [{"source_file": "bad.apk", "error": "not a zip"}],
         })
         return report
+
+    def _manifest_from_elsewhere(self, stem):
+        """A manifest written before the result folder was moved: its report
+        path is absolute and points at a folder that no longer exists."""
+        report = self.make_report(stem)
+        self.make_agent_json(stem, package=stem, app_name=stem)
+        old = Path("D:/somewhere/else/engine/result") / report.name
+        from app.store import index
+        index.write_manifest({
+            "id": 1, "status": "done", "target": "hmos", "input": "moved",
+            "started_at": "2026-08-30T01:00:00", "file_count": 1,
+            "results": [{"source_file": f"{stem}.apk", "report": str(old)}],
+            "failures": []})
+        return report
+
+    def test_a_moved_result_folder_resolves_by_file_name(self):
+        """No dead link under its run and no copy under Unfiled."""
+        from app.store import index
+        report = self._manifest_from_elsewhere("com.moved")
+        counts = index.rescan()
+        self.assertEqual(counts["orphans"], 0)
+        apps = [a for r in index.library()["runs"] for a in r["apps"]]
+        self.assertEqual(len(apps), 1)
+        # rel() stores a path relative to the repo when it can; joining an
+        # absolute one onto ROOT leaves it unchanged.
+        html = (self.config.ROOT / apps[0]["artifacts"]["html"]).resolve()
+        self.assertEqual(html, report.resolve())
+
+    def test_deleting_in_a_moved_folder_removes_the_manifest_entry(self):
+        from app.store import index
+        report = self._manifest_from_elsewhere("com.gone")
+        index.rescan()
+        index.delete_report(report)
+        self.assertFalse(report.exists())
+        apps = [a for r in index.library()["runs"] for a in r["apps"]]
+        self.assertEqual(apps, [])
 
     def test_empty_disk_gives_an_empty_library(self):
         from app.store import index
@@ -205,6 +242,33 @@ class TestRescan(IsolatedTest):
         app = index.library()["runs"][0]["apps"][0]
         self.assertEqual(app["coverage_status"], "low")
         self.assertIsNone(app["coverage_pct"])
+
+    def test_downloads_are_rebuilt_from_the_manifest(self):
+        """ADR 0006: a result must trace to where its binary came from. The
+        manifest carries it, so it survives deleting the database."""
+        from app.store import index
+        apk = self.config.INPUT_DIR / "com.a.apk"
+        index.write_manifest({
+            "id": 3, "status": "done", "target": "hmos", "input": "2 packages",
+            "started_at": "2026-08-30T03:00:00", "file_count": 2,
+            "results": [], "failures": [{"source_file": "com.b", "error": "x"}],
+            "downloads": [
+                {"package_name": "com.a", "source": "apkpure", "state": "ready",
+                 "file_path": str(apk), "version": "1.2.3", "size": 10,
+                 "requested_at": "2026-08-30T03:00:01", "error": None, "note": None},
+                {"package_name": "com.b", "source": None, "state": "failed",
+                 "file_path": None, "version": None, "size": None,
+                 "requested_at": "2026-08-30T03:00:05", "error": "blocked", "note": None},
+            ],
+        })
+        self.assertEqual(index.rescan()["downloads"], 2)
+        [run] = index.library()["runs"]
+        by_pkg = {d["package_name"]: d for d in run["downloads"]}
+        self.assertEqual(by_pkg["com.a"]["source"], "apkpure")
+        self.assertEqual(by_pkg["com.a"]["version"], "1.2.3")
+        from app.store.db import rel
+        self.assertEqual(by_pkg["com.a"]["file_path"], rel(apk))   # stored like every path
+        self.assertEqual(by_pkg["com.b"]["error"], "blocked")
 
     def test_skipped_files_count_but_are_not_listed_twice(self):
         from app.store import index

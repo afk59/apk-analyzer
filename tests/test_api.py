@@ -195,15 +195,16 @@ class TestRunEndpoint(ApiTest):
         self.assertFalse(body["skip_existing"])
         self.post(f"/api/runs/{body['run_id']}/cancel")
 
-    def test_a_folder_of_binaries_is_one_exe_folder_application(self):
-        """The engine treats a directory of .exe/.dll as ONE app. Re-deciding
-        that here would produce a different report than the CLI."""
+    def test_a_folder_of_binaries_can_be_one_exe_folder_application(self):
+        """The engine's exe_folder mode -- the whole folder as ONE app, the
+        report the CLI writes for a folder -- is the "combined" option. A
+        program folder defaults to a per-binary batch (tests/test_batch_features)."""
         self.start_server()
         d = self.tmp / "pcapp"
         d.mkdir()
         (d / "app.exe").write_bytes(b"MZ")
         (d / "core.dll").write_bytes(b"MZ")
-        status, body = self.post("/api/runs", {"input": str(d)})
+        status, body = self.post("/api/runs", {"input": str(d), "pc_mode": "combined"})
         self.assertEqual(status, 200)
         self.assertEqual(body["file_count"], 1)
         self.assertIn("(folder)", body["input"])
@@ -218,6 +219,18 @@ class TestRunEndpoint(ApiTest):
         status, body = self.post("/api/runs", {"input": str(d)})
         self.assertEqual(body["file_count"], 1)
         self.post(f"/api/runs/{body['run_id']}/cancel")
+
+    def test_latest_is_null_before_any_run_and_the_run_after_one(self):
+        """A reloaded page re-attaches through this; "latest" must not be
+        swallowed by /api/runs/{run_id} as a malformed integer."""
+        self.start_server()
+        self.assertEqual(self.get("/api/runs/latest"), (200, {"run": None}))
+        d = self.tmp / "one"
+        d.mkdir()
+        self.make_fake_apk(d / "a.apk")
+        _, body = self.post("/api/runs", {"input": str(d)})
+        _, latest = self.get("/api/runs/latest")
+        self.assertEqual(latest["run"]["id"], body["run_id"])
 
     def test_unknown_run_id_is_404(self):
         self.start_server()
@@ -240,7 +253,9 @@ class TestDownloadEndpoint(ApiTest):
 
     def test_rejects_things_that_are_not_package_names(self):
         self.start_server()
-        for value in ("../etc/passwd", "a/b", "has space", "a\\b"):
+        # "x:y" / "C:evil" are drive-relative paths on Windows.
+        for value in ("../etc/passwd", "a/b", "has space", "a\\b",
+                      "x:y", "C:evil", "nodots", "com..x", "1com.x", "com.x."):
             status, body = self.post("/api/downloads", {"packages": value})
             self.assertEqual(status, 400, value)
             self.assertIn("Not package names", body["detail"])
@@ -315,6 +330,38 @@ class TestEventStream(ApiTest):
         # A fake APK cannot be analysed, so the file must fail -- and the RUN
         # must still finish. Per-file isolation is the property being checked.
         self.assertIn("file_failed", stages)
+
+    def test_a_reconnect_resumes_after_the_last_event_id(self):
+        """EventSource reconnects to the same URL and sends the last id it saw.
+        Without ids, the replay counted every finished file twice in the UI."""
+        self.start_server()
+        d = self.tmp / "one"
+        d.mkdir()
+        self.make_fake_apk(d / "a.apk")
+        _, body = self.post("/api/runs", {"input": str(d)})
+        url = f"{self.base}/api/runs/{body['run_id']}/events"
+
+        def read(req):
+            got = []
+            with urllib.request.urlopen(req, timeout=180) as r:
+                ev_id = None
+                for raw in r:
+                    line = raw.decode("utf-8", "replace").strip()
+                    if line.startswith("id: "):
+                        ev_id = int(line[4:])
+                    elif line.startswith("data: "):
+                        got.append((ev_id, json.loads(line[6:]).get("stage")))
+                    elif line.startswith("event: end"):
+                        break
+            return got
+
+        first = read(url)
+        ids = [i for i, _ in first]
+        self.assertEqual(ids, list(range(len(first))), "ids must be positions")
+        self.assertIn("run_finished", [s for _, s in first])
+
+        req = urllib.request.Request(url, headers={"Last-Event-ID": str(ids[1])})
+        self.assertEqual(read(req), first[2:])
 
     def test_events_for_an_unknown_run_are_404(self):
         self.start_server()

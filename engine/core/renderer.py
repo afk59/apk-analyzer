@@ -1,4 +1,6 @@
 
+import base64
+import io
 import os
 import re
 import json
@@ -28,6 +30,21 @@ def _esc(s: str) -> str:
         .replace(">", "&gt;")
         .replace('"', "&quot;")
     )
+
+
+def _script_json(data) -> str:
+    """report_data as a JS literal that is safe inside an inline <script>.
+
+    App names, versions and permission strings come from the analysed file, and
+    json.dumps leaves "</script>" intact. "<\\/" and "\\u0025" are the same
+    characters to the JS parser, so the value is unchanged. The "%" escape keeps
+    a "%%PLACEHOLDER%%" in app text from being expanded by the template pass
+    that runs after this value is inserted.
+    """
+    return (json.dumps(data, ensure_ascii=False, default=str)
+            .replace("</", "<\\/")
+            .replace("<!--", "<\\u0021--")
+            .replace("%%", "%\\u0025"))
 
 
 def confidence_badge(c: str) -> str:
@@ -407,6 +424,7 @@ _HTML_BASE = r"""<!DOCTYPE html>
 
 <script>
 const REPORT_DATA = %%REPORT_DATA_JSON%%;
+const WORKBOOK_B64 = "%%WORKBOOK_B64%%";
 document.querySelectorAll('.kit-header').forEach(h =>
   h.addEventListener('click', () => h.closest('.kit-card').classList.toggle('open')));
 if (REPORT_DATA.mode !== 'apk') {
@@ -520,11 +538,37 @@ function toggleSection(id){
 })();
 
 function exportExcel() {
+  // The workbook openpyxl produced is carried in this page, so the button hands
+  // over exactly the file the tool wrote next to this report -- same sheets,
+  // same styling, and no network.
+  if (WORKBOOK_B64) { downloadWorkbook(); return; }
+
+  // Only exe_folder reports reach this: that mode has no Python exporter, so
+  // its sheets are still built here. Needs a CDN, and therefore internet.
   if (typeof XLSX !== 'undefined') { buildExcel(); return; }
   const s = document.createElement('script');
   s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
   s.onload = buildExcel;
+  s.onerror = function () {
+    alert('The Excel export needs an internet connection on this report type.');
+  };
   document.head.appendChild(s);
+}
+
+function downloadWorkbook() {
+  const bin = atob(WORKBOOK_B64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], {type: '%%XLSX_MIME%%'});
+  // Named after this file, which is also what the workbook beside it is called.
+  const here = decodeURIComponent((location.pathname.split('/').pop() || ''));
+  const name = (here.replace(/\.html?$/i, '') || 'migration_report') + '.xlsx';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
 
 function buildExcel() {
@@ -1544,7 +1588,9 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
+        "WORKBOOK_B64":   _embedded_workbook(result, export_excel_apk),
+        "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   sidebar_html,
         "CONTAINER_EXTRA_CLASS": "with-sidebar",
         "SIDEBAR_TOGGLE_HTML": (
@@ -1786,7 +1832,9 @@ def render_html_exe(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
+        "WORKBOOK_B64":   _embedded_workbook(result, export_excel_exe),
+        "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   sidebar_html,
         "CONTAINER_EXTRA_CLASS": "with-sidebar",
         "SIDEBAR_TOGGLE_HTML": (
@@ -1963,7 +2011,11 @@ def render_html_exe_folder(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
+        # exe_folder has no Python exporter (docs/HANDOFF.md lists it as a
+        # gap), so this one report still builds its sheets in the browser.
+        "WORKBOOK_B64":   "",
+        "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   sidebar_html,
         "CONTAINER_EXTRA_CLASS": "with-sidebar",
         "SIDEBAR_TOGGLE_HTML": (
@@ -2136,7 +2188,9 @@ def render_html_ipa(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
+        "WORKBOOK_B64":   _embedded_workbook(result, export_excel_ipa),
+        "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   "",
         "CONTAINER_EXTRA_CLASS": "",
         "SIDEBAR_TOGGLE_HTML": "",
@@ -2166,6 +2220,28 @@ def _excel_styles():
         cell.border    = bdr
 
     return hdr, dat, bdr, RED, GRAY, WHITE, GRN, AMB, RED_C
+
+
+_XLSX_MIME = ("application/vnd.openxmlformats-officedocument"
+              ".spreadsheetml.sheet")
+
+
+def _embedded_workbook(result: dict, export) -> str:
+    """The report's own copy of the Python workbook, base64 for the page.
+
+    Embedding the real workbook makes the report's export identical to the
+    file beside it by construction, styles included, with no network needed.
+    Returns "" if the build fails, and the page then falls back to the browser
+    path -- a worse export beats a dead button.
+    """
+    try:
+        buf = io.BytesIO()
+        export(result, buf)
+        return base64.b64encode(buf.getvalue()).decode("ascii")
+    except Exception as exc:
+        print(f"{C.YELLOW}[!] Could not embed the workbook in the report: "
+              f"{exc}{C.RESET}")
+        return ""
 
 
 def export_excel_apk(result: dict, output_path: Path):
@@ -2445,7 +2521,10 @@ def export_excel_apk(result: dict, output_path: Path):
             ws4.row_dimensions[i].height = 16
 
     wb.save(output_path)
-    _print_ok(f"Excel report: {output_path}")
+    # output_path may be a BytesIO: the report embeds its own copy of this same
+    # workbook (see _embedded_workbook), and a buffer has no name to announce.
+    if not hasattr(output_path, "write"):
+        _print_ok(f"Excel report: {output_path}")
 
 
 def export_excel_exe(result: dict, output_path: Path):
@@ -2596,7 +2675,10 @@ def export_excel_exe(result: dict, output_path: Path):
     ws4.auto_filter.ref = "A1:D1"
 
     wb.save(output_path)
-    _print_ok(f"Excel report: {output_path}")
+    # output_path may be a BytesIO: the report embeds its own copy of this same
+    # workbook (see _embedded_workbook), and a buffer has no name to announce.
+    if not hasattr(output_path, "write"):
+        _print_ok(f"Excel report: {output_path}")
 
 
 def export_excel_ipa(result: dict, output_path: Path):
@@ -2725,7 +2807,10 @@ def export_excel_ipa(result: dict, output_path: Path):
     ws3.auto_filter.ref = f"A1:{get_column_letter(len(hdrs3))}1"
 
     wb.save(output_path)
-    _print_ok(f"Excel report: {output_path}")
+    # output_path may be a BytesIO: the report embeds its own copy of this same
+    # workbook (see _embedded_workbook), and a buffer has no name to announce.
+    if not hasattr(output_path, "write"):
+        _print_ok(f"Excel report: {output_path}")
 
 
 def _rel_link(html_path, output_path) -> str:

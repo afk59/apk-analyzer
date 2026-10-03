@@ -29,12 +29,24 @@ public mirrors. Use only for apps the team is authorised to analyse; mirrors
 carry their own terms of use.
 """
 
+import re
 import shutil
 import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+# Android's own rule for an application id: two or more dot-separated
+# segments, each a letter followed by letters, digits or underscores. Checked
+# before the name is used as a file name: "x:y" is a drive-relative path on
+# Windows.
+_PACKAGE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
+
+
+def is_package_name(name: str) -> bool:
+    return bool(_PACKAGE_RE.match(name or ""))
+
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
@@ -64,6 +76,20 @@ class Result:
     tried: list = field(default_factory=list)
 
 
+class Unusable(Exception):
+    """A source answered, but not with an APK and not with "no such app".
+
+    Kept apart from None ("this source does not have it"): a web filter's
+    block page read as "not found" would blame the app instead of the network.
+    """
+
+
+def _describe(exc: Exception) -> str:
+    if isinstance(exc, Unusable):
+        return str(exc)
+    return f"{type(exc).__name__}: {exc}"
+
+
 def _request(url: str, method: str = "GET"):
     return urllib.request.Request(url, method=method, headers={
         "User-Agent": _UA,
@@ -90,8 +116,12 @@ class ApkPure:
                     return None
                 ctype = (r.headers.get("Content-Type") or "").lower()
                 if "html" in ctype:
-                    # An HTML body here is an interstitial or an error page.
-                    return None
+                    # A missing package is a 404. An HTML page is usually a web
+                    # filter or proxy block page, sometimes a mirror
+                    # interstitial; the final URL says which.
+                    raise Unusable(f"answered with an HTML page instead of an APK "
+                                   f"(ended at {r.url}) - typically a web filter or "
+                                   f"proxy block page, or a mirror interstitial")
                 size = r.headers.get("Content-Length")
                 return Candidate(package, url, self.name,
                                  int(size) if size and size.isdigit() else None, ctype)
@@ -212,20 +242,24 @@ def _verify(path: Path, package: str):
 
 def fetch(package: str, dest_dir: Path, on_progress=None) -> Result:
     package = (package or "").strip()
-    if not package or "/" in package or "\\" in package:
+    if not is_package_name(package):
         return Result(package, "failed", error="Not a package name.")
 
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{package}.apk"
     tried = []
+    # Sources that answered with something other than an APK or "not here".
+    # While any exist, nothing has shown the app to be missing.
+    problems = []
 
     for source in SOURCES:
         tried.append(source.name)
         try:
             candidate = source.resolve(package)
         except Exception as exc:
+            problems.append(f"{source.name}: {_describe(exc)}")
             if on_progress:
-                on_progress(None, None, f"{source.name}: {type(exc).__name__}")
+                on_progress(None, None, problems[-1])
             continue
         if candidate is None:
             continue
@@ -267,6 +301,10 @@ def fetch(package: str, dest_dir: Path, on_progress=None) -> Result:
                       version=version, size=dest.stat().st_size, tried=tried,
                       note=note)
 
+    if problems:
+        return Result(package, "failed", tried=tried,
+                      error="No source gave a usable answer, so this does NOT show the "
+                            "app is missing - " + "; ".join(problems))
     return Result(package, "not_found", tried=tried,
                   error=f"Not available from: {', '.join(tried)}. "
                         f"Enterprise, internal and delisted apps are often on no public mirror.")

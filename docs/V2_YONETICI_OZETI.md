@@ -30,8 +30,9 @@ v2'de iki şey yaptık: **aracı herkesin kullanabileceği hale getirdik** ve
 Eskiden her analiz sadece diskte duran bir dosyaydı. "Kapsamı %60'ın altında kalan
 uygulamalar hangileri?" sorusunun cevabı, 43 dosyayı tek tek açmaktı.
 
-- Artık dosyaların üzerinde bir **dizin (veritabanı)** var. Liste, filtreleme, geçmişe
-  bakma ve iki analizi karşılaştırma anında geliyor.
+- Artık dosyaların üzerinde bir **dizin (veritabanı)** var. Liste ve geçmişe bakma anında
+  geliyor. Filtreleme ve iki analizi karşılaştırma bu dizinin üzerine kurulabilir, ancak
+  henüz arayüzde yok (2026-10-03 denetimi düzeltmesi).
 - Yapılan her analiz kaydediliyor; eski raporlara listeden tek tıkla dönülebiliyor.
 - Daha önce yapılmış bir analiz tekrar çalıştırılmıyor — zaman kaybı ortadan kalktı.
 - İndirilen uygulamaların durumu da burada tutuluyor (sırada / indiriliyor / hazır / hatalı).

@@ -33,11 +33,15 @@ const API = (() => {
     pick:    (kind)  => post('/api/pick', { kind }),
     open:    (path)  => post('/api/open', { path }),
     results:   ()    => call('/api/results'),
-    startRun:  (input, target, skipExisting) =>
-                       post('/api/runs', { input, target, skip_existing: skipExisting }),
+    startRun:  (input, target, skipExisting, pc) =>
+                       post('/api/runs', { input, target, skip_existing: skipExisting,
+                                           ...(pc || {}) }),
     runState:  (id)  => call('/api/runs/' + id),
+    latestRun: ()    => call('/api/runs/latest'),
     cancelRun: (id)  => post('/api/runs/' + id + '/cancel', {}),
     rescan:    ()    => post('/api/rescan', {}),
     download:  (packages, target) => post('/api/downloads', { packages, target }),
+    deleteResult: (target) => post('/api/results/delete', target),
+    deleteMany:   (items)  => post('/api/results/delete-many', { items }),
   };
 })();

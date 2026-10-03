@@ -1,6 +1,6 @@
 {
-  "version": "1.11.1",
-  "last_updated": "2026-08",
+  "version": "1.14.0",
+  "last_updated": "2026-10",
   "namespace_mappings": [
     {
       "android_namespace": "com.google.android.gms.ads",
@@ -2561,6 +2561,206 @@
       "harmony_import": "@kit.ArkUI",
       "confidence": "medium",
       "note": "Pager dots. ArkUI's Swiper has a built-in indicator, so the library disappears rather than porting."
+    },
+    {
+      "android_namespace": "coil",
+      "android_display": "Coil (2.x coil.*, 3.x coil3.*)",
+      "harmony_kit": "@kit.ImageKit",
+      "harmony_import": "@kit.ImageKit",
+      "confidence": "medium",
+      "note": "Kotlin image loading (fetch, decode, memory/disk cache, display). Same row as com.bumptech.glide / com.squareup.picasso. `import { image } from '@kit.ImageKit'` (kits/@kit.ImageKit.d.ts) decodes; ArkUI Image loads a URL and caches. Coil's interceptor/fetcher pipeline and Compose AsyncImage have no drop-in -- rebuilt on Image + image.createImageSource. One prefix covers coil3 too."
+    },
+    {
+      "android_namespace": "org.maplibre.android",
+      "android_display": "MapLibre Native",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "note": "Map display, camera, markers, gestures. Same row as com.mapbox (MapLibre is its open fork). `import { map, mapCommon, MapComponent } from '@kit.MapKit'` (harmonyos-guides/application-services/map-kit). Custom styles and raster tile overlays exist (map-creation/displaying-a-custom-map, drawing-on-a-map/tileoverlay); MapLibre style-spec vector sources do not -- the missing half. org.maplibre.geojson is a data model and stays unmapped."
+    },
+    {
+      "android_namespace": "com.j256.ormlite",
+      "android_display": "ORMLite",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "medium",
+      "note": "SQLite ORM. Storage is `import { relationalStore } from '@kit.ArkData'` (kits/@kit.ArkData.d.ts), like androidx.room. Annotation-driven entities and DAOs have no counterpart: RdbPredicates + ValuesBucket by hand."
+    },
+    {
+      "android_namespace": "com.orhanobut.hawk",
+      "android_display": "Hawk",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "medium",
+      "note": "Encrypted key-value store. Key-value half is `import { preferences } from '@kit.ArkData'` (kits/@kit.ArkData.d.ts), like android.content.SharedPreferences. Hawk encrypts every value; preferences does not -- secrets belong in @kit.AssetStoreKit instead."
+    },
+    {
+      "android_namespace": "com.fasterxml.uuid",
+      "android_display": "Java UUID Generator",
+      "harmony_kit": "@kit.ArkTS",
+      "harmony_import": "@kit.ArkTS",
+      "confidence": "medium",
+      "note": "UUID generation. `util.generateRandomUUID` / `generateRandomBinaryUUID` (api/@ohos.util.d.ts, re-exported by kits/@kit.ArkTS.d.ts) -- RFC 4122 version 4 only. JUG's time-based (v1/v6/v7) and name-based (v3/v5) generators have no counterpart."
+    },
+    {
+      "android_namespace": "com.makeramen.roundedimageview",
+      "android_display": "RoundedImageView",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Rounded / oval image with border. ArkUI Image takes `.borderRadius()` and `.border()` (component/common.d.ts), so the library disappears rather than porting."
+    },
+    {
+      "android_namespace": "com.wang.avi",
+      "android_display": "AVLoadingIndicatorView",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Loading spinners. ArkUI `LoadingProgress` (component/loading_progress.d.ts) is one style; AVI's 28 animated styles are custom animation work."
+    },
+    {
+      "android_namespace": "com.skydoves.balloon",
+      "android_display": "Balloon",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Tooltip popups with arrows. ArkUI `.bindPopup(show, PopupOptions | CustomPopupOptions)` (component/common.d.ts). Balloon's overlay highlight and show-once persistence are not built in."
+    },
+    {
+      "android_namespace": "com.flaviofaria.kenburnsview",
+      "android_display": "KenBurnsView",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Slow pan-and-zoom over an image. ArkUI Image with animateTo on scale/translate; no built-in Ken Burns transition generator."
+    },
+    {
+      "android_namespace": "dev.chrisbanes.snapper",
+      "android_display": "Snapper (Compose)",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Snap-to-item scrolling for Compose lazy lists. ArkUI `List.scrollSnapAlign(ScrollSnapAlign)` (component/list.d.ts) does the core work; Snapper's custom fling behaviours do not carry over."
+    },
+    {
+      "android_namespace": "it.xabaras.android.recyclerview",
+      "android_display": "RecyclerViewSwipeDecorator",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Swipe-to-act backgrounds on list rows. ArkUI `ListItem.swipeAction(SwipeActionOptions)` (component/list_item.d.ts) with start/end builders."
+    },
+    {
+      "android_namespace": "com.google.accompanist.pager",
+      "android_display": "Accompanist Pager",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Horizontal/vertical pager for Compose. ArkUI `Swiper` (component/swiper.d.ts), indicator built in. Mapped per module like Expo: accompanist is a grab-bag."
+    },
+    {
+      "android_namespace": "com.google.accompanist.flowlayout",
+      "android_display": "Accompanist FlowLayout",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "high",
+      "note": "Wrapping row/column layout for Compose. ArkUI `Flex({ wrap: FlexWrap.Wrap })` (component/flex.d.ts)."
+    },
+    {
+      "android_namespace": "com.google.accompanist.drawablepainter",
+      "android_display": "Accompanist DrawablePainter",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Draws an Android Drawable in Compose. ArkUI Image accepts a `DrawableDescriptor` / `PixelMapDrawableDescriptor` (api/@ohos.arkui.drawableDescriptor.d.ts, exported by @kit.ArkUI). Animated drawables need AnimatedDrawableDescriptor."
+    },
+    {
+      "android_namespace": "jp.wasabeef.picasso",
+      "android_display": "picasso-transformations",
+      "harmony_kit": "@kit.ArkGraphics2D",
+      "harmony_import": "@kit.ArkGraphics2D",
+      "confidence": "medium",
+      "note": "Bitmap transformations for Picasso (blur, grayscale, colour filter, crop, mask). `effectKit.createEffect(pixelMap)` with blur/brightness/grayscale/invert/setColorMatrix (api/@ohos.effectKit.d.ts, exported by kits/@kit.ArkGraphics2D.d.ts); crop is PixelMap.crop in @kit.ImageKit. Shape masks and GPU filter chains are hand work."
+    },
+    {
+      "android_namespace": "io.realm",
+      "android_display": "Realm (Java)",
+      "harmony_kit": "@kit.ArkData",
+      "harmony_import": "@kit.ArkData",
+      "confidence": "medium",
+      "note": "Local object database. Storage is `import { relationalStore } from '@kit.ArkData'` (kits/@kit.ArkData.d.ts), as androidx.room. Realm's live objects, schema migrations and Atlas Device Sync have no counterpart. @ohos/realm-core exists but is only the C++ core, not an SDK - pointing at it would overstate it."
+    },
+    {
+      "android_namespace": "org.reactnative.camera",
+      "android_display": "react-native-camera",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "RN camera module: preview, capture, recording. `import { camera } from '@kit.CameraKit'` (createCameraInput, createPreviewOutput). Its barcode half is @kit.ScanKit and face detection is @kit.CoreVisionKit, as org.reactnative.facedetector already is."
+    },
+    {
+      "android_namespace": "com.lwansbrough.RCTCamera",
+      "android_display": "react-native-camera (legacy RCTCamera)",
+      "harmony_kit": "@kit.CameraKit",
+      "harmony_import": "@kit.CameraKit",
+      "confidence": "medium",
+      "note": "The older react-native-camera module; same row as org.reactnative.camera."
+    },
+    {
+      "android_namespace": "com.alibaba.android.arouter",
+      "android_display": "ARouter",
+      "harmony_kit": "@kit.ArkUI",
+      "harmony_import": "@kit.ArkUI",
+      "confidence": "medium",
+      "note": "Page routing. ArkUI Navigation + NavPathStack (component/navigation.d.ts), as androidx.navigation. ARouter's annotation-generated route table, interceptors and service discovery are not built in."
+    },
+    {
+      "android_namespace": "com.amap.api.maps",
+      "android_display": "AMap 3D Map SDK",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "note": "Map display, camera, overlays -> `import { map, mapCommon, MapComponent } from '@kit.MapKit'`. The data is Petal Maps, not AMap's. AMap publishes its own HarmonyOS SDK, @amap/amap_lbs_map3d (publisher 高德开放平台), for an app that must stay on AMap data and keys."
+    },
+    {
+      "android_namespace": "com.amap.api.location",
+      "android_display": "AMap Location SDK",
+      "harmony_kit": "@kit.LocationKit",
+      "harmony_import": "@kit.LocationKit",
+      "confidence": "medium",
+      "note": "Positioning -> `geoLocationManager` (kits/@kit.LocationKit.d.ts). AMap's own HarmonyOS SDK is @amap/amap_lbs_location (publisher 高德开放平台) when AMap coordinates/services are required."
+    },
+    {
+      "android_namespace": "com.amap.api.services",
+      "android_display": "AMap Search SDK",
+      "harmony_kit": "@kit.MapKit",
+      "harmony_import": "@kit.MapKit",
+      "confidence": "medium",
+      "note": "POI search, geocoding, routing -> `import { site } from '@kit.MapKit'` (harmonyos-guides/application-services/map-kit/place-search). AMap's own HarmonyOS SDK is @amap/amap_lbs_search (publisher 高德开放平台)."
+    },
+    {
+      "android_namespace": "com.igexin",
+      "android_display": "Getui Push SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Push delivery -> `import { pushService } from '@kit.PushKit'` (harmonyos-guides/application-services/push-kit). Getui's targeting backend is the vendor's: its HarmonyOS SDK is @getui/push (publisher getui), which itself rides on Push Kit."
+    },
+    {
+      "android_namespace": "cn.jpush",
+      "android_display": "JPush SDK",
+      "harmony_kit": "@kit.PushKit",
+      "harmony_import": "@kit.PushKit",
+      "confidence": "medium",
+      "note": "Push delivery -> `import { pushService } from '@kit.PushKit'`. JPush's own HarmonyOS SDK is @jg/push (publisher 极光推送), on Push Kit. cn.jiguang (shared core/analytics) is not claimed."
+    },
+    {
+      "android_namespace": "ai.onnxruntime",
+      "android_display": "ONNX Runtime",
+      "harmony_kit": "@kit.MindSporeLiteKit",
+      "harmony_import": "@kit.MindSporeLiteKit",
+      "confidence": "medium",
+      "note": "On-device inference. `mindSporeLite.loadModelFromFile` (api/@ohos.ai.mindSporeLite.d.ts, exported by kits/@kit.MindSporeLiteKit.d.ts); ONNX models are converted offline to .ms (harmonyos-guides/ai/mindspore-lite-kit/using-mindspore-lite-for-model-conversion), and the supported operators are listed against ONNX Opset 18 (appendix/mindspore-lite-kit-operator-list). Same row as org.tensorflow.lite. No runtime ONNX loading; operators outside the list block conversion. @ohos/onnxruntime exists but native-first rules it out."
     }
   ],
   "permission_mappings": [

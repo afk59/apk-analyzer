@@ -159,7 +159,34 @@ class TestFetchFlow(IsolatedTest):
         from app.services import downloader as dl
         with_source(dl, FakeSource(None, raise_on_resolve=True))
         r = dl.fetch("com.x", self.config.INPUT_DIR)
-        self.assertEqual(r.state, "not_found")       # skipped, not crashed
+        # Skipped, not crashed -- and NOT reported as "not found": a source
+        # that errored has not shown the app to be missing.
+        self.assertEqual(r.state, "failed")
+        self.assertIn("mirror exploded", r.error)
+
+    def test_a_block_page_is_named_not_reported_as_not_found(self):
+        """A web filter answering 200 with an HTML page must not read as "Not
+        available from: apkpure"."""
+        from app.services import downloader as dl
+        import email.message
+
+        class Resp:
+            status, url = 200, "https://filter.example/blocked?cat=download"
+            headers = email.message.Message()
+            headers["Content-Type"] = "text/html; charset=utf-8"
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        dl.SOURCES = [dl.ApkPure()]
+        real = dl.urllib.request.urlopen
+        dl.urllib.request.urlopen = lambda *a, **k: Resp()
+        try:
+            r = dl.fetch("com.x", self.config.INPUT_DIR)
+        finally:
+            dl.urllib.request.urlopen = real
+        self.assertEqual(r.state, "failed")
+        self.assertIn("HTML page", r.error)
+        self.assertIn("filter.example", r.error)
 
     def test_a_bad_payload_is_deleted_so_it_cannot_be_analysed_later(self):
         """A wrong or truncated APK left in input/ is one the next folder run

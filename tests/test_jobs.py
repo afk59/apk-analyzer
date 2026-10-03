@@ -265,6 +265,23 @@ class TestSkipAndCancel(JobsTest):
         self.assertFalse(self.runner.cancel(99999))
 
 
+class TestDownloads(JobsTest):
+
+    def test_every_fetch_is_recorded_in_the_manifest(self):
+        """ADR 0006 rule 3: source and version, for success and failure alike."""
+        self.use_stub(STUB_OK)
+        from app.services import downloader
+        downloader.fetch = lambda pkg, dest, progress=None: downloader.Result(
+            pkg, "failed", tried=["apkpure"], error="blocked by a filter")
+        run = self.wait(self.runner.submit([], "hmos", packages=["com.q"]))
+        [dl] = run.snapshot()["downloads"]
+        self.assertEqual((dl["package_name"], dl["state"], dl["error"]),
+                         ("com.q", "failed", "blocked by a filter"))
+        manifest = json.loads(next((self.config.RESULT_DIR / ".runs").glob("run-*.json"))
+                              .read_text(encoding="utf-8"))
+        self.assertEqual(manifest["downloads"], [dl])
+
+
 class TestEvents(JobsTest):
 
     def test_events_are_readable_by_cursor(self):
@@ -293,29 +310,54 @@ class TestAggregateEntries(JobsTest):
     """_aggregate builds the list the workbooks are made from."""
 
     def test_failures_appear_as_error_rows_in_input_order(self):
-        self.use_stub(STUB_OK)
-        run = self.runner.get(self.runner.submit(
-            self.touch_inputs("a.apk", "bad.apk", "c.apk"), "hmos"))
+        jobs = self.use_stub(STUB_OK)
+        run = jobs.Run(1, self.touch_inputs("a.apk", "bad.apk", "c.apk"), "hmos", "t")
         run.results = [{"source_file": "a.apk", "sidecar": None},
                        {"source_file": "c.apk", "sidecar": None}]
         run.failures = [{"source_file": "bad.apk", "error": "boom"}]
-        captured = {}
-        self.runner._aggregate = lambda r: captured.setdefault("run", r)
-
-        # Rebuild the entry list exactly as _aggregate does.
-        from app.services import jobs
-        real = jobs.JobRunner._aggregate
-        entries = []
-        by_name = {r.get("source_file"): r for r in run.results}
-        failed = {f.get("source_file"): f for f in run.failures}
-        for p in run.paths:
-            if p.name in failed:
-                entries.append({"row": {"source_file": p.name, "mode": "error"}})
-            elif p.name in by_name:
-                entries.append({"row": by_name[p.name]})
+        entries = self.runner._entries(run)
         self.assertEqual([e["row"]["source_file"] for e in entries],
                          ["a.apk", "bad.apk", "c.apk"])
         self.assertEqual(entries[1]["row"]["mode"], "error")
+
+    def test_a_skipped_file_links_the_report_for_its_own_target(self):
+        """A resumed HMS run once looked for "_apk_hmos_" and lost the report
+        link of every file it skipped."""
+        jobs = self.use_stub(STUB_OK)
+        run = jobs.Run(1, self.touch_inputs("a.apk"), "hms", "t")
+        run.results = [{"source_file": "a.apk", "skipped": True}]
+        side_dir = self.config.RESULT_DIR / ".sidecars"
+        side_dir.mkdir(parents=True, exist_ok=True)
+        (side_dir / "a_hms.json").write_text(
+            json.dumps({"app_name": "A", "mapped": [], "unmapped": []}), encoding="utf-8")
+        hms = self.config.RESULT_DIR / "a_apk_hms_report.html"
+        hms.write_text("x", encoding="utf-8")
+        (self.config.RESULT_DIR / "a_apk_hmos_report.html").write_text("x", encoding="utf-8")
+
+        [entry] = self.runner._entries(run)
+        self.assertEqual(entry["row"]["report"], str(hms))
+
+    def test_a_skipped_exe_keeps_its_workbook_row(self):
+        """A resumed batch keeps every EXE/DLL/IPA it skipped in
+        batch_summary.xlsx."""
+        from app.services import jobs
+        exe = self.config.INPUT_DIR / "prog" / "tool.exe"
+        exe.parent.mkdir(parents=True, exist_ok=True)
+        exe.write_bytes(b"MZ")
+        report = self.config.RESULT_DIR / "tool_exe_hmos_report.html"
+        report.write_text("<html></html>", encoding="utf-8")
+        side = self.config.RESULT_DIR / ".sidecars" / "tool_exe_hmos.json"
+        side.parent.mkdir(parents=True, exist_ok=True)
+        side.write_text(json.dumps({"mode": "exe", "app_name": "tool.exe",
+                                    "kit_count": 4, "unmapped_count": 2,
+                                    "permissions": 0}), encoding="utf-8")
+        run = jobs.Run(1, [exe], "hmos", "prog")
+        run.results.append({"source_file": "tool.exe", "skipped": True})
+        [entry] = jobs.JobRunner()._entries(run)
+        row = entry["row"]
+        self.assertEqual((row["mode"], row["kit_count"], row["unmapped_count"]),
+                         ("exe", 4, 2))
+        self.assertEqual(Path(row["report"]), report)
 
     def test_no_workbooks_for_a_single_analysed_app(self):
         """The CLI has never produced them for one file either."""
@@ -326,3 +368,44 @@ class TestAggregateEntries(JobsTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+STUB_STDERR_FLOOD = """
+import json, sys
+sys.stderr.write("w" * (1 << 20))      # far past any OS pipe buffer
+sys.stderr.write("LAST-LINE" + chr(10))
+sys.stderr.flush()
+print(json.dumps({"stage": "error", "error": None}))
+sys.exit(3)
+"""
+
+
+class TestRealReaderStderr(JobsTest):
+    """The REAL _run_one (not the mirror above), with only the command swapped.
+
+    A worker that writes more than the pipe buffer to stderr before its
+    terminal line must not deadlock the runner reading stdout."""
+
+    def test_a_worker_flooding_stderr_does_not_deadlock(self):
+        from app.services import jobs
+        script = self.tmp / "flood.py"
+        script.write_text(STUB_STDERR_FLOOD, encoding="utf-8")
+        self.runner = jobs.JobRunner()
+        real_popen = jobs.subprocess.Popen
+
+        def popen(cmd, **kw):
+            if "app.worker" in cmd:
+                cmd = [sys.executable, "-u", str(script), cmd[cmd.index("app.worker") + 1]]
+            return real_popen(cmd, **kw)
+
+        jobs.subprocess.Popen = popen
+        try:
+            run = self.wait(self.runner.submit(self.touch_inputs("f.apk"), "hmos"),
+                            timeout=30)
+        finally:
+            jobs.subprocess.Popen = real_popen
+        self.assertEqual(len(run.failures), 1)
+        # The tail of what it wrote is what the failure row reports.
+        err = run.failures[0]["error"]
+        self.assertNotIn("Error", err, "the stub itself failed, not the reader")
+        self.assertIn("LAST-LINE", err)

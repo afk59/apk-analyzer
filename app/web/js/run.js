@@ -13,7 +13,34 @@ const stageLabel = (key) => t('stage.' + key);
 const run = {
   id: null, total: 0, done: 0, source: null,
   fileStart: 0, timer: null, seen: new Set(),
+  quiet: false,   // replaying a run that had already finished: no toast
+  dl: {},         // package -> its row in #run-downloads
 };
+
+/* One row per requested package. Downloads overlap analysis, so a package's
+   progress cannot share the run's single "current file" line. */
+function dlRow(pkg) {
+  if (run.dl[pkg]) return run.dl[pkg];
+  const box = $('#run-downloads');
+  box.hidden = false;
+  const el = document.createElement('div');
+  el.className = 'dlrow';
+  el.innerHTML = '<span class="pkg"></span><span class="bar"><i></i></span><span class="st"></span>';
+  el.querySelector('.pkg').textContent = pkg;
+  box.appendChild(el);
+  run.dl[pkg] = el;
+  return el;
+}
+
+function dlState(pkg, key, extra, cls) {
+  const el = dlRow(pkg);
+  el.dataset.state = key;
+  el.className = 'dlrow' + (cls ? ' ' + cls : '');
+  el.querySelector('.st').textContent = t('dl.' + key) + (extra ? ' · ' + extra : '');
+}
+
+/* A downloaded file is analysed under its file name, <package>.apk. */
+const pkgOf = (file) => (file || '').replace(/\.apk$/i, '');
 
 function renderStages(active) {
   const box = $('#run-stages');
@@ -26,6 +53,7 @@ function renderStages(active) {
     if (!run.seen.has(key) && key !== active) return;
     const el = document.createElement('span');
     el.className = 'stage' + (key === active ? ' active' : (activeIdx > i || activeIdx === -1 ? ' done' : ''));
+    el.dataset.key = key;
     el.textContent = stageLabel(key);
     box.appendChild(el);
   });
@@ -59,7 +87,7 @@ function doneRow(row, failed) {
   el.className = 'result' + (failed ? ' fail' : '');
   if (failed) {
     el.innerHTML = '<div class="grow"><div class="name">' + escapeHtml(row.source_file) +
-      '</div><div class="meta">' + escapeHtml(row.error || 'failed') + '</div></div>';
+      '</div><div class="meta">' + escapeHtml(row.error || t('msg.failed')) + '</div></div>';
     $('#run-done').appendChild(el);
     return;
   }
@@ -92,9 +120,7 @@ function handleEvent(ev) {
     case 'run_started':
       run.total = ev.file_count; updateBar(); break;
     case 'download_started':
-      run.seen = new Set(); run.fileStart = Date.now();
-      $('#run-file').textContent = ev.file;
-      renderStages(null);
+      dlState(ev.file, 'downloading');
       logLine('── ' + t('msg.downloading') + ' ' + ev.file);
       break;
     case 'download_progress': {
@@ -102,12 +128,16 @@ function handleEvent(ev) {
       // its Content-Length. Analysis does not, which is why nothing else shows
       // one.
       const mb = (n) => (n / 1048576).toFixed(1);
-      $('#run-elapsed').textContent = mb(ev.got) + ' / ' + mb(ev.total) + ' MB';
-      $('#run-bar').style.width =
-        Math.round(((run.done + ev.got / ev.total) / (run.total || 1)) * 100) + '%';
+      const el = dlRow(ev.file);
+      el.querySelector('.bar > i').style.width =
+        Math.min(100, Math.round((ev.got / (ev.total || 1)) * 100)) + '%';
+      el.querySelector('.st').textContent =
+        t('dl.downloading') + ' · ' + mb(ev.got) + ' / ' + mb(ev.total) + ' MB';
       break;
     }
     case 'download_done':
+      dlRow(ev.file).querySelector('.bar > i').style.width = '100%';
+      dlState(ev.file, 'ready', ev.version ? 'v' + ev.version : '', 'ok');
       logLine(t('msg.fetched') + ' ' + ev.file + (ev.version ? ' v' + ev.version : '') +
               ' — ' + t('msg.from') + ' ' + ev.source, 'ok');
       // Say when the config splits were dropped. The analysis is still valid --
@@ -117,10 +147,12 @@ function handleEvent(ev) {
       break;
     case 'download_failed':
       run.done++; updateBar();
+      dlState(ev.file, 'failed', '', 'fail');
       doneRow({ source_file: ev.file, error: ev.error }, true);
-      logLine('DOWNLOAD FAILED ' + ev.file + ' — ' + ev.error, 'err');
+      logLine(t('msg.downloadFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
       break;
     case 'file_started':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'analysing', '', 'ok');
       run.seen = new Set();
       run.fileStart = Date.now();
       $('#run-file').textContent = ev.file;
@@ -129,16 +161,38 @@ function handleEvent(ev) {
       break;
     case 'file_skipped':
       run.done++; updateBar();
-      logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + ev.reason, 'ok');
+      logLine(t('msg.skipped') + ' ' + ev.file + ' — ' + t('msg.alreadyAnalysed'), 'ok');
       break;
     case 'file_done':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'analysed', '', 'ok');
       run.done++; updateBar(); doneRow(ev.result, false);
       logLine(t('msg.done') + ' ' + ev.file, 'ok');
       break;
     case 'file_failed':
+      if (run.dl[pkgOf(ev.file)]) dlState(pkgOf(ev.file), 'failed', '', 'fail');
       run.done++; updateBar();
       doneRow({ source_file: ev.file, error: ev.error }, true);
-      logLine('FAILED ' + ev.file + ' — ' + ev.error, 'err');
+      logLine(t('msg.fileFailed') + ' ' + ev.file + ' — ' + ev.error, 'err');
+      break;
+    /* The batch workbook step, after the last file. It includes the Google
+       Play lookup and can take a while, so it is shown as its own stage. */
+    case 'aggregating':
+      run.seen = new Set(); run.fileStart = Date.now();
+      $('#run-file').textContent = t('run.aggregating');
+      renderStages(null);
+      logLine('── ' + t('run.aggregating'));
+      break;
+    case 'metadata':
+    case 'workbooks':
+      if (ev.detail) logLine('  ' + ev.detail);
+      break;
+    case 'aggregate_done':
+      logLine(t('msg.workbooksWritten'), 'ok');
+      break;
+    case 'error':
+      // A worker's error is followed by its own file_failed; only the
+      // workbook step's (which names no file) needs saying here.
+      if (!ev.file) logLine(t('msg.workbooksFailed') + ' — ' + ev.error, 'err');
       break;
     case 'run_finished':
       finishRun(ev);
@@ -163,24 +217,61 @@ function finishRun(ev) {
   run.seen = new Set();
   renderStages(null);
   $('#run-bar').style.width = '100%';
-  toast(ev.status === 'cancelled'
-    ? t('msg.cancelled')
-    : t('msg.finished') + ' — ' + ev.ok + ' ' + t('msg.ok') + ', ' +
-      ev.failed + ' ' + t('msg.failed') + '.', ev.failed > 0);
-  $('#start').disabled = false;
+  showWorkbooks(ev.workbooks);
+  if (!run.quiet) {
+    toast(ev.status === 'cancelled'
+      ? t('msg.cancelled')
+      : t('msg.finished') + ' — ' + ev.ok + ' ' + t('msg.ok') + ', ' +
+        ev.failed + ' ' + t('msg.failed') + '.', ev.failed > 0);
+  }
+  run.quiet = false;
+  // Not unconditionally enabled: after a reload nothing is picked, and Start
+  // with no input is a button that does nothing.
+  $('#start').disabled = !(state.file || state.folder);
+  $('#download').disabled = false;
+}
+
+/* The two batch workbooks, once written: the same buttons Results shows, so
+   the run's main deliverable is one click away where the run ended. */
+function showWorkbooks(wb) {
+  const paths = Object.values(wb || {}).filter(
+    (v) => typeof v === 'string' && v.toLowerCase().endsWith('.xlsx'));
+  if (!paths.length) return;
+  const box = document.createElement('div');
+  box.className = 'workbooks';
+  box.innerHTML = '<span class="label">' + t('results.workbooks') + '</span>';
+  paths.forEach((p) => {
+    const b = document.createElement('button');
+    b.className = 'btn ghost';
+    b.textContent = p.split(/[\\/]/).pop();
+    b.addEventListener('click', () => openPath(p));
+    box.appendChild(b);
+  });
+  $('#run-done').prepend(box);
 }
 
 /* Shared by "Start analysis" and "Download & analyse": both create a run and
    then watch the same event stream. */
-function beginRun(res) {
+function beginRun(res, show = true) {
   run.id = res.run_id; run.total = res.file_count; run.done = 0; run.seen = new Set();
   $('#nav-run').hidden = false;
   $('#run-done').innerHTML = '';
   $('#run-log').innerHTML = '';
+  $('#run-downloads').innerHTML = '';
+  $('#run-downloads').hidden = true;
+  run.dl = {};
+  // Every requested package is listed from the start, so a long list shows
+  // what is still waiting rather than appearing one row at a time.
+  (res.packages || []).forEach((pkg) => dlState(pkg, 'queued'));
   $('#run-cancel').disabled = false;
+  // Both ways of starting a run stay locked until this one finishes: two
+  // overlapping runs put two androguard workers in memory at once
+  // (docs/decisions/0005).
+  $('#start').disabled = true;
+  $('#download').disabled = true;
   $('#run-file').textContent = res.input;
   updateBar();
-  showPanel('run');
+  if (show) showPanel('run');
   if (res.skip_existing) logLine(t('msg.skipping'), 'ok');
 
   run.source = new EventSource('/api/runs/' + res.run_id + '/events');
@@ -201,12 +292,32 @@ function beginRun(res) {
   run.timer = setInterval(tickElapsed, 1000);
 }
 
+/* A reload (F5, or the webview re-navigating) wipes everything above, but the
+   run lives on in the server. Re-attach to it: replaying its stream from the
+   first event into an emptied panel rebuilds exactly what was on screen. */
+async function resumeLatestRun() {
+  let res;
+  try { res = await API.latestRun(); } catch { return; }
+  const r = res && res.run;
+  if (!r || run.id !== null) return;
+  const running = r.status === 'running';
+  run.quiet = !running;
+  if (running) $('#start').disabled = true;
+  beginRun({ run_id: r.id, file_count: r.file_count, input: r.input,
+             packages: r.packages }, running);
+}
+
+resumeLatestRun();
+
 async function startRun() {
   const input = state.file || state.folder;
   if (!input) return;
   $('#start').disabled = true;
   try {
-    const res = await API.startRun(input, $('#target').value, null);
+    // null lets the server decide for a single file, which it never skips.
+    const skip = state.folder ? $('#skip-existing').checked : null;
+    const res = await API.startRun(input, $('#target').value, skip,
+                                   state.folder ? pcOptions() : null);
     beginRun(res);
   } catch (e) {
     toast(e.message, true);
@@ -234,19 +345,19 @@ async function startDownload() {
   $('#download').disabled = true;
   try {
     const res = await API.download(packages, $('#target').value);
-    beginRun(res);
+    beginRun(res);   // finishRun re-enables it
   } catch (e) {
     toast(e.message, true);
-  } finally {
     $('#download').disabled = false;
   }
 }
 
 $('#download').addEventListener('click', startDownload);
 
-/* i18n hook: redraw the stage pills in the new language, keeping the active one. */
+/* i18n hook: redraw the stage pills in the new language, keeping the active one.
+   Read from the pill's key, not its text: t() already answers in the NEW
+   language here. */
 function redrawStages() {
   const active = document.querySelector('.stage.active');
-  const key = active ? STAGE_KEYS.find((k) => stageLabel(k) === active.textContent) : null;
-  renderStages(key || null);
+  renderStages((active && active.dataset.key) || null);
 }

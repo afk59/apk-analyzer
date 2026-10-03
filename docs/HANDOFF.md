@@ -1,6 +1,6 @@
 # Handoff — start here
 
-Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
+Last updated **2026-10-02**, end of an unattended overnight session — see the last entry of `SESSION_LOG.md`. Read this, then `CLAUDE.md`.
 
 ---
 
@@ -9,12 +9,12 @@ Last updated **2026-09-02**, end of session. Read this, then `CLAUDE.md`.
 | | |
 |---|---|
 | Branch | `v2` (this folder), pushed. `main` is the product branch, frozen except bug fixes. |
-| App | Working. `run.bat` → window, pickers, analysis with live progress, results library, APK download by package name. |
+| App | Working. `run.bat` → window, pickers, analysis with live progress, results library (with ×-delete), APK download by package name (comma-separated batch, downloads overlap analysis), PC program folders as a per-binary batch. |
 | Languages | EN / TR / 中文, remembered. UI chrome only — analysis output is never translated. |
 | Theme | system / light / dark, remembered. |
-| Tests | **202**, `python -m unittest discover -s tests -t .`, ~3 min when nothing else is running. |
-| `mapping.json` | **v1.11.1** — 311 namespaces, 67 permissions. Fully audited. |
-| Corpus | 43 apps in `../apk-analyzer-side/src/input/`. Full run ≈ 55 min including HSBC. |
+| Tests | **271**, `python -m unittest discover -s tests -t .`. ~4 min with `MA_TEST_APK` pointing at the 3 MB corpus APK (see below); ~21 min without. Green on 2026-10-03 after the audit fixes. |
+| `mapping.json` | **v1.14.0** — 336 namespaces, 67 permissions. `ohpm_mapping.json` v1.3.0 (29), `win_mapping.json` v1.2.0 (101). The 2026-10-02 rows are confirmed on real runs (435/435 and 898/898) except `org.msgpack` and `app.rive`, predicted only — see `MAPPING_ROUND_2026-10-02.md`. |
+| Corpus | **42 apps** in `../apk-analyzer-side/src/input/`. HSBC was removed 2026-10-02 by maintainer decision (see below); the full run is now ≈ 35 min. |
 
 ## The two branches
 
@@ -88,8 +88,7 @@ python -m app --no-window                       # note the port it prints
 POST /api/runs {"input": "<corpus>", "target": "hmos", "skip_existing": false}
 ```
 
-Budget ~55 min. HSBC (`hk.com.hsbc.hsbchkmobilebanking.apk`, 328 MB) is last in
-sort order and takes ~20 min on its own; that is normal, not a hang.
+Budget ~35 min. (HSBC used to add ~20 min on its own; it is no longer in the corpus.)
 
 **Afterwards, confirm the absorption** — the numbers to reproduce are in
 `docs/MAPPING_ROUND_2026-08-30.md` §6: 161 distinct namespaces, 251 row
@@ -113,6 +112,34 @@ instances, 0 shadowed, 0 leak-back.
    found **nine hallucinated values** — including `@kit.AnalyticsKit`, a kit
    that appears nowhere in the 110 MB documentation corpus and was used by 13
    rows. All corrected; the audit is now five permanent tests.
+
+## Audit 2026-10-03 -- what is still open
+
+An audit on 2026-10-03 (report kept on the `v2` branch) listed 35 findings. App-side bugs BUG-02/03/04/05/11/12/13/14/15/17
+are fixed, one commit each. Everything below was verified as real and **deliberately not
+fixed**: each changes analysis output or a mapping and needs a maintainer decision, a grounding
+round and a corpus re-run.
+
+| Item | Note |
+|---|---|
+| **BUG-01 (critical)** 5+-segment rows never match | `apk_engine` cuts namespaces to 4 segments, so 14 `mapping.json` rows and 19 `hms_mapping.json` rows (gms.maps/location/auth/ads/wallet…, mlkit.vision/nl) are dead; all GMS falls to the catch-all row. Engine change, output-changing. |
+| BUG-06 fuzzy DLL match | `mfc140.dll` → Media Foundation via `startswith('mf')`, first key wins. Engine. |
+| BUG-07 placeholder kits | 36 `win_mapping.json` rows ("No direct equivalent", "HarmonyOS NDK (…)", "Qt for HarmonyOS …") counted as kits. Data + engine. |
+| BUG-08 permission targets | 7 targets exist only in the `permissions.d.ts` union; 3 are documented system-only. Also: `ohos.permission.ACCESS_NOTIFICATION_POLICY` exists, yet Android ACCESS_NOTIFICATION_POLICY maps to NOTIFICATION_CONTROLLER. Search docs for both `_` and `\_` spellings. |
+| BUG-09, 10, 16 | CLI exe/dll report-name collision; `NSLocationTemporaryUsageDescriptionDictionary` never collected; weakest-confidence rule missing in EXE/IPA. Engine. |
+| BUG-18, EKS-02, EKS-11, EKS-12 | grant_level contradictions; functionally wrong HMS rows; suggester proposes for custom permissions; Bluetooth: official FAQ says USE_BLUETOOTH is API 7-9 only, ACCESS_BLUETOOTH is current. |
+| BUG-03 remainder | The runner accepts overlapping runs by design (`TestConcurrentRuns`), but its own docstring states a one-worker-at-a-time rule. UI now locks both start buttons; whether the API should answer 409 is open. |
+| EKS-01, GEL-02 | Local library is three mapping versions behind; skip_existing ignores the mapping version. A fresh v1.14.0 corpus run exists on the maintainer's machine. |
+| EKS-04/05/06/09/10, GEL-01/03/04/05 | Product/UX proposals; see the report. |
+
+## Owed from 2026-10-02
+
+| Item | Note |
+|---|---|
+| **HSBC and Calm are not analysed any more** | Maintainer decision, 2026-10-02: both exhausted memory on this machine and cost more than they returned. Inputs, reports and side-cars deleted; `RESUME.txt` updated. Do not re-download or re-add them. Consequence: `org.msgpack`, `app.rive` and `ai.onnxruntime` match nothing in the remaining corpus — they stay as grounded rows for future apps, confirmed by prediction only. A copy of HSBC output still sits in `../apk-analyzer-v3/out/corpus43/` (the separate v3 project, left untouched). |
+| Duolingo dies in androguard | `get_app_name()` → `struct.error` in `ARSCParser`. Engine bug with a 3-line repro in the session log; fix proposed, not applied (engine is frozen). |
+| Audit `win_mapping.json` | Never audited. `version.dll` → BasicServicesKit names `bundleManager`, which is AbilityKit. |
+| Sync `v2-nocomment` | The three 2026-10-02 commits are local on `v2`, not pushed, not cherry-picked. |
 
 ## What is deliberately still open
 

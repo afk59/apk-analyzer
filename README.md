@@ -14,7 +14,7 @@ expansion.** v1's analysis engine is inherited unchanged and its CLI still works
 
 ```
 engine/     v1 analysis engine — inherited and behaviour-frozen (decisions/0003)
-  data/mappings/    THE PRODUCT: 279 native + 15 OHPM mapping rows
+  data/mappings/    THE PRODUCT: native + OHPM mapping rows (counts: docs/HANDOFF.md)
   analyzer.py       the v1 CLI, still supported
 app/        v2 shell: FastAPI + pywebview + frontend + SQLite + downloader
 docs/       architecture, roadmap, mapping rules, decisions, session log

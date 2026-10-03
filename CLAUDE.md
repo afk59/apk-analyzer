@@ -57,7 +57,7 @@ mapping expansion — without touching the analysis engine's behaviour.
 ```
 run.bat                      # v2 desktop app
 python -m app                # same thing, from a shell
-python -m unittest discover -s tests -t .     # 202 tests
+python -m unittest discover -s tests -t .     # count: docs/HANDOFF.md
 python engine/analyzer.py <file> --no-open    # v1 CLI, still works and still supported
 ```
 
