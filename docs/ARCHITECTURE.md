@@ -126,6 +126,10 @@ Rules:
   namespace with an OHPM port counts as covered. A report without `total_ohpm_ns` (written
   earlier) keeps the kit-only figure it was published with.
 - Paths are stored **relative to the repo root** so a moved or shared folder still resolves.
+- Run manifests still hold the **absolute** report path the worker wrote. Rescan and delete
+  resolve it by file name against the current `RESULT_DIR` first (`index._locate`), since
+  every report lives directly there -- that is what makes a moved or copied result folder
+  work, including for manifests written before the fix (audit 2026-10-03, BUG-05).
 
 ## Side-cars
 

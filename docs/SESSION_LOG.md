@@ -713,3 +713,21 @@ Testler 254 → **258**; tam paket iki kez koşuldu, ikisi de 258/258 OK.
   `org.tensorflow.lite` ile aynı satır. Motor değişikliği gerekmedi.
 - Sonuç: `org.msgpack`, `app.rive`, `ai.onnxruntime` kalan korpusta hiçbir şeyle eşleşmiyor;
   dayanakları yazılı satırlar olarak gelecekteki uygulamalar için duruyor.
+
+## 2026-10-03 — Denetim raporu (AUDIT_REPORT.md) bulgularının düzeltilmesi
+
+- Önce çalışma alanı commit edildi (rapor, `audit/` script'leri, küçük ölçüm çıktıları,
+  Play önbelleği). Büyük koşu çıktıları, Edge profili, `24-9/` ve `deliverables/` takip dışı.
+- Her bulgu kodda teyit edildi. Düzeltilenler (her biri ayrı commit, testli):
+  BUG-02 rapor `<script>` enjeksiyonu (motor, çıktı-nötr), BUG-03 paralel koşu takibi +
+  buton kilidi, BUG-04 PC/IPA toplu kitabında Unmapped DLLs/Frameworks sheet'leri
+  (**çıktı değiştiren**), BUG-05 taşınan sonuç klasörü, BUG-11/15 arayüz i18n,
+  BUG-12 başsız modda port satırı, BUG-13 silme sayısı, BUG-14 paket adı doğrulaması,
+  BUG-17 stderr kilitlenmesi (rapor "teorik" demişti; bu makinede 1 MB stderr yetiyor,
+  ölçüldü), EKS-03/07 doküman düzeltmeleri.
+- Raporun yanlış/eksik kısımları: batch_unmapped.xlsx v1'de de yalnız APK — "No Unmapped"
+  doğru davranış; BUG-13'te dosyası olmayan ama manifest'te duran rapor silinebilmeli
+  (404 değil); BUG-08'de 3 izin dokümanda geçiyor (`\_` yazımıyla), ama yine de sistem-özel.
+- Ertelenenler (motor/mapping, bakımcı kararı + korpus koşusu gerekir): BUG-01 (kritik),
+  06, 07, 08, 09, 10, 16, 18, EKS-02/11/12 — liste HANDOFF.md'de.
+- Testler 258 → **271**, tam paket yeşil.
