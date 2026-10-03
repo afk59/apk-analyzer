@@ -582,3 +582,28 @@ class TestLanguages(IsolatedTest):
     def test_switching_language_raises_nothing(self):
         for lang, p in self._langs().items():
             self.assertEqual(p["errors"], 0, f"{lang} produced JS errors")
+
+
+class TestI18nKeys(unittest.TestCase):
+    """Static: every key index.html asks for exists in every language.
+
+    t() falls back to the key itself, so a missing one renders as a literal
+    "analyze.download.ph" instead of failing -- which is how the download
+    box's placeholder shipped broken in all three languages (audit BUG-11).
+    The webview probe above only checks data-i18n text, not placeholders or
+    titles, and only when a webview is available.
+    """
+
+    def test_every_html_key_is_in_every_language(self):
+        import re
+        web = ROOT / "app" / "web"
+        html = (web / "index.html").read_text(encoding="utf-8")
+        keys = set(re.findall(r'data-i18n(?:-ph|-title)?="([^"]+)"', html))
+        self.assertTrue(keys)
+        js = (web / "js" / "i18n.js").read_text(encoding="utf-8")
+        blocks = re.split(r"\n  (en|tr|zh): \{", js)
+        tables = {blocks[i]: blocks[i + 1] for i in range(1, len(blocks) - 1, 2)}
+        self.assertEqual(set(tables), {"en", "tr", "zh"})
+        for lang, body in tables.items():
+            defined = set(re.findall(r"^\s*'([^']+)':", body, re.M))
+            self.assertEqual(sorted(keys - defined), [], f"missing in {lang}")

@@ -56,6 +56,7 @@ function renderStages(active) {
     if (!run.seen.has(key) && key !== active) return;
     const el = document.createElement('span');
     el.className = 'stage' + (key === active ? ' active' : (activeIdx > i || activeIdx === -1 ? ' done' : ''));
+    el.dataset.key = key;
     el.textContent = stageLabel(key);
     box.appendChild(el);
   });
@@ -357,9 +358,11 @@ async function startDownload() {
 
 $('#download').addEventListener('click', startDownload);
 
-/* i18n hook: redraw the stage pills in the new language, keeping the active one. */
+/* i18n hook: redraw the stage pills in the new language, keeping the active one.
+   Read from the pill's key, not its text: by the time this runs t() already
+   answers in the NEW language, so matching the old label never succeeded and
+   the active pill vanished on every language switch. */
 function redrawStages() {
   const active = document.querySelector('.stage.active');
-  const key = active ? STAGE_KEYS.find((k) => stageLabel(k) === active.textContent) : null;
-  renderStages(key || null);
+  renderStages((active && active.dataset.key) || null);
 }
