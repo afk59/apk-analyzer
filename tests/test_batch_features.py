@@ -414,6 +414,33 @@ class TestDeleteEndpoint(test_api.ApiTest):
         _, lib = self.get("/api/results")
         self.assertEqual(lib["runs"], [])
 
+    def test_a_report_that_does_not_exist_is_404_not_deleted(self):
+        """Audit BUG-13: answered 200 with reports=1, and the UI said
+        "Deleted: 1" for something that was never there."""
+        self.start_server()
+        ghost = self.config.RESULT_DIR / "ghost_apk_hmos_report.html"
+        status, _ = self.post("/api/results/delete", {"report": str(ghost)})
+        self.assertEqual(status, 404)
+        status, body = self.post("/api/results/delete-many",
+                                 {"items": [{"report": str(ghost)}]})
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["reports"], 0)
+
+    def test_a_listed_report_whose_file_is_gone_still_deletes(self):
+        """The row exists only in a manifest: removing it IS a delete."""
+        from app.store import index
+        self.start_server()
+        report = self.make_report("stale")
+        index.write_manifest({
+            "id": 1, "status": "done", "target": "hmos", "input": "x",
+            "started_at": "2026-08-30T01:00:00", "file_count": 1,
+            "results": [{"source_file": "stale.apk", "report": str(report)}],
+            "failures": []})
+        report.unlink()
+        status, body = self.post("/api/results/delete", {"report": str(report)})
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["reports"], 1)
+
     def test_a_selection_through_the_api_skips_what_it_must_refuse(self):
         self.start_server()
         r1, r2 = self.make_report("m1"), self.make_report("m2")

@@ -355,12 +355,17 @@ def delete_many(reports, failures) -> dict:
     """
     targets = {Path(r).resolve() for r in reports}
     removed = []
+    # Reports that actually had something to delete -- a file, or an entry in
+    # some manifest. Counting the request instead told the UI "Deleted: 1" for
+    # a report that never existed (audit 2026-10-03, BUG-13).
+    hit = set()
     for report in sorted(targets):
         for f in _files_of(report):
             try:
                 if f.exists():
                     f.unlink()
                     removed.append(f.name)
+                    hit.add(report)
             except OSError:
                 pass
     keys = {(m, sf) for m, sf in failures
@@ -372,12 +377,17 @@ def delete_many(reports, failures) -> dict:
             # By the stored path, or by the same name in the current result
             # folder (see _locate): the file is already gone at this point, so
             # _locate itself can no longer tell a moved folder's entry apart.
-            return not (rep and (_resolved(rep) in targets or
-                                 _resolved(config.RESULT_DIR / Path(rep).name) in targets))
+            if not rep:
+                return True
+            for cand in (_resolved(rep), _resolved(config.RESULT_DIR / Path(rep).name)):
+                if cand in targets:
+                    hit.add(cand)
+                    return False
+            return True
         return (manifest, entry.get("source_file")) not in keys
 
     changed = _edit_manifests(keep)
-    return {"deleted": removed, "reports": len(targets), "failures": len(keys),
+    return {"deleted": removed, "reports": len(hit), "failures": len(keys),
             "manifests_changed": changed, **rescan()}
 
 

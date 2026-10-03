@@ -372,7 +372,10 @@ def delete_result(req: DeleteRequest):
             raise HTTPException(403, "Only reports inside the result folder can be deleted.")
         if _report_in_use(path):
             raise HTTPException(409, "That report is being written by the run in progress.")
-        return store_index.delete_report(path)
+        out = store_index.delete_report(path)
+        if not out["reports"]:
+            raise HTTPException(404, "No such report.")
+        return out
     if req.manifest and req.source_file:
         out = store_index.delete_failure(req.manifest, req.source_file)
         if out is None:
