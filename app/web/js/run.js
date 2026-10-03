@@ -231,6 +231,7 @@ function finishRun(ev) {
   // Not unconditionally enabled: after a reload nothing is picked, and Start
   // with no input is a button that does nothing.
   $('#start').disabled = !(state.file || state.folder);
+  $('#download').disabled = false;
 }
 
 /* The two batch workbooks, once written: the same buttons Results shows, so
@@ -266,6 +267,11 @@ function beginRun(res, show = true) {
   // what is still waiting rather than appearing one row at a time.
   (res.packages || []).forEach((pkg) => dlState(pkg, 'queued'));
   $('#run-cancel').disabled = false;
+  // Both ways of starting a run stay locked until this one finishes: two
+  // overlapping runs put two androguard workers in memory at once, which is
+  // what one-process-per-file exists to avoid (docs/decisions/0005).
+  $('#start').disabled = true;
+  $('#download').disabled = true;
   $('#run-file').textContent = res.input;
   updateBar();
   if (show) showPanel('run');
@@ -342,10 +348,9 @@ async function startDownload() {
   $('#download').disabled = true;
   try {
     const res = await API.download(packages, $('#target').value);
-    beginRun(res);
+    beginRun(res);   // finishRun re-enables it
   } catch (e) {
     toast(e.message, true);
-  } finally {
     $('#download').disabled = false;
   }
 }

@@ -184,9 +184,20 @@ class JobRunner:
     def get(self, run_id):
         return self._runs.get(run_id)
 
+    def running(self) -> list:
+        """Every run still in progress, oldest first."""
+        with self._lock:
+            return [self._runs[i] for i in sorted(self._runs)
+                    if self._runs[i].status == "running"]
+
     def latest(self):
-        """The most recent run this process started, running or not. What a
-        reloaded page re-attaches to."""
+        """What a reloaded page re-attaches to: the most recent run still in
+        progress, else the most recent run. Preferring a running one matters
+        when two overlap -- the newer could finish first, and a reload would
+        then show it and lose the run that is still going."""
+        live = self.running()
+        if live:
+            return live[-1]
         with self._lock:
             return self._runs[max(self._runs)] if self._runs else None
 

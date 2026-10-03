@@ -418,14 +418,18 @@ def delete_results(req: DeleteManyRequest):
 
 
 def _report_in_use(report: Path) -> bool:
-    """True if the running run is analysing the input that writes `report`."""
-    run = runner.latest()
-    if not run or run.status != "running" or not run.current:
-        return False
-    for p in list(run.paths):
-        if run.label(p) == run.current:
-            return runner._report_for(p, run.target, run.stems.get(str(p))).resolve() \
-                == report.resolve()
+    """True if any running run is analysing the input that writes `report`.
+    Every running run, not just the latest: two can overlap."""
+    for run in runner.running():
+        current = run.current
+        if not current:
+            continue
+        for p in list(run.paths):
+            if run.label(p) == current:
+                if runner._report_for(p, run.target, run.stems.get(str(p))).resolve() \
+                        == report.resolve():
+                    return True
+                break
     return False
 
 

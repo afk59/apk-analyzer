@@ -63,7 +63,9 @@ function renderPicked(kind, res) {
   $('#skip-wrap').hidden     = !state.folder;
   $('#pc-opts').hidden       = !state.program;
   const input = state.file || state.folder;
-  $('#start').disabled = !input;
+  // Picking during a run must not re-enable Start (run.js owns that).
+  const busy = typeof run !== 'undefined' && run.source;
+  $('#start').disabled = !input || !!busy;
   $('#start-hint').textContent = input ? '' : t('analyze.hint');
 
   const box = kind === 'folder' ? $('#picked-folder') : $('#picked-file');
