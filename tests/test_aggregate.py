@@ -68,6 +68,39 @@ class TestAggregation(IsolatedTest):
         self.assertTrue((self.config.RESULT_DIR / "batch_summary.xlsx").exists())
         self.assertTrue((self.config.RESULT_DIR / "batch_unmapped.xlsx").exists())
 
+    def test_pc_and_ipa_batches_get_their_unmapped_sheets(self):
+        """run_batch writes "Unmapped DLLs" / "Unmapped Frameworks" for EXE and
+        IPA rows. The app passed empty lists and lost both (audit BUG-04)."""
+        from openpyxl import load_workbook
+        side_dir = self.config.RESULT_DIR / ".sidecars"
+        side_dir.mkdir(parents=True, exist_ok=True)
+        docs = {
+            "a.exe": {"mode": "exe", "app_name": "a.exe", "unmapped_dlls": [
+                {"dll_name": "foo.dll", "func_count": 3, "sample_funcs": ["f2", "f1"]},
+                {"dll_name": "bar.dll", "func_count": 9, "sample_funcs": ["b"]}]},
+            "b.dll": {"mode": "exe", "app_name": "b.dll", "unmapped_dlls": [
+                {"dll_name": "foo.dll", "func_count": 2, "sample_funcs": ["f3"]}]},
+            "c.ipa": {"mode": "ipa", "app_name": "C", "unmapped_frameworks": ["Lottie"]},
+        }
+        entries = []
+        for name, doc in docs.items():
+            side = side_dir / f"{name.replace('.', '_')}.json"
+            side.write_text(json.dumps(doc), encoding="utf-8")
+            row = self._row(name, extra={"mode": doc["mode"]})
+            entries.append({"row": row, "sidecar": str(side)})
+        proc, _ = self.run_aggregate(entries)
+        self.assertEqual(proc.returncode, 0, proc.stderr[-800:])
+
+        wb = load_workbook(self.config.RESULT_DIR / "batch_summary.xlsx", read_only=True)
+        dlls = [r for r in wb["Unmapped DLLs"].iter_rows(min_row=2, values_only=True)]
+        # Ordered by app count, then function count -- run_batch's order.
+        self.assertEqual([r[:3] for r in dlls], [("foo.dll", 2, 5), ("bar.dll", 1, 9)])
+        self.assertEqual(dlls[0][3], "a.exe, b.dll")
+        self.assertEqual(dlls[0][4], "f1, f2, f3")
+        fws = [r for r in wb["Unmapped Frameworks"].iter_rows(min_row=2, values_only=True)]
+        self.assertEqual([r[:2] for r in fws], [("Lottie", 1)])
+        wb.close()
+
     def test_summary_coverage_counts_ohpm_matches(self):
         """The workbook's Coverage column goes through the same coverage_status()
         as the stat card, so it must see total_ohpm_ns from the side-car."""

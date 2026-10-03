@@ -281,6 +281,15 @@ def _run(path: Path, target: str, stem_override: str | None = None) -> dict:
                     "kit_count": row["kit_count"],
                     "unmapped_count": row["unmapped_count"],
                     "permissions": row["permission_count"]}
+        # run_batch's "Unmapped DLLs" / "Unmapped Frameworks" sheets are built
+        # from these lists. Without them the PC batch workbook had no gap list
+        # at all (audit 2026-10-03, BUG-04).
+        if mode == "exe":
+            side_doc["unmapped_dlls"] = [
+                {k: u.get(k) for k in ("dll_name", "func_count", "sample_funcs")}
+                for u in result.get("unmapped_dlls") or []]
+        elif mode == "ipa":
+            side_doc["unmapped_frameworks"] = list(result.get("unmapped_frameworks") or [])
 
     side_dir = result_dir / ".sidecars"
     side_dir.mkdir(exist_ok=True)
