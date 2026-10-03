@@ -40,6 +40,21 @@ def write_manifest(snapshot: dict) -> Path:
 
 
 # ------------------------------------------------------------------ reading
+def _locate(path) -> Path:
+    """Where a report named in a manifest is NOW.
+
+    Manifests hold the absolute path the worker wrote, and every report lives
+    directly in RESULT_DIR. So when the result folder has been moved or copied,
+    the same file name in the current RESULT_DIR is that report. Trusting the
+    stored path instead listed every app twice after a move -- once as a dead
+    link to the old folder, once under "Unfiled" -- and a delete in a copy came
+    back on the next rescan (audit 2026-10-03, BUG-05).
+    """
+    p = Path(path)
+    here = config.RESULT_DIR / p.name
+    return here if here.exists() else p
+
+
 def _agent_for(report: Path):
     cand = config.AGENT_DIR / report.name.replace("_report.html", "_agent.json")
     return cand if cand.exists() else None
@@ -166,7 +181,7 @@ def rescan() -> dict:
             run_id = cur.lastrowid
 
             for row in snap.get("results", []):
-                report = Path(row["report"]) if row.get("report") else None
+                report = _locate(row["report"]) if row.get("report") else None
                 if row.get("skipped") or not report:
                     # A skipped file was analysed by an EARLIER run and belongs
                     # to that run's manifest. Listing it twice would double-count
@@ -354,7 +369,11 @@ def delete_many(reports, failures) -> dict:
     def keep(kind, entry, manifest):
         if kind == "result":
             rep = entry.get("report")
-            return not (rep and _resolved(rep) in targets)
+            # By the stored path, or by the same name in the current result
+            # folder (see _locate): the file is already gone at this point, so
+            # _locate itself can no longer tell a moved folder's entry apart.
+            return not (rep and (_resolved(rep) in targets or
+                                 _resolved(config.RESULT_DIR / Path(rep).name) in targets))
         return (manifest, entry.get("source_file")) not in keys
 
     changed = _edit_manifests(keep)
