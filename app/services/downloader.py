@@ -36,12 +36,25 @@ enterprise, internal and delisted apps are not on public mirrors, just as 2 of
 team is authorised to analyse; mirrors carry their own terms of use.
 """
 
+import re
 import shutil
 import urllib.error
 import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+# Android's own rule for an application id: two or more dot-separated
+# segments, each a letter followed by letters, digits or underscores. Checked
+# before the name is ever used as a file name -- rejecting only "/", "\\" and
+# spaces let "x:y" through, which on Windows is a drive-relative path outside
+# the input folder (audit 2026-10-03, BUG-14).
+_PACKAGE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
+
+
+def is_package_name(name: str) -> bool:
+    return bool(_PACKAGE_RE.match(name or ""))
+
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
@@ -249,7 +262,7 @@ def _verify(path: Path, package: str):
 
 def fetch(package: str, dest_dir: Path, on_progress=None) -> Result:
     package = (package or "").strip()
-    if not package or "/" in package or "\\" in package:
+    if not is_package_name(package):
         return Result(package, "failed", error="Not a package name.")
 
     dest_dir.mkdir(parents=True, exist_ok=True)

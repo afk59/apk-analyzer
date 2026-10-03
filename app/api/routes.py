@@ -239,9 +239,10 @@ def start_download(req: DownloadRequest):
     names = list(dict.fromkeys(n for n in names if n))
     if not names:
         raise HTTPException(400, "Give at least one package name.")
-    # A package name has no separators and no spaces. Rejecting them here keeps
-    # a path from ever reaching the downloader, which builds a filename from it.
-    bad = [n for n in names if "/" in n or "\\" in n or " " in n]
+    # Rejected here, by Android's own naming rule, so nothing that could be a
+    # path ever reaches the downloader, which builds a file name from it.
+    from app.services.downloader import is_package_name
+    bad = [n for n in names if not is_package_name(n)]
     if bad:
         raise HTTPException(400, f"Not package names: {', '.join(bad[:3])}")
     if req.target not in ("hmos", "hms"):

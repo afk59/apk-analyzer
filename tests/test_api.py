@@ -256,7 +256,9 @@ class TestDownloadEndpoint(ApiTest):
 
     def test_rejects_things_that_are_not_package_names(self):
         self.start_server()
-        for value in ("../etc/passwd", "a/b", "has space", "a\\b"):
+        # "x:y" / "C:evil" are drive-relative paths on Windows (audit BUG-14).
+        for value in ("../etc/passwd", "a/b", "has space", "a\\b",
+                      "x:y", "C:evil", "nodots", "com..x", "1com.x", "com.x."):
             status, body = self.post("/api/downloads", {"packages": value})
             self.assertEqual(status, 400, value)
             self.assertIn("Not package names", body["detail"])
