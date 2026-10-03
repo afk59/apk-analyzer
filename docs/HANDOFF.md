@@ -21,11 +21,19 @@ Last updated **2026-10-02**, end of an unattended overnight session — see the 
 `v2` is where the work happens, with Claude, in a terminal. `v2-nocomment` is
 what gets pulled onto the company machine and pushed to the company repo.
 
-**The only difference between them is comment density.** Same code, same tests,
-same `docs/`. `v2-nocomment` carries the comments a developer needs and none of
-the session narrative -- no dated changelog notes, no corpus measurements quoted
-as evidence, no retellings of how a bug was found. Every rule those stories
-justified is still there.
+**`v2-nocomment` is the app only, for people who use it and do not develop it**
+(maintainer decision, 2026-10-03). Same code under `app/` and `engine/`, with
+comments trimmed: the comments a developer needs and none of the session
+narrative -- no dated changelog notes, no corpus measurements, no audit IDs, no
+retellings of how a bug was found. Every rule those stories justified is still
+there.
+
+It does **not** carry: `CLAUDE.md`, `RESUME.txt`, `tests/`, `docs/` (all of it,
+the manager summary included), `docs-ref/`, `engine/data/reference/hmos_api.xlsx`,
+`engine/data/reference/ohpm_registry_cache.json`, nor the `audit/` work. None is
+read at runtime. Its `README.md` is a user guide, not the developer README.
+When syncing, leave those paths out; with no test suite on that branch, verify
+it by running the app (the live check against a fresh clone).
 
 Two things follow, and both cost time when forgotten:
 
@@ -44,7 +52,9 @@ fresh -- the trim is editorial, not mechanical, and it cannot be scripted.
 
 ```
 git checkout v2-nocomment
-git cherry-pick -n <sha-on-v2>       # conflicts on every file whose comments differ
+git diff <last-synced-v2-sha> <sha-on-v2> -- app engine requirements.txt run.bat \
+    ':!engine/data/reference/hmos_api.xlsx' ':!engine/data/reference/ohpm_registry_cache.json' \
+    | git apply -3                    # conflicts on every file whose comments differ
 # resolve, trim the new comments to this branch's style, then:
 git commit                            # no attribution trailers
 git push origin v2-nocomment
@@ -56,7 +66,10 @@ Verify before pushing:
 ```
 git log --format='%B' v2-nocomment | grep -ciE '^Co-Authored-By: Claude|claude\.ai/code'   # 0
 git diff --stat v2 v2-nocomment -- <the files you touched>   # comment lines only
+git ls-tree --name-only v2-nocomment     # README.md app engine requirements.txt run.bat (+ dotfiles)
 ```
+
+Last synced: `v2-nocomment` 2026-10-03 = `v2` code as of `098c454a`.
 
 ## THE ONE THING THAT IS UNFINISHED
 
