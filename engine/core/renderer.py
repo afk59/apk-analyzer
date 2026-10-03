@@ -32,6 +32,22 @@ def _esc(s: str) -> str:
     )
 
 
+def _script_json(data) -> str:
+    """report_data as a JS literal that is safe inside an inline <script>.
+
+    App names, versions and permission strings come from the analysed file, which
+    may come from a third-party mirror. json.dumps leaves "</script>" intact, so
+    such a string closed the block and ran whatever followed it. "<\\/" and
+    "\\u0025" are the same characters to the JS parser: the value is unchanged.
+    The "%" escape keeps a "%%PLACEHOLDER%%" in app text from being substituted
+    by the template pass that runs after this value is inserted.
+    """
+    return (json.dumps(data, ensure_ascii=False, default=str)
+            .replace("</", "<\\/")
+            .replace("<!--", "<\\u0021--")
+            .replace("%%", "%\\u0025"))
+
+
 def confidence_badge(c: str) -> str:
     label = {"high": "High", "medium": "Medium", "low": "Low"}.get(c, c)
     return f'<span class="badge {c}">{label}</span>'
@@ -1585,7 +1601,7 @@ def render_html_apk(result: dict, mapping: dict = None) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
         "WORKBOOK_B64":   _embedded_workbook(result, export_excel_apk),
         "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   sidebar_html,
@@ -1829,7 +1845,7 @@ def render_html_exe(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
         "WORKBOOK_B64":   _embedded_workbook(result, export_excel_exe),
         "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   sidebar_html,
@@ -2008,7 +2024,7 @@ def render_html_exe_folder(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
         # exe_folder has no Python exporter (docs/HANDOFF.md lists it as a
         # gap), so this one report still builds its sheets in the browser.
         "WORKBOOK_B64":   "",
@@ -2185,7 +2201,7 @@ def render_html_ipa(result: dict) -> str:
         "STAT_CARDS":     stat_cards,
         "BODY_SECTIONS":  body_sections,
         "REPORT_DATE":    now,
-        "REPORT_DATA_JSON": json.dumps(report_data, ensure_ascii=False, default=str),
+        "REPORT_DATA_JSON": _script_json(report_data),
         "WORKBOOK_B64":   _embedded_workbook(result, export_excel_ipa),
         "XLSX_MIME":      _XLSX_MIME,
         "SIDEBAR_HTML":   "",
