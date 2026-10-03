@@ -1,0 +1,478 @@
+{
+ "compared": 41,
+ "apps_losing_a_kit": 0,
+ "kits_lost_total": 0,
+ "rows": [
+  {
+   "app": "app.hkbus_apk_hmos_agent.json",
+   "note": "no old report"
+  },
+  {
+   "app": "com.asw.moneyback",
+   "kits_old": 34,
+   "kits_new": 34,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [
+    "@kit.ArkData"
+   ],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.bochk.app.aos",
+   "kits_old": 37,
+   "kits_new": 37,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 13,
+   "ohpm_new": 105,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.ctm",
+   "kits_old": 37,
+   "kits_new": 37,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 34,
+   "ohpm_new": 220,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.fairwood.app",
+   "kits_old": 35,
+   "kits_new": 35,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [
+    "@kit.CameraKit"
+   ],
+   "ohpm_old": 1,
+   "ohpm_new": 1,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.foodgulu",
+   "kits_old": 41,
+   "kits_new": 41,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 13,
+   "ohpm_new": 75,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.hkairlines.b2c.app",
+   "kits_old": 31,
+   "kits_new": 31,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 47,
+   "ohpm_new": 52,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.hopetrip.gzhkbus",
+   "kits_old": 28,
+   "kits_new": 29,
+   "lost": [],
+   "added": [
+    "@kit.MapKit"
+   ],
+   "confidence_changed": [
+    "@kit.LocationKit"
+   ],
+   "ohpm_old": 27,
+   "ohpm_new": 29,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.house730.app",
+   "kits_old": 34,
+   "kits_new": 34,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 4,
+   "ohpm_new": 16,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.hph.odt.stacks",
+   "kits_old": 25,
+   "kits_new": 25,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 1,
+   "ohpm_new": 1,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.hse28.hse28_2",
+   "kits_old": 39,
+   "kits_new": 39,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 16,
+   "ohpm_new": 16,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.huayuan.namkwong",
+   "kits_old": 1,
+   "kits_new": 1,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.macauwynn.android",
+   "kits_old": 29,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 2,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.midland.mrinfo",
+   "kits_old": 38,
+   "kits_new": 38,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 4,
+   "ohpm_new": 4,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.mpsaps.cmoffice",
+   "kits_old": 30,
+   "kits_new": 30,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 103,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.mtr.mobile",
+   "kits_old": 20,
+   "kits_new": 20,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 2,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.oocl.ooclapp",
+   "kits_old": 31,
+   "kits_new": 31,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 14,
+   "ohpm_new": 14,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.polyulife",
+   "kits_old": 29,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 3,
+   "ohpm_new": 3,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.proan.bestmart360",
+   "kits_old": 33,
+   "kits_new": 33,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 4,
+   "ohpm_new": 4,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.ricacorp.ricacorp",
+   "kits_old": 31,
+   "kits_new": 31,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 8,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.secmenu.chineselearning",
+   "kits_old": 33,
+   "kits_new": 34,
+   "lost": [],
+   "added": [
+    "@kit.ImageKit"
+   ],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.storellet",
+   "kits_old": 36,
+   "kits_new": 36,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 3,
+   "ohpm_new": 17,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.tamjai.android",
+   "kits_old": 29,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 19,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.tamjaisamgor.hk",
+   "kits_old": 29,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 19,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.wayfind",
+   "kits_old": 24,
+   "kits_new": 24,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 3,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "com.wlb.android",
+   "kits_old": 6,
+   "kits_new": 6,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "hk.edu.cityu.mobile",
+   "kits_old": 30,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 1,
+   "ohpm_new": 1,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.edu.polyu.polyumobile",
+   "kits_old": 27,
+   "kits_new": 26,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 2,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.edu.polyu.polyustaffmobile",
+   "kits_old": 28,
+   "kits_new": 27,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 2,
+   "ohpm_new": 2,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.gov.ogcio.iamsmart",
+   "kits_old": 2,
+   "kits_new": 2,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "hk.org.ha.hago",
+   "kits_old": 45,
+   "kits_new": 44,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 4,
+   "ohpm_new": 32,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.ust.alum",
+   "kits_old": 35,
+   "kits_new": 34,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [
+    "@kit.CameraKit"
+   ],
+   "ohpm_old": 69,
+   "ohpm_new": 69,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.ust.ei",
+   "kits_old": 24,
+   "kits_new": 24,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "hk.ust.itsc.pathadvisor",
+   "kits_old": 24,
+   "kits_new": 24,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "hk.ust.itsc.tt.iLearn",
+   "kits_old": 19,
+   "kits_new": 19,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "hk.ust.researchapp",
+   "kits_old": 31,
+   "kits_new": 30,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 3,
+   "ohpm_new": 3,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.ust.staffapp",
+   "kits_old": 38,
+   "kits_new": 37,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [
+    "@kit.CameraKit"
+   ],
+   "ohpm_old": 69,
+   "ohpm_new": 69,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "hk.ust.student",
+   "kits_old": 37,
+   "kits_new": 36,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [
+    "@kit.CameraKit"
+   ],
+   "ohpm_old": 70,
+   "ohpm_new": 291,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "mo.gov.safp.portal",
+   "kits_old": 2,
+   "kits_new": 2,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 0,
+   "ohpm_new": 0,
+   "phantom_AnalyticsKit_in_old": false
+  },
+  {
+   "app": "mo.org.kwh.kwapp",
+   "kits_old": 30,
+   "kits_new": 29,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 27,
+   "ohpm_new": 27,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "Octopus",
+   "kits_old": 39,
+   "kits_new": 38,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 15,
+   "ohpm_new": 123,
+   "phantom_AnalyticsKit_in_old": true
+  },
+  {
+   "app": "scameter.hk.cyberdefender",
+   "kits_old": 32,
+   "kits_new": 31,
+   "lost": [],
+   "added": [],
+   "confidence_changed": [],
+   "ohpm_old": 13,
+   "ohpm_new": 13,
+   "phantom_AnalyticsKit_in_old": true
+  }
+ ]
+}

@@ -1,0 +1,39 @@
+{
+ "A_rescan_invariant_equal": false,
+ "A_counts": [
+  52,
+  104
+ ],
+ "B_deleted_files": [
+  "ar2idt_exe_hmos_report.html",
+  "ar2idt_exe_hmos_report.xlsx",
+  "ar2idt_exe_hmos_agent.json",
+  "ar2idt_exe_hmos.json"
+ ],
+ "B_report_gone": true,
+ "B_sidecars_removed": [
+  "ar2idt_exe_hmos.json"
+ ],
+ "B_apps_after_delete_and_rescan": 103,
+ "B_came_back": true,
+ "C_delete_many": {
+  "reports": 3,
+  "failures": 1,
+  "manifests_changed": 0,
+  "apps": 100
+ },
+ "D_runs": [
+  [
+   "Unfiled",
+   52
+  ],
+  [
+   "IDA Free 9.3 (52 files)",
+   52
+  ]
+ ],
+ "D_apps_total": 104,
+ "D_html_artifacts_pointing_at_old_location": 0,
+ "D_html_artifacts_existing": 104,
+ "D_sample_html_artifact": "audit/out/lib_test/D_moved_elsewhere/result/ar2idt_exe_hmos_report.html"
+}

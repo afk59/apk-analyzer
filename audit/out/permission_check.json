@@ -1,0 +1,1507 @@
+{
+ "mapping_targets": [
+  {
+   "source": "mapping.json",
+   "android": "android.permission.INTERNET",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.INTERNET",
+   "verdict": "open (244/244 annotated APIs are public)",
+   "dts_apis": 244,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 267
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.CAMERA",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.CAMERA",
+   "verdict": "open (6/6 annotated APIs are public)",
+   "dts_apis": 6,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 51
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.RECORD_AUDIO",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.MICROPHONE",
+   "verdict": "open (14/14 annotated APIs are public)",
+   "dts_apis": 14,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 47
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_CONTACTS",
+   "grant_level_in_row": "restricted",
+   "name": "ohos.permission.READ_CONTACTS",
+   "verdict": "open (72/72 annotated APIs are public)",
+   "dts_apis": 72,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WRITE_CONTACTS",
+   "grant_level_in_row": "restricted",
+   "name": "ohos.permission.WRITE_CONTACTS",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_EXTERNAL_STORAGE",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_MEDIA",
+   "verdict": "open (1/1 annotated APIs are public)",
+   "dts_apis": 1,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WRITE_EXTERNAL_STORAGE",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.WRITE_MEDIA",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_FINE_LOCATION",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.LOCATION",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 135
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_COARSE_LOCATION",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.APPROXIMATELY_LOCATION",
+   "verdict": "open (54/54 annotated APIs are public)",
+   "dts_apis": 54,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_BACKGROUND_LOCATION",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.LOCATION_IN_BACKGROUND",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BLUETOOTH",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.USE_BLUETOOTH",
+   "verdict": "open (116/116 annotated APIs are public)",
+   "dts_apis": 116,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BLUETOOTH_ADMIN",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.MANAGE_BLUETOOTH",
+   "verdict": "open (6/6 annotated APIs are public)",
+   "dts_apis": 6,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BLUETOOTH_CONNECT",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.ACCESS_BLUETOOTH",
+   "verdict": "open (376/376 annotated APIs are public)",
+   "dts_apis": 376,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BLUETOOTH_SCAN",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.ACCESS_BLUETOOTH",
+   "verdict": "open (376/376 annotated APIs are public)",
+   "dts_apis": 376,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.NFC",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.NFC_TAG",
+   "verdict": "open (112/112 annotated APIs are public)",
+   "dts_apis": 112,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.VIBRATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.VIBRATE",
+   "verdict": "open (26/26 annotated APIs are public)",
+   "dts_apis": 26,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 57
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.RECEIVE_BOOT_COMPLETED",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.RECEIVER_STARTUP_COMPLETED",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WAKE_LOCK",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.RUNNING_LOCK",
+   "verdict": "open (8/8 annotated APIs are public)",
+   "dts_apis": 8,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.USE_BIOMETRIC",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.ACCESS_BIOMETRIC",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.USE_FINGERPRINT",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.ACCESS_BIOMETRIC",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_PHONE_STATE",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.GET_TELEPHONY_STATE",
+   "verdict": "open (4/4 annotated APIs are public)",
+   "dts_apis": 4,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.CALL_PHONE",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.PLACE_CALL",
+   "verdict": "open (3/3 annotated APIs are public)",
+   "dts_apis": 3,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_CALL_LOG",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.READ_CALL_LOG",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.SEND_SMS",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.SEND_MESSAGES",
+   "verdict": "open (3/3 annotated APIs are public)",
+   "dts_apis": 3,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.RECEIVE_SMS",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.RECEIVE_SMS",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_SMS",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.READ_MESSAGES",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_CALENDAR",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_CALENDAR",
+   "verdict": "open (8/8 annotated APIs are public)",
+   "dts_apis": 8,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WRITE_CALENDAR",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.WRITE_CALENDAR",
+   "verdict": "open (4/4 annotated APIs are public)",
+   "dts_apis": 4,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BODY_SENSORS",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_HEALTH_DATA",
+   "verdict": "open (11/11 annotated APIs are public)",
+   "dts_apis": 11,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACTIVITY_RECOGNITION",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.ACTIVITY_MOTION",
+   "verdict": "open (24/24 annotated APIs are public)",
+   "dts_apis": 24,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.SYSTEM_ALERT_WINDOW",
+   "grant_level_in_row": "restricted",
+   "name": "ohos.permission.SYSTEM_FLOAT_WINDOW",
+   "verdict": "open (5/5 annotated APIs are public)",
+   "dts_apis": 5,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.PACKAGE_USAGE_STATS",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.BUNDLE_ACTIVE_INFO",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.MANAGE_EXTERNAL_STORAGE",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.FILE_ACCESS_MANAGER",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.POST_NOTIFICATIONS",
+   "grant_level_in_row": "unknown",
+   "name": "ohos.permission.NOTIFICATION_CONTROLLER",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_WIFI_STATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.GET_WIFI_INFO",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.CHANGE_WIFI_STATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.SET_WIFI_INFO",
+   "verdict": "open (24/24 annotated APIs are public)",
+   "dts_apis": 24,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_NETWORK_STATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.GET_NETWORK_INFO",
+   "verdict": "open (58/58 annotated APIs are public)",
+   "dts_apis": 58,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_MEDIA_IMAGES",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_IMAGEVIDEO",
+   "verdict": "open (38/38 annotated APIs are public)",
+   "dts_apis": 38,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_MEDIA_VIDEO",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_IMAGEVIDEO",
+   "verdict": "open (38/38 annotated APIs are public)",
+   "dts_apis": 38,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_MEDIA_AUDIO",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.READ_AUDIO",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.CHANGE_NETWORK_STATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.SET_NETWORK_INFO",
+   "verdict": "open (1/1 annotated APIs are public)",
+   "dts_apis": 1,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.SET_WIFI_INFO",
+   "verdict": "open (24/24 annotated APIs are public)",
+   "dts_apis": 24,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.NEARBY_WIFI_DEVICES",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.GET_WIFI_INFO",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.BLUETOOTH_ADVERTISE",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.DISCOVER_BLUETOOTH",
+   "verdict": "open (32/32 annotated APIs are public)",
+   "dts_apis": 32,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.MODIFY_AUDIO_SETTINGS",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.MANAGE_AUDIO_CONFIG",
+   "verdict": "open (2/2 annotated APIs are public)",
+   "dts_apis": 2,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_NOTIFICATION_POLICY",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.NOTIFICATION_CONTROLLER",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WRITE_SETTINGS",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "verdict": "open (7/7 annotated APIs are public)",
+   "dts_apis": 7,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.READ_SYNC_SETTINGS",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.DISTRIBUTED_DATASYNC",
+   "verdict": "open (136/136 annotated APIs are public)",
+   "dts_apis": 136,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.WRITE_SYNC_SETTINGS",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.DISTRIBUTED_DATASYNC",
+   "verdict": "open (136/136 annotated APIs are public)",
+   "dts_apis": 136,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS",
+   "grant_level_in_row": "user_grant",
+   "name": "ohos.permission.LOCATION",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 135
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_LOCATION",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_PHONE_CALL",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "mapping.json",
+   "android": "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+   "grant_level_in_row": "system_grant",
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSLocationWhenInUseUsageDescription",
+   "name": "ohos.permission.APPROXIMATELY_LOCATION",
+   "verdict": "open (54/54 annotated APIs are public)",
+   "dts_apis": 54,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSLocationAlwaysUsageDescription",
+   "name": "ohos.permission.LOCATION",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 135
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSLocationAlwaysAndWhenInUseUsageDescription",
+   "name": "ohos.permission.LOCATION",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 135
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSCameraUsageDescription",
+   "name": "ohos.permission.CAMERA",
+   "verdict": "open (6/6 annotated APIs are public)",
+   "dts_apis": 6,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 51
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSMicrophoneUsageDescription",
+   "name": "ohos.permission.MICROPHONE",
+   "verdict": "open (14/14 annotated APIs are public)",
+   "dts_apis": 14,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 47
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSPhotoLibraryUsageDescription",
+   "name": "ohos.permission.READ_IMAGEVIDEO",
+   "verdict": "open (38/38 annotated APIs are public)",
+   "dts_apis": 38,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSPhotoLibraryAddUsageDescription",
+   "name": "ohos.permission.WRITE_IMAGEVIDEO",
+   "verdict": "open (23/23 annotated APIs are public)",
+   "dts_apis": 23,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSContactsUsageDescription",
+   "name": "ohos.permission.READ_CONTACTS",
+   "verdict": "open (72/72 annotated APIs are public)",
+   "dts_apis": 72,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSCalendarsUsageDescription",
+   "name": "ohos.permission.READ_CALENDAR",
+   "verdict": "open (8/8 annotated APIs are public)",
+   "dts_apis": 8,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSRemindersUsageDescription",
+   "name": "ohos.permission.READ_WHOLE_CALENDAR",
+   "verdict": "open (8/8 annotated APIs are public)",
+   "dts_apis": 8,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSBluetoothAlwaysUsageDescription",
+   "name": "ohos.permission.USE_BLUETOOTH",
+   "verdict": "open (116/116 annotated APIs are public)",
+   "dts_apis": 116,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSBluetoothPeripheralUsageDescription",
+   "name": "ohos.permission.USE_BLUETOOTH",
+   "verdict": "open (116/116 annotated APIs are public)",
+   "dts_apis": 116,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSMotionUsageDescription",
+   "name": "ohos.permission.ACTIVITY_MOTION",
+   "verdict": "open (24/24 annotated APIs are public)",
+   "dts_apis": 24,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSHealthShareUsageDescription",
+   "name": "ohos.permission.READ_HEALTH_DATA",
+   "verdict": "open (11/11 annotated APIs are public)",
+   "dts_apis": 11,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSHealthUpdateUsageDescription",
+   "name": "ohos.permission.HEALTH_DATA",
+   "verdict": "open (2/2 annotated APIs are public)",
+   "dts_apis": 2,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSFaceIDUsageDescription",
+   "name": "ohos.permission.ACCESS_BIOMETRIC",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSAppleMusicUsageDescription",
+   "name": "ohos.permission.READ_AUDIO",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSSpeechRecognitionUsageDescription",
+   "name": "ohos.permission.MICROPHONE",
+   "verdict": "open (14/14 annotated APIs are public)",
+   "dts_apis": 14,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 47
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSLocalNetworkUsageDescription",
+   "name": "ohos.permission.GET_NETWORK_INFO",
+   "verdict": "open (58/58 annotated APIs are public)",
+   "dts_apis": 58,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSUserTrackingUsageDescription",
+   "name": "ohos.permission.APP_TRACKING_CONSENT",
+   "verdict": "open (2/2 annotated APIs are public)",
+   "dts_apis": 2,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSLocationTemporaryUsageDescriptionDictionary",
+   "name": "ohos.permission.APPROXIMATELY_LOCATION",
+   "verdict": "open (54/54 annotated APIs are public)",
+   "dts_apis": 54,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "source": "ios_permission_mapping.json",
+   "android": "NSVideoSubscriberAccountUsageDescription",
+   "name": "ohos.permission.READ_IMAGEVIDEO",
+   "verdict": "open (38/38 annotated APIs are public)",
+   "dts_apis": 38,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  }
+ ],
+ "suggester_catalogue": [
+  {
+   "name": "ohos.permission.INTERNET",
+   "verdict": "open (244/244 annotated APIs are public)",
+   "dts_apis": 244,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 267
+  },
+  {
+   "name": "ohos.permission.MANAGE_WIFI_CONNECTION",
+   "verdict": "open (5/5 annotated APIs are public)",
+   "dts_apis": 5,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.MANAGE_BLUETOOTH",
+   "verdict": "open (6/6 annotated APIs are public)",
+   "dts_apis": 6,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.ACCESS_BLUETOOTH",
+   "verdict": "open (376/376 annotated APIs are public)",
+   "dts_apis": 376,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.NFC_TAG",
+   "verdict": "open (112/112 annotated APIs are public)",
+   "dts_apis": 112,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.ACCESS_NEARLINK",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.LOCATION",
+   "verdict": "open (129/129 annotated APIs are public)",
+   "dts_apis": 129,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 135
+  },
+  {
+   "name": "ohos.permission.APPROXIMATELY_LOCATION",
+   "verdict": "open (54/54 annotated APIs are public)",
+   "dts_apis": 54,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.LOCATION_IN_BACKGROUND",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.MEDIA_LOCATION",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.CAMERA",
+   "verdict": "open (6/6 annotated APIs are public)",
+   "dts_apis": 6,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 51
+  },
+  {
+   "name": "ohos.permission.MICROPHONE",
+   "verdict": "open (14/14 annotated APIs are public)",
+   "dts_apis": 14,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 47
+  },
+  {
+   "name": "ohos.permission.READ_IMAGEVIDEO",
+   "verdict": "open (38/38 annotated APIs are public)",
+   "dts_apis": 38,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_IMAGEVIDEO",
+   "verdict": "open (23/23 annotated APIs are public)",
+   "dts_apis": 23,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO",
+   "verdict": "open (1/1 annotated APIs are public)",
+   "dts_apis": 1,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_AUDIO",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_AUDIO",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_MEDIA",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_CONTACTS",
+   "verdict": "open (72/72 annotated APIs are public)",
+   "dts_apis": 72,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_CONTACTS",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "restricted_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_CALENDAR",
+   "verdict": "open (8/8 annotated APIs are public)",
+   "dts_apis": 8,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_CALENDAR",
+   "verdict": "open (4/4 annotated APIs are public)",
+   "dts_apis": 4,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_MESSAGES",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.SEND_MESSAGES",
+   "verdict": "open (3/3 annotated APIs are public)",
+   "dts_apis": 3,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.RECEIVE_SMS",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.RECEIVE_MMS",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_CELL_MESSAGES",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.ANSWER_CALL",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_CALL_LOG",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.WRITE_CALL_LOG",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.GET_TELEPHONY_STATE",
+   "verdict": "open (4/4 annotated APIs are public)",
+   "dts_apis": 4,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.MANAGE_VOICEMAIL",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.STORE_PERSISTENT_DATA",
+   "verdict": "in permission .txt list only (no .d.ts annotation)",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.DISTRIBUTED_DATASYNC",
+   "verdict": "open (136/136 annotated APIs are public)",
+   "dts_apis": 136,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.ACTIVITY_MOTION",
+   "verdict": "open (24/24 annotated APIs are public)",
+   "dts_apis": 24,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.READ_HEALTH_DATA",
+   "verdict": "open (11/11 annotated APIs are public)",
+   "dts_apis": 11,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_user_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.VIBRATE",
+   "verdict": "open (26/26 annotated APIs are public)",
+   "dts_apis": 26,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 57
+  },
+  {
+   "name": "ohos.permission.ACCESS_BIOMETRIC",
+   "verdict": "open (16/16 annotated APIs are public)",
+   "dts_apis": 16,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "verdict": "open (7/7 annotated APIs are public)",
+   "dts_apis": 7,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.NOTIFICATION_CONTROLLER",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.PUBLISH_AGENT_REMINDER",
+   "verdict": "open (5/5 annotated APIs are public)",
+   "dts_apis": 5,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+   "verdict": "open (21/21 annotated APIs are public)",
+   "dts_apis": 21,
+   "dts_systemapi": 0,
+   "txt_lists": [
+    "open_system_grant_permissions"
+   ],
+   "docs_md_hits": 0
+  },
+  {
+   "name": "ohos.permission.GET_INSTALLED_BUNDLE_LIST",
+   "verdict": "UNATTESTED",
+   "dts_apis": 0,
+   "dts_systemapi": 0,
+   "txt_lists": [],
+   "docs_md_hits": 0
+  }
+ ],
+ "suggester_replay": [
+  {
+   "android": "Manifest.permission.CAPTURE_AUDIO_OUTPUT",
+   "suggested": "ohos.permission.READ_AUDIO",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "in permission .txt list only (no .d.ts annotation)"
+  },
+  {
+   "android": "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION",
+   "suggested": "ohos.permission.NOTIFICATION_CONTROLLER",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "UNATTESTED"
+  },
+  {
+   "android": "android.permission.MODIFY_PHONE_STATE",
+   "suggested": "ohos.permission.GET_TELEPHONY_STATE",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "open (4/4 annotated APIs are public)"
+  },
+  {
+   "android": "android.permission.NFC_TRANSACTION_EVENT",
+   "suggested": "ohos.permission.NFC_TAG",
+   "confidence": "low",
+   "in_mapping": false,
+   "suggested_verdict": "open (112/112 annotated APIs are public)"
+  },
+  {
+   "android": "android.permission.READ_PRIVILEGED_PHONE_STATE",
+   "suggested": "ohos.permission.GET_TELEPHONY_STATE",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "open (4/4 annotated APIs are public)"
+  },
+  {
+   "android": "android.permission.VIBRATE",
+   "suggested": "ohos.permission.VIBRATE",
+   "confidence": "high",
+   "in_mapping": true,
+   "suggested_verdict": "open (26/26 annotated APIs are public)"
+  },
+  {
+   "android": "android.permission.WRITE_MEDIA_STORAGE",
+   "suggested": "ohos.permission.MEDIA_LOCATION",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "in permission .txt list only (no .d.ts annotation)"
+  },
+  {
+   "android": "android.permission.write_settings",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  },
+  {
+   "android": "com.hihonor.push.permission.READ_PUSH_NOTIFICATION_INFO",
+   "suggested": "ohos.permission.NOTIFICATION_CONTROLLER",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "UNATTESTED"
+  },
+  {
+   "android": "com.htc.launcher.permission.READ_SETTINGS",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": true,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  },
+  {
+   "android": "com.huawei.android.launcher.permission.READ_SETTINGS",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": true,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  },
+  {
+   "android": "com.huawei.android.launcher.permission.WRITE_SETTINGS",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": true,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  },
+  {
+   "android": "com.huawei.appmarket.service.commondata.permission.GET_COMMON_DATA",
+   "suggested": "ohos.permission.STORE_PERSISTENT_DATA",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "in permission .txt list only (no .d.ts annotation)"
+  },
+  {
+   "android": "com.mpsaps.cmoffice.PERMISSION_CALL",
+   "suggested": "ohos.permission.ANSWER_CALL",
+   "confidence": "medium",
+   "in_mapping": false,
+   "suggested_verdict": "UNATTESTED"
+  },
+  {
+   "android": "com.octopuscards.nfc_reader.RECEIVE_AUDIT_LOG",
+   "suggested": "ohos.permission.READ_CALL_LOG",
+   "confidence": "low",
+   "in_mapping": false,
+   "suggested_verdict": "UNATTESTED"
+  },
+  {
+   "android": "com.octopuscards.nfc_reader.SEND_TIMEOUT_SMS",
+   "suggested": "ohos.permission.RECEIVE_SMS",
+   "confidence": "low",
+   "in_mapping": false,
+   "suggested_verdict": "UNATTESTED"
+  },
+  {
+   "android": "com.oppo.launcher.permission.READ_SETTINGS",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": true,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  },
+  {
+   "android": "com.oppo.launcher.permission.WRITE_SETTINGS",
+   "suggested": "ohos.permission.MANAGE_SECURE_SETTINGS",
+   "confidence": "medium",
+   "in_mapping": true,
+   "suggested_verdict": "open (7/7 annotated APIs are public)"
+  }
+ ]
+}

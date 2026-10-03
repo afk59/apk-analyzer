@@ -1,0 +1,1580 @@
+{
+ "evidence": {
+  "doc_md_files": 7639,
+  "dts_files": 835,
+  "kit_tokens_dts_barrels": 47,
+  "kit_tokens_docs_or_dts_text": 96,
+  "kit_tokens_api_index": 77,
+  "kit_tokens_union": 97,
+  "perm_names_docs": 86,
+  "perm_names_dts": 661,
+  "perm_names_txt": 134,
+  "perm_names_union": 755
+ },
+ "counts": {
+  "mapping.json namespace rows": 336,
+  "mapping.json permission rows": 67,
+  "hms namespace rows": 137,
+  "hms permission rows": 27,
+  "ohpm rows": 29,
+  "win rows": 101,
+  "ios framework rows": 54,
+  "ios permission rows": 22
+ },
+ "by_check": {
+  "dead-prefix-over-4-segments": 33,
+  "kit-token-shape": 39,
+  "ios-key-never-matched": 1,
+  "kit-without-doc-url": 38,
+  "grant-level-vs-list": 4,
+  "perm-txt-unattested": 23,
+  "fuzzy-prefix-collision": 2,
+  "legacy-V5-url": 44,
+  "hms-kit-without-doc-url": 12,
+  "grant-level-value": 12,
+  "perm-txt-in-several-lists": 1,
+  "ohpm-row-partially-shadowed": 2,
+  "dll-name-case": 8
+ },
+ "by_severity": {
+  "high": 73,
+  "medium": 31,
+  "low": 105,
+  "info": 10
+ },
+ "findings": [
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.ads",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.analytics",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.ar",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.auth",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.cast",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.fitness",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.games",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.location",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.maps",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.nearby",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.panorama",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.search",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.vision",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.wallet",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.wearable",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.mlkit.nl.translate",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.mlkit.vision.barcode",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.mlkit.vision.face",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "hms_mapping.json",
+   "key": "com.google.mlkit.vision.text",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "can never match"
+  },
+  {
+   "severity": "high",
+   "file": "ios_mapping.json",
+   "key": "absl",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='NDK libc++' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "ios_permission_mapping.json",
+   "key": "NSLocationTemporaryUsageDescriptionDictionary",
+   "check": "ios-key-never-matched",
+   "detail": "ipa_engine only collects Info.plist keys ending in 'UsageDescription'"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.ads",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.ar",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.auth",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.fitness",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.games",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.location",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.maps",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.nearby",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.vision",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.android.gms.wallet",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.mlkit.nl.translate",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.mlkit.vision.barcode",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.mlkit.vision.face",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "com.google.mlkit.vision.text",
+   "check": "dead-prefix-over-4-segments",
+   "detail": "engine keys namespaces at 4 segments (apk_engine ns_key) -- this row can never match"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "android.renderscript",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++ / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "mapping.json",
+   "key": "org.apache.commons.lang3",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt5Core.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (official port)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt5Gui.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (official port)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt5Widgets.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (official port)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt6Core.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (pending Qt 6.12 release)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt6Gui.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (pending Qt 6.12 release)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "Qt6Widgets.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='Qt for HarmonyOS (pending Qt 6.12 release)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-convert-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-environment-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-filesystem-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-heap-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-locale-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-math-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-runtime-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-stdio-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-string-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-time-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-utility-l1-1-0.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "combase.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "dbghelp.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (hilog / hiperf)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "msvcp140.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++ / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "msvcp140d.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++ debug)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "msvcr120.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "msvcrt.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "ntdll.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "ole32.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "oleaut32.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "psapi.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "ucrtbase.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "ucrtbased.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc debug)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "userenv.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "vcruntime140.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++ / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "vcruntime140_1.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (libc++ / BiSheng)' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "wintypes.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "wldap32.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "wtsapi32.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='No direct equivalent' is not an @kit.* token"
+  },
+  {
+   "severity": "high",
+   "file": "win_mapping.json",
+   "key": "zlib1.dll",
+   "check": "kit-token-shape",
+   "detail": "harmony_kit='HarmonyOS NDK (zlib)' is not an @kit.* token"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json",
+   "key": "HarmonyOS NDK (libc++ / BiSheng)",
+   "check": "kit-without-doc-url",
+   "detail": "used by 1 rows, no KIT_DOC_URLS entry"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json",
+   "key": "HarmonyOS NDK (libc++)",
+   "check": "kit-without-doc-url",
+   "detail": "used by 1 rows, no KIT_DOC_URLS entry"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json/permission",
+   "key": "android.permission.BLUETOOTH_ADVERTISE",
+   "check": "grant-level-vs-list",
+   "detail": "grant_level=user_grant but ohos.permission.DISCOVER_BLUETOOTH is listed in ['open_system_grant_permissions']"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_MEDIA_AUDIO",
+   "check": "grant-level-vs-list",
+   "detail": "grant_level=user_grant but ohos.permission.READ_AUDIO is listed in ['restricted_permissions']"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_MEDIA_IMAGES",
+   "check": "grant-level-vs-list",
+   "detail": "grant_level=user_grant but ohos.permission.READ_IMAGEVIDEO is listed in ['restricted_permissions']"
+  },
+  {
+   "severity": "medium",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_MEDIA_VIDEO",
+   "check": "grant-level-vs-list",
+   "detail": "grant_level=user_grant but ohos.permission.READ_IMAGEVIDEO is listed in ['restricted_permissions']"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.ALLOW_COREDUMP",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.CONNECT_OBJECTEDITOR_EXTENSION",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.CUSTOMIZE_MENU_ICON",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.GET_DONOTDISTURB_STATE",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.HDR_BRIGHTNESS",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.INHERIT_PARENT_PERMISSION",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.LOCK_WINDOW_CURSOR",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/open_system_grant_permissions",
+   "key": "ohos.permission.TIMEOUT_SCREENOFF_DISABLE_LOCK",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.ACCESS_USER_FULL_DISK",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.ALLOW_EXTERNAL_NATIVE_CODE",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.AUTO_RESTORE_MAIN_WINDOW",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.CHECK_CALL_LOG",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.CRYPTO_EXTENSION_REGISTER",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.CUSTOM_SCREEN_RECORDING",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.GET_IP_MAC_INFO",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.INPUT_DEVICE_CONFIGURATOR",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.KEEP_BACKGROUND_RUNNING_SPECIAL_SCENARIO",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.MANAGE_BLUETOOTH_ADVERTISER_NAME",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.MANAGE_CALL_FOR_DEVICES",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.MANAGE_MEDIA_RESOURCES_FOR_PUBLIC",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.PRINTER_DRIVER",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.REGISTER_OBJECTEDITOR_EXTENSION",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "permissions/restricted_permissions",
+   "key": "ohos.permission.SUBSCRIBE_NOTIFICATION",
+   "check": "perm-txt-unattested",
+   "detail": "permission listed in engine/data/permissions/*.txt but found in neither the docs corpus nor the .d.ts"
+  },
+  {
+   "severity": "medium",
+   "file": "win_mapping.json",
+   "key": "msvcp140d.dll",
+   "check": "fuzzy-prefix-collision",
+   "detail": "'msvcp140.dll' stem is a prefix of 'msvcp140d.dll' with a different kit (HarmonyOS NDK (libc++ / BiSheng) vs HarmonyOS NDK (libc++ debug)); only exact-name lookups are safe"
+  },
+  {
+   "severity": "medium",
+   "file": "win_mapping.json",
+   "key": "ucrtbased.dll",
+   "check": "fuzzy-prefix-collision",
+   "detail": "'ucrtbase.dll' stem is a prefix of 'ucrtbased.dll' with a different kit (HarmonyOS NDK (libc / BiSheng) vs HarmonyOS NDK (libc debug)); only exact-name lookups are safe"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.AREngine",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/ar-engine-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.AdsKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/ads-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ArkData",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/arkdata-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ArkGraphics2D",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/arkgraphics-2d-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ArkGraphics3D",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/arkgraphics-3d-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ArkUI",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/arkui-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ArkWeb",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/arkweb-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.AudioKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/audio-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.BackgroundTasksKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/background-task-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.BasicServicesKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/basic-services-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.CalendarKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/calendar-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.CameraKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/camera-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.CloudFoundationKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/cloud-foundation-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ConnectivityKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/connectivity-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ContactsKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/contacts-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.CoreFileKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-file-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.CoreSpeechKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/core-speech-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.DeviceCertificateKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/device-certificate-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.DriverDevelopmentKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/driver-development-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.DrmKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/drm-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.GameServiceKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/game-service-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.HealthServiceKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/health-service-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.IAPKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/iap-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.IMEKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/ime-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.IPCKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/ipc-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ImageKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/image-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.InputKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/input-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.LocationKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/location-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.MapKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/map-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.MediaKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/media-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.MindSporeLiteKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/mindspore-lite-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.NaturalLanguageKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/natural-language-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.NetworkKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/network-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.NotificationKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/notification-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.PerformanceAnalysisKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/performance-analysis-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.PushKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/push-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ScanKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/scan-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.SensorServiceKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/sensor-service-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.ServiceCollaborationKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/service-collaboration-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.SpeechKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/speech-kit-guide-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.TelephonyKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/telephony-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.UniversalKeystoreKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/huks-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.UserAuthenticationKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/user-authentication-kit-V5"
+  },
+  {
+   "severity": "low",
+   "file": "core/mapping.py KIT_DOC_URLS",
+   "key": "@kit.VisionKit",
+   "check": "legacy-V5-url",
+   "detail": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides-V5/vision-cardrecognition-V5"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "android.app.admin",
+   "check": "hms-kit-without-doc-url",
+   "detail": "MDM Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "android.media.projection",
+   "check": "hms-kit-without-doc-url",
+   "detail": "CaaS Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "android.renderscript",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Accelerate Kit"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.google.android.gms.panorama",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Panorama Kit"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.caaskit",
+   "check": "hms-kit-without-doc-url",
+   "detail": "CaaS Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.gameturbo",
+   "check": "hms-kit-without-doc-url",
+   "detail": "GameTurbo Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.hms.hemsdk",
+   "check": "hms-kit-without-doc-url",
+   "detail": "HEM Kit"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.hms.panorama",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Panorama Kit"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.hms.share",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Share Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.mdm",
+   "check": "hms-kit-without-doc-url",
+   "detail": "MDM Engine"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "com.huawei.quickapp",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Quick App"
+  },
+  {
+   "severity": "low",
+   "file": "hms_mapping.json",
+   "key": "org.hapjs",
+   "check": "hms-kit-without-doc-url",
+   "detail": "Quick App"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.BLUETOOTH_ADMIN",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.CALL_PHONE",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.MANAGE_EXTERNAL_STORAGE",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.PACKAGE_USAGE_STATS",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.POST_NOTIFICATIONS",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_CALL_LOG",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_PHONE_STATE",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.READ_SMS",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.RECEIVE_BOOT_COMPLETED",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.RECEIVE_SMS",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.SEND_SMS",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "mapping.json/permission",
+   "key": "android.permission.WAKE_LOCK",
+   "check": "grant-level-value",
+   "detail": "'unknown'"
+  },
+  {
+   "severity": "low",
+   "file": "permissions",
+   "key": "ohos.permission.kernel",
+   "check": "perm-txt-in-several-lists",
+   "detail": "listed in ['open_system_grant_permissions', 'restricted_permissions'] -- grant class ambiguous"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt5Core.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (official port)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt5Gui.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (official port)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt5Widgets.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (official port)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt6Core.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (pending Qt 6.12 release)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt6Gui.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (pending Qt 6.12 release)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "Qt6Widgets.dll",
+   "check": "kit-without-doc-url",
+   "detail": "Qt for HarmonyOS (pending Qt 6.12 release)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-convert-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-environment-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-filesystem-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-heap-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-locale-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-math-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-runtime-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-stdio-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-string-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-time-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "api-ms-win-crt-utility-l1-1-0.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "combase.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "dbghelp.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (hilog / hiperf)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "msvcp140.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc++ / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "msvcp140d.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc++ debug)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "msvcr120.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "msvcrt.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "ntdll.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "ole32.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "oleaut32.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "psapi.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "ucrtbase.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "ucrtbased.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc debug)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "userenv.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "vcruntime140.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc++ / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "vcruntime140_1.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (libc++ / BiSheng)"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "wintypes.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "wldap32.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "wtsapi32.dll",
+   "check": "kit-without-doc-url",
+   "detail": "No direct equivalent"
+  },
+  {
+   "severity": "low",
+   "file": "win_mapping.json",
+   "key": "zlib1.dll",
+   "check": "kit-without-doc-url",
+   "detail": "HarmonyOS NDK (zlib)"
+  },
+  {
+   "severity": "info",
+   "file": "ohpm_mapping.json",
+   "key": "org.webrtc",
+   "check": "ohpm-row-partially-shadowed",
+   "detail": "native 'org.webrtc.Camera' (@kit.CameraKit) takes the sub-tree org.webrtc.Camera*"
+  },
+  {
+   "severity": "info",
+   "file": "ohpm_mapping.json",
+   "key": "org.webrtc",
+   "check": "ohpm-row-partially-shadowed",
+   "detail": "native 'org.webrtc.audio' (@kit.AudioKit) takes the sub-tree org.webrtc.audio*"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt5Core.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt5Gui.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt5Network.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt5Widgets.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt6Core.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt6Gui.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt6Network.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  },
+  {
+   "severity": "info",
+   "file": "win_mapping.json",
+   "key": "Qt6Widgets.dll",
+   "check": "dll-name-case",
+   "detail": "lower-cased at load; harmless"
+  }
+ ]
+}

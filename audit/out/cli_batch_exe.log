@@ -1,0 +1,113 @@
+  [1m[38;5;45m[*][0m  Batch mode: 4 file(s) found
+
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;255mcppcheck.exe[0m  [38;5;45m(EXE)[0m
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;45m[*][0m  Loading EXE: [38;5;45mcppcheck.exe[0m
+  [1m[38;5;45m[*][0m  Parsing import table...
+  [1m[38;5;45m[*][0m  Matching [1m[38;5;45mHarmonyOS NEXT[0m kits...
+  [1m[38;5;40m[OK][0m  [38;5;255mAnalysis complete in [1m[38;5;40m0.15s[0m[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mHTML report: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\cppcheck_exe_hmos_report.html[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mAgent JSON: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\agent_outputs\cppcheck_exe_hmos_agent.json[0m
+
+  [38;5;124m--------------------------------------------------[0m
+  [1m[38;5;255mSUMMARY  —  EXE[0m
+  [38;5;124m--------------------------------------------------[0m
+  [38;5;45mFile        :[0m  cppcheck.exe
+  [38;5;45mArch        :[0m  x86-64 (AMD64)
+  [38;5;45mSubsystem   :[0m  Windows Console (CUI)
+  [38;5;45mImports     :[0m  14 DLLs  /  333 functions
+  [38;5;45mKit matches :[0m  [1m[38;5;255m3[0m
+  [38;5;45mUnmapped    :[0m  1 DLLs
+
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.BasicServicesKit[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc)[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc++ / BiSheng)[0m
+
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;255mida.exe[0m  [38;5;45m(EXE)[0m
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;45m[*][0m  Loading EXE: [38;5;45mida.exe[0m
+  [1m[38;5;45m[*][0m  Parsing import table...
+  [1m[38;5;45m[*][0m  Matching [1m[38;5;45mHarmonyOS NEXT[0m kits...
+  [1m[38;5;40m[OK][0m  [38;5;255mAnalysis complete in [1m[38;5;40m2.93s[0m[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mHTML report: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\ida_exe_hmos_report.html[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mAgent JSON: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\agent_outputs\ida_exe_hmos_agent.json[0m
+
+  [38;5;124m--------------------------------------------------[0m
+  [1m[38;5;255mSUMMARY  —  EXE[0m
+  [38;5;124m--------------------------------------------------[0m
+  [38;5;45mFile        :[0m  ida.exe
+  [38;5;45mArch        :[0m  x86-64 (AMD64)
+  [38;5;45mSubsystem   :[0m  Windows GUI
+  [38;5;45mImports     :[0m  25 DLLs  /  4039 functions
+  [38;5;45mKit matches :[0m  [1m[38;5;255m7[0m
+  [38;5;45mUnmapped    :[0m  4 DLLs
+
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.ArkUI[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255m@kit.BasicServicesKit[0m
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.CoreFileKit[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc)[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc++ / BiSheng)[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255mNo direct equivalent[0m
+  [1m[38;5;220m[MED ][0m  [38;5;255mQt for HarmonyOS (pending Qt 6.12 release)[0m
+
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;255mclp64.dll[0m  [38;5;45m(EXE)[0m
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;45m[*][0m  Loading EXE: [38;5;45mclp64.dll[0m
+  [1m[38;5;45m[*][0m  Parsing import table...
+  [1m[38;5;45m[*][0m  Matching [1m[38;5;45mHarmonyOS NEXT[0m kits...
+  [1m[38;5;40m[OK][0m  [38;5;255mAnalysis complete in [1m[38;5;40m1.58s[0m[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mHTML report: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\clp64_exe_hmos_report.html[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mAgent JSON: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\agent_outputs\clp64_exe_hmos_agent.json[0m
+
+  [38;5;124m--------------------------------------------------[0m
+  [1m[38;5;255mSUMMARY  —  EXE[0m
+  [38;5;124m--------------------------------------------------[0m
+  [38;5;45mFile        :[0m  clp64.dll
+  [38;5;45mArch        :[0m  x86-64 (AMD64)
+  [38;5;45mSubsystem   :[0m  Windows GUI
+  [38;5;45mImports     :[0m  14 DLLs  /  127 functions
+  [38;5;45mKit matches :[0m  [1m[38;5;255m3[0m
+  [38;5;45mUnmapped    :[0m  0 DLLs
+
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.BasicServicesKit[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc)[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc++ / BiSheng)[0m
+
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;255mida.dll[0m  [38;5;45m(EXE)[0m
+  [1m[38;5;124m----------------------------------------------------------[0m
+  [1m[38;5;45m[*][0m  Loading EXE: [38;5;45mida.dll[0m
+  [1m[38;5;45m[*][0m  Parsing import table...
+  [1m[38;5;45m[*][0m  Matching [1m[38;5;45mHarmonyOS NEXT[0m kits...
+  [1m[38;5;40m[OK][0m  [38;5;255mAnalysis complete in [1m[38;5;40m14.6s[0m[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mHTML report: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\ida_exe_hmos_report.html[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mAgent JSON: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\agent_outputs\ida_exe_hmos_agent.json[0m
+
+  [38;5;124m--------------------------------------------------[0m
+  [1m[38;5;255mSUMMARY  —  EXE[0m
+  [38;5;124m--------------------------------------------------[0m
+  [38;5;45mFile        :[0m  ida.dll
+  [38;5;45mArch        :[0m  x86-64 (AMD64)
+  [38;5;45mSubsystem   :[0m  Windows GUI
+  [38;5;45mImports     :[0m  26 DLLs  /  519 functions
+  [38;5;45mKit matches :[0m  [1m[38;5;255m9[0m
+  [38;5;45mUnmapped    :[0m  0 DLLs
+
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.ArkUI[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255m@kit.BasicServicesKit[0m
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.CoreFileKit[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255m@kit.CryptoArchitectureKit[0m
+  [1m[38;5;220m[MED ][0m  [38;5;255m@kit.DeviceCertificateKit[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255m@kit.NetworkKit[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255mHarmonyOS NDK (libc)[0m
+  [1m[38;5;40m[HIGH][0m  [38;5;255mHarmonyOS NDK (libc++ / BiSheng)[0m
+  [1m[38;5;160m[LOW ][0m  [38;5;255mNo direct equivalent[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mBatch Excel: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\batch_summary.xlsx[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mBatch unmapped Excel: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\batch_unmapped.xlsx[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mUnique unmapped: 0 namespace(s), 5 DLL(s), 0 framework(s)[0m
+  [1m[38;5;40m[OK][0m  [38;5;255mAgent summary: C:\Users\AFK\Claude\projects\apk-analyzer-v2\audit\out\engine_copy\result\agent_outputs\agent_summary.json[0m
+
+  [1m[38;5;40m[OK][0m  [38;5;255mBatch complete — 4 file(s) processed.[0m

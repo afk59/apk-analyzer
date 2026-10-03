@@ -1,0 +1,39 @@
+.........................................................................................................................................................................C:\Users\AFK\AppData\Local\Programs\Python\Python314\Lib\json\decoder.py:361: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x000001AEEA7017B0>
+  obj, end = self.scan_once(s, idx)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.........................................................................................
+----------------------------------------------------------------------
+Ran 258 tests in 256.015s
+
+OK
+[*] First run - installing: uvicorn
+[*] This happens once and needs internet. It can take a few minutes.
+[!] The install did not finish (Command 'pip' returned non-zero exit status 1.).
+[!] Cannot start without: uvicorn
+    Connect to the internet and run this once:
+    "C:\Users\AFK\AppData\Local\Programs\Python\Python314\python.exe" -m pip install -r "C:\Users\AFK\Claude\projects\apk-analyzer-v2\requirements.txt"
+[*] First run - installing: pywebview
+[*] This happens once and needs internet. It can take a few minutes.
+[!] The install did not finish (Command 'pip' returned non-zero exit status 1.).
+[*] Continuing without: pywebview
+[*] First run - installing: uvicorn>=0.52.4,<1.0
+[*] This happens once and needs internet. It can take a few minutes.
+[!] The install did not finish (Command 'pip' returned non-zero exit status 1.).
+[!] Cannot start without: uvicorn>=0.52.4,<1.0
+    Connect to the internet and run this once:
+    "C:\Users\AFK\AppData\Local\Programs\Python\Python314\python.exe" -m pip install -r "C:\Users\AFK\Claude\projects\apk-analyzer-v2\requirements.txt"
+[*] First run - installing: fastapi
+[*] This happens once and needs internet. It can take a few minutes.
+[*] Setup complete.
+
+[*] First run - installing: uvicorn
+[*] This happens once and needs internet. It can take a few minutes.
+[!] The install did not finish (no pip).
+[!] Cannot start without: uvicorn
+    Connect to the internet and run this once:
+    "C:\Users\AFK\AppData\Local\Programs\Python\Python314\python.exe" -m pip install -r "C:\Users\AFK\Claude\projects\apk-analyzer-v2\requirements.txt"
+[*] First run - installing: fastapi
+[*] This happens once and needs internet. It can take a few minutes.
+[*] Setup complete.
+
+EXIT=0

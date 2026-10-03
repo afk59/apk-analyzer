@@ -1,0 +1,14 @@
+{
+ "run_dir": "C:\\Users\\AFK\\Claude\\projects\\apk-analyzer-v2\\audit\\out\\corpus_run",
+ "apps_checked": 43,
+ "batch_rows": 42,
+ "problems": [
+  {
+   "app": "notepad.exe",
+   "check": "row missing from batch_summary",
+   "a": null,
+   "b": "notepad.exe"
+  }
+ ],
+ "problem_count": 1
+}

@@ -1,0 +1,52 @@
+{
+ "languages": {
+  "en": 99,
+  "tr": 99,
+  "zh": 99
+ },
+ "missing": {
+  "en": [
+   "analyze.download.ph",
+   "dl.",
+   "stage."
+  ],
+  "tr": [
+   "analyze.download.ph",
+   "dl.",
+   "stage."
+  ],
+  "zh": [
+   "analyze.download.ph",
+   "dl.",
+   "stage."
+  ]
+ },
+ "extra": {
+  "tr_vs_en_missing": [],
+  "tr_not_in_en": [],
+  "zh_vs_en_missing": [],
+  "zh_not_in_en": []
+ },
+ "dynamic_prefixes": [
+  "dl.*",
+  "stage.*"
+ ],
+ "untranslated_same_as_en": {
+  "tr": [
+   "app.subtitle"
+  ],
+  "zh": [
+   "app.subtitle"
+  ]
+ },
+ "placeholder_mismatch": [],
+ "unused_keys_in_en": [
+  "run.finished",
+  "status.nomappings",
+  "status.ready",
+  "theme.dark",
+  "theme.light",
+  "theme.system",
+  "theme.title"
+ ]
+}
