@@ -1,3 +1,0 @@
-# How do I enable the AVPlayer to continue playing the previous video when the application is switched from the background to the foreground?
-
-Call [avPlayer.play()](<https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-media-avplayer#play9 >) of the **AVPlayer** class in the **onPageShow()** callback, which is used for a switching to the foreground; call [avPlayer.pause()](https://developer.huawei.com/consumer/en/doc/harmonyos-references/arkts-apis-media-avplayer#pause9) of the **AVPlayer** class in the **onPageHide()** callback, which is used for switching to the background.

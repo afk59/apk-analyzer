@@ -1,4 +1,0 @@
-# How do I implement a short prompt sound (for example, a sound or sound effect in scenarios such as liking, favoriting, or receiving new messages)?
-
--   [SoundPool](https://developer.huawei.com/consumer/en/doc/harmonyos-references/js-apis-inner-multimedia-soundpool) is recommended. If an application uses SoundPool for audio playback development and sets **StreamUsage** to **Music**, **Movie**, or **AudioBook**, playing short sounds will automatically operate in concurrent mode. This means that it does not interrupt other audio playback.
--   If the application prefers not to use SoundPool and the current stream type interrupts other audio playback, you are advised to use the [AudioSession](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/audio-playback-concurrency) API and set the strategy to **MIX\_WITH\_OTHERS**.

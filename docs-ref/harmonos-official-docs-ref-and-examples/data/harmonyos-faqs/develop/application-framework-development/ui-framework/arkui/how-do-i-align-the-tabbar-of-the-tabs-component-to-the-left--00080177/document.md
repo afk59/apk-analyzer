@@ -1,3 +1,0 @@
-# How do I align the TabBar of the Tabs component to the left?
-
-You can set the [align](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-universal-attributes-location#align) parameter of the TabBar by using the **barModifier** attribute of [TabsOptions](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-container-tabs#tabsoptions15) to implement the tab alignment layout. Similar to text alignment, tab bars can be set to center, top, bottom, left, or right. In the RTL layout, you are advised to use **start** and **end** instead of **left** and **right**. For details, see [Example 16: Aligning Tabs](https://developer.huawei.com/consumer/en/doc/harmonyos-references/ts-container-tabs#example-16-aligning-tabs).

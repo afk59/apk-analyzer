@@ -32,19 +32,15 @@ engine/result/
 *.zip
 
 # ---------------------------------------------------------------- v2 state
-# The SQLite file is an INDEX (see docs/decisions/0002): every row is derivable
+# The SQLite file is an INDEX: every row is derivable
 # from an artifact on disk, so it is rebuilt by a rescan and never committed.
 app/store/*.db
 app/store/*.db-wal
 app/store/*.db-shm
 
 # ---------------------------------------------------------------- exceptions
-# Analysis INPUTS caught by the blanket rules above. Without them a fresh clone
-# silently degrades: the API index cannot be rebuilt, OHPM package existence
-# cannot be checked, and an offline batch shows "No internet connection"
-# instead of real Play metadata. See "What a clone needs" in README.md.
-!engine/data/reference/hmos_api.xlsx
-!engine/data/reference/ohpm_registry_cache.json
+# Analysis input caught by the blanket rules above: without it an offline
+# batch shows "No internet connection" instead of real Play metadata.
 !engine/data/reference/play_metadata_cache.json
 
 # The frontend is hand-written and MUST stay tracked -- *.html above would

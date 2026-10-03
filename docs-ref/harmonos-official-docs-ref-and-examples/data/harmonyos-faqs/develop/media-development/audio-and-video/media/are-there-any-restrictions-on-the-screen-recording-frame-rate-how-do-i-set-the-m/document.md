@@ -1,3 +1,0 @@
-# Are there any restrictions on the screen recording frame rate? How do I set the maximum frame rate?
-
-You can call **OH\_AVScreenCapture\_SetMaxVideoFrameRate()** to set the maximum frame rate during screen recording. The actual frame rate is limited by the device capability. For details, see [Setting the Maximum Frame Rate During Screen Recording](https://developer.huawei.com/consumer/en/doc/harmonyos-references/capi-native-avscreen-capture-h#oh_avscreencapture_setmaxvideoframerate). The screen recording frame rate must meet the encoding and decoding specifications. For details, see [Setting the Correct Video Frame Rate](https://developer.huawei.com/consumer/en/doc/harmonyos-guides/obtain-supported-codecs#setting-the-correct-video-frame-rate).
