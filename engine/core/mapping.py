@@ -81,6 +81,16 @@ KIT_DOC_URLS: dict[str, str] = {
     "@kit.DeviceSecurityKit":      "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/devicesecurity-sysintegrity-check",
     "@kit.OnlineAuthenticationKit": "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/onlineauthentication-passkey-intro",
     "@kit.PaymentKit":             "https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/payment-preparations",
+    # Page ids below are the relateDocument of each kit's node in the official
+    # harmonyos-guides catalog.
+    "@kit.AssetStoreKit":          "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/asset-store-kit",
+    "@kit.CallServiceKit":         "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/call-kit-guide",
+    "@kit.FormKit":                "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/form-kit",
+    "@kit.AppLinkingKit":          "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/app-linking-kit-guide",
+    "@kit.Penkit":                 "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/pen-kit-guide",
+    "@kit.PreviewKit":             "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/preview-kit-guide",
+    "@kit.ReaderKit":              "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/reader-kit-guide",
+    "@kit.WalletKit":              "https://developer.huawei.com/consumer/en/doc/harmonyos-guides/wallet-kit-guide",
 }
 
 HMS_DOC_URLS: dict[str, str] = {
